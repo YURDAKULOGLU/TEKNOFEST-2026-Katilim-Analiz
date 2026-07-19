@@ -46,6 +46,30 @@ class ModelFailureCode(StrEnum):
     BLOCK_NOT_SENT = "model_block_not_sent"
 
 
+#: Codes proving the local model service itself is unhealthy: it never answered
+#: inside the budget, or answered outside its own API contract.  Retrying these
+#: burns a full inference slot, so they trip the breaker quickly.
+DEPENDENCY_FAILURE_CODES: frozenset[ModelFailureCode] = frozenset(
+    {
+        ModelFailureCode.TIMEOUT,
+        ModelFailureCode.TRANSPORT,
+        ModelFailureCode.HTTP_STATUS,
+        ModelFailureCode.ENVELOPE_INVALID,
+        ModelFailureCode.RESPONSE_TOO_LARGE,
+    }
+)
+
+
+def is_dependency_failure(code: ModelFailureCode) -> bool:
+    """Answer whether a failure says the service is sick or the answer was rejected.
+
+    A rejected quote means the grounding guard did its job on a live, responsive
+    model; it is not evidence that the next document would fail too.
+    """
+
+    return code in DEPENDENCY_FAILURE_CODES
+
+
 class ModelInferenceError(RuntimeError):
     def __init__(self, code: ModelFailureCode, detail: str) -> None:
         self.code = code
@@ -107,10 +131,14 @@ class CircuitBreaker:
     """Small in-process breaker; one half-open probe is permitted."""
 
     failure_threshold: int = 2
+    #: Rejected model content is expected on a small local model, so it needs its
+    #: own, far more patient budget before the model is taken out of service.
+    content_failure_threshold: int = 12
     recovery_seconds: float = 120.0
     monotonic: Callable[[], float] = time.monotonic
     state: CircuitState = CircuitState.CLOSED
     failures: int = 0
+    content_failures: int = 0
     opened_at: float | None = None
     probe_in_flight: bool = False
 
@@ -135,15 +163,33 @@ class CircuitBreaker:
     def success(self) -> None:
         self.state = CircuitState.CLOSED
         self.failures = 0
+        self.content_failures = 0
         self.opened_at = None
         self.probe_in_flight = False
 
-    def failure(self) -> None:
+    def failure(self, *, dependency: bool = True) -> None:
         self.probe_in_flight = False
+        if not dependency:
+            self._content_failure()
+            return
         self.failures += 1
         if self.state is CircuitState.HALF_OPEN or self.failures >= self.failure_threshold:
             self.state = CircuitState.OPEN
             self.opened_at = self.monotonic()
+
+    def _content_failure(self) -> None:
+        self.content_failures += 1
+        if self.content_failures >= self.content_failure_threshold:
+            self.state = CircuitState.OPEN
+            self.opened_at = self.monotonic()
+            return
+        if self.state is CircuitState.HALF_OPEN:
+            # The probe reached a responsive model and only its answer was
+            # rejected, so the dependency has recovered even though this
+            # document gained nothing.
+            self.state = CircuitState.CLOSED
+            self.failures = 0
+            self.opened_at = None
 
 
 def _reject_duplicate_keys(pairs: list[tuple[str, Any]]) -> dict[str, Any]:
@@ -293,9 +339,9 @@ class OllamaStructuredClient:
                 ModelFailureCode.TIMEOUT,
                 f"local model exceeded the configured {self._timeout:g}s timeout",
             ) from exc
-        except ModelInferenceError:
+        except ModelInferenceError as exc:
             if circuit_acquired:
-                self._circuit.failure()
+                self._circuit.failure(dependency=is_dependency_failure(exc.code))
             raise
         self._circuit.success()
         return result

@@ -317,6 +317,97 @@ async def test_timeout_waiting_for_model_slot_does_not_trip_circuit(
     assert breaker.state.value == "closed"
 
 
+def _ungrounded_facts() -> list[dict[str, Any]]:
+    return [{"field": "rate", "quote": "bu alıntı gönderilen bloklarda yok"}]
+
+
+@pytest.mark.asyncio
+async def test_rejected_quote_keeps_serving_later_documents(
+    campaign_document: CleanDocument,
+) -> None:
+    """A responsive model must not be taken out of service by grounding rejects."""
+
+    calls = 0
+
+    async def ungrounded_handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(200, json=_envelope(_content(facts=_ungrounded_facts())))
+
+    breaker = CircuitBreaker(failure_threshold=2, recovery_seconds=300)
+    client, http_client = _client(
+        httpx.MockTransport(ungrounded_handler),
+        circuit_breaker=breaker,
+    )
+    try:
+        for _ in range(5):
+            with pytest.raises(ModelInferenceError) as error:
+                await client.extract(campaign_document, frozenset({ModelFactField.RATE}))
+            assert error.value.code is ModelFailureCode.BLOCK_NOT_SENT
+    finally:
+        await http_client.aclose()
+
+    assert calls == 5, "the model must still be consulted for every later document"
+    assert breaker.state.value == "closed"
+    assert breaker.failures == 0
+    assert breaker.content_failures == 5
+
+
+@pytest.mark.asyncio
+async def test_persistently_ungrounded_model_is_eventually_taken_out_of_service(
+    campaign_document: CleanDocument,
+) -> None:
+    calls = 0
+
+    async def ungrounded_handler(request: httpx.Request) -> httpx.Response:
+        nonlocal calls
+        calls += 1
+        return httpx.Response(200, json=_envelope(_content(facts=_ungrounded_facts())))
+
+    breaker = CircuitBreaker(content_failure_threshold=3, recovery_seconds=300)
+    client, http_client = _client(
+        httpx.MockTransport(ungrounded_handler),
+        circuit_breaker=breaker,
+    )
+    try:
+        for _ in range(3):
+            with pytest.raises(ModelInferenceError):
+                await client.extract(campaign_document, frozenset({ModelFactField.RATE}))
+        with pytest.raises(ModelInferenceError) as open_error:
+            await client.extract(campaign_document, frozenset({ModelFactField.RATE}))
+    finally:
+        await http_client.aclose()
+
+    assert open_error.value.code is ModelFailureCode.CIRCUIT_OPEN
+    assert calls == 3, "inference slots must stop being burned once the model is useless"
+
+
+@pytest.mark.asyncio
+async def test_recovery_probe_answered_with_bad_quote_reopens_the_service() -> None:
+    """The probe proves the dependency answers; only its content was unusable."""
+
+    clock = 1_000.0
+    breaker = CircuitBreaker(
+        failure_threshold=2,
+        recovery_seconds=120,
+        monotonic=lambda: clock,
+    )
+    breaker.acquire()
+    breaker.failure()
+    breaker.acquire()
+    breaker.failure()
+    assert breaker.state.value == "open"
+
+    clock += 121
+    breaker.acquire()
+    assert breaker.state.value == "half_open"
+    breaker.failure(dependency=False)
+
+    assert breaker.state.value == "closed"
+    assert breaker.failures == 0
+    breaker.acquire()  # must not raise: the circuit is serving traffic again
+
+
 @pytest.mark.asyncio
 async def test_total_deadline_includes_response_parsing(
     campaign_document: CleanDocument,
