@@ -12,8 +12,6 @@ from katilim_analiz.contracts import (
     CampaignType,
     CleanDocument,
     EvidenceStatus,
-    FeeBasis,
-    FeeKind,
     FeeValue,
     MoneyValue,
     ProductFamily,
@@ -35,6 +33,7 @@ from katilim_analiz.domain import (
 )
 from katilim_analiz.extraction.draft import BoundFact, CustomerSegmentFact, ExtractionDraft
 from katilim_analiz.extraction.evidence import TextSpan, verify_document_blocks
+from katilim_analiz.extraction.fees import read_fee
 from katilim_analiz.llm.contracts import ModelFactField
 from katilim_analiz.llm.safety import is_obvious_prompt_injection
 
@@ -64,22 +63,6 @@ _TERM_MARKER = re.compile(
     rf"\b(?:vade|vadeli|\d+\s*(?:ay|yıl|yil|sene){_TERM_UNIT_SUFFIX})\b",
     re.I,
 )
-# The stem carries case and derivation suffixes in Turkish, so the marker ends at
-# the stem and lets the suffix run on; a trailing word boundary would miss both
-# the possessive and the "-siz" derivation that states the fee does not apply.
-_FEE_MARKER = re.compile(r"\b(?:ücret|ucret|masraf|tahsis|aidat)", re.I)
-#: Phrases stating the fee is not charged, including the negated verb forms that
-#: campaign pages actually use and the "covered by the bank" wording.
-_FEE_WAIVER_MARKER = re.compile(
-    r"\b(?:ücretsiz|ucretsiz|masrafsız|masrafsiz)\b"
-    r"|\b(?:alınma|alinma|alınmıyor|alinmiyor|yansıtılma|yansitilma)\w*"
-    r"|\b(?:tahsil\s+edilme|talep\s+edilme)\w*"
-    r"|\b(?:banka\s+tarafından\s+karşılan|banka\s+tarafindan\s+karsilan)\w*"
-    r"|\b(?:yoktur|bulunmamaktadır|bulunmamaktadir)\b",
-    re.I,
-)
-#: A waiver that only holds up to a stated ceiling ("50.000 TL'ye kadar").
-_FEE_WAIVER_LIMIT = re.compile(r"\bkadar\b", re.I)
 #: Vouchers and gift cards carry a stated lira value and are named as a phrase,
 #: because the bare stem also begins unrelated words such as the raffle below.
 _VOUCHER_MARKER = re.compile(
@@ -458,48 +441,7 @@ def _dedupe_bound[T](facts: Iterable[BoundFact[T]]) -> tuple[BoundFact[T], ...]:
 
 
 def _fee_from_span(span: TextSpan) -> FeeValue | None:
-    text = span.quote
-    lowered = text.casefold()
-    if _FEE_MARKER.search(lowered) is None:
-        return None
-    kind = FeeKind.OTHER
-    basis = FeeBasis.ONE_TIME
-    if "tahsis" in lowered:
-        kind = FeeKind.ALLOCATION
-    elif "aidat" in lowered or "yıllık" in lowered or "yillik" in lowered:
-        kind = FeeKind.ANNUAL
-        basis = FeeBasis.PER_YEAR
-    elif "aylık" in lowered or "aylik" in lowered:
-        kind = FeeKind.MONTHLY
-        basis = FeeBasis.PER_MONTH
-    elif "işlem" in lowered or "islem" in lowered:
-        kind = FeeKind.TRANSACTION
-        basis = FeeBasis.PER_TRANSACTION
-
-    money = normalize_money(text)
-    # A waiver is decided before any amount is read.  A sentence waiving the fee
-    # up to 50.000 TL carries a figure that bounds the waiver, and reading that
-    # figure as the fee would publish the exact opposite of what the source says.
-    if _FEE_WAIVER_MARKER.search(lowered) is not None:
-        return FeeValue(
-            raw=text,
-            kind=kind,
-            basis=basis,
-            description=text,
-            waived=True,
-            waiver_limit=money.value if _FEE_WAIVER_LIMIT.search(lowered) is not None else None,
-        )
-    if money.value is not None:
-        return FeeValue(raw=text, money=money.value, kind=kind, basis=basis)
-    rate = normalize_rate(text)
-    if rate.value is not None:
-        return FeeValue(
-            raw=text,
-            rate=rate.value,
-            kind=kind,
-            basis=FeeBasis.PERCENT_OF_AMOUNT,
-        )
-    return None
+    return read_fee(span.quote)
 
 
 def _reward_from_span(span: TextSpan) -> RewardValue | None:

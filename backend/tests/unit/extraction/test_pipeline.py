@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import UTC, datetime
+from decimal import Decimal
 
 import pytest
 from _factories import make_document
@@ -473,3 +474,29 @@ def test_list_valued_model_proposals_remain_independently_acceptable() -> None:
         "bireysel",
         "kobi",
     }
+
+
+def test_model_proposed_waiver_is_not_merged_as_the_fee_it_rules_out() -> None:
+    """The model path must read a waiver exactly as the rule path does.
+
+    The two paths each used to read the sentence for themselves, and they
+    disagreed: one recorded a waiver while the other published the ceiling
+    inside it as the amount charged.
+    """
+
+    quote = "Tahsis ücreti 50.000 TL'ye kadar alınmayacaktır."
+    document = make_document(("heading", "Konut Finansmanı"), ("paragraph", quote))
+    response = ModelExtractionResponse(
+        schema_version="model-extraction/1.1",
+        document_id=document.id,
+        facts=[ModelFactProposal(field=ModelFactField.FEE, quote=quote)],
+    )
+
+    merged, accepted = merge_model_response(extract_rules(document), response, document)
+
+    assert accepted == 1
+    fee = merged.fees[0].value
+    assert fee.waived is True
+    assert fee.money is None, "the ceiling is what the waiver spares, not a charge"
+    assert fee.waiver_limit is not None
+    assert fee.waiver_limit.amount == Decimal("50000")

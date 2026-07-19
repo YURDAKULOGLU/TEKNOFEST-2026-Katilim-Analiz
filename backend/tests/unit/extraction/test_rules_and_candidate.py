@@ -551,3 +551,25 @@ def test_specification_scenario_separates_waived_absent_and_rewarded_costs() -> 
     assert drafts["C"].fees == (), "C states no fee at all, which stays unknown"
     assert drafts["C"].rewards[0].value.money is not None
     assert drafts["C"].rewards[0].value.money.amount == Decimal("5000")
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Kampanya kapsamında 50.000 TL'ye kadar dosya masrafı alınmamaktadır.",
+        "50.000 TL'ye kadar masrafsız finansman fırsatı.",
+        "Tahsis ücreti 50.000 TL'ye kadar alınmayacaktır.",
+    ],
+)
+def test_waiver_ceiling_survives_every_waiver_wording(sentence: str) -> None:
+    """The ceiling must not depend on which waiver word the campaign chose."""
+
+    document = make_document(("heading", "Konut Finansmanı"), ("paragraph", sentence))
+
+    draft = extract_rules(document)
+
+    fee = draft.fees[0].value
+    assert fee.waived is True
+    assert fee.money is None
+    assert fee.waiver_limit is not None
+    assert fee.waiver_limit.amount == Decimal("50000")

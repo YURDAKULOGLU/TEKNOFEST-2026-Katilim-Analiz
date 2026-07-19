@@ -9,8 +9,6 @@ from decimal import Decimal, InvalidOperation
 from katilim_analiz.contracts import (
     CleanDocument,
     EvidenceStatus,
-    FeeBasis,
-    FeeKind,
     FeeValue,
     RateKind,
     RatePeriod,
@@ -26,6 +24,7 @@ from katilim_analiz.domain import (
 )
 from katilim_analiz.extraction.draft import BoundFact, CustomerSegmentFact, ExtractionDraft
 from katilim_analiz.extraction.evidence import EvidenceBindingError, TextSpan, verify_span
+from katilim_analiz.extraction.fees import FEE_MARKER, read_fee
 from katilim_analiz.extraction.rules import (
     is_explicit_eligibility,
     is_explicit_new_customer_restriction,
@@ -108,54 +107,19 @@ def _upsert_by_span[T](
 
 def _fee(proposal: ModelFactProposal, span: TextSpan) -> FeeValue:
     text = span.quote
-    lowered = text.casefold()
-    if re.search(r"\b(?:ücret|ucret|masraf|tahsis|aidat)\b", lowered) is None:
+    if FEE_MARKER.search(text.casefold()) is None:
         raise ProposalRejected("fee_terminology_missing")
-    kind = FeeKind.OTHER
-    basis = FeeBasis.ONE_TIME
-    if "tahsis" in lowered:
-        kind = FeeKind.ALLOCATION
-    elif "aidat" in lowered or "yıllık" in lowered or "yillik" in lowered:
-        kind = FeeKind.ANNUAL
-        basis = FeeBasis.PER_YEAR
-    elif "aylık" in lowered or "aylik" in lowered:
-        kind = FeeKind.MONTHLY
-        basis = FeeBasis.PER_MONTH
-    elif "işlem" in lowered or "islem" in lowered:
-        kind = FeeKind.TRANSACTION
-        basis = FeeBasis.PER_TRANSACTION
-    money = normalize_money(text).value
-    rate = normalize_rate(text).value
-    description: str | None = None
-    if money is None and rate is None:
-        if (
-            re.search(
-                r"\b(?:ücretsiz|ucretsiz|masrafsız|masrafsiz|alınmayacak|alinmayacak)\b",
-                text,
-                re.I,
-            )
-            is None
-        ):
-            raise ProposalRejected("fee_value_not_supported")
-        description = text
-    if money is None and rate is not None:
-        basis = FeeBasis.PERCENT_OF_AMOUNT
-    if proposal.fee_kind is not None and proposal.fee_kind is not kind:
+    # The same sentence must read the same way whether a rule or the model
+    # brought it here; reading it twice is how the two paths came to disagree
+    # about whether a waiver states a charge.
+    fee = read_fee(text, status=EvidenceStatus.INFERRED)
+    if fee is None:
+        raise ProposalRejected("fee_value_not_supported")
+    if proposal.fee_kind is not None and proposal.fee_kind is not fee.kind:
         raise ProposalRejected("fee_hint_contradicts_quote")
-    if proposal.fee_basis is not None and proposal.fee_basis is not basis:
+    if proposal.fee_basis is not None and proposal.fee_basis is not fee.basis:
         raise ProposalRejected("fee_hint_contradicts_quote")
-    try:
-        return FeeValue(
-            raw=text,
-            money=money,
-            rate=rate,
-            kind=kind,
-            basis=basis,
-            description=description,
-            status=EvidenceStatus.INFERRED,
-        )
-    except ValueError as exc:
-        raise ProposalRejected("fee_contract_invalid") from exc
+    return fee
 
 
 def _reward(proposal: ModelFactProposal, span: TextSpan) -> RewardValue:
