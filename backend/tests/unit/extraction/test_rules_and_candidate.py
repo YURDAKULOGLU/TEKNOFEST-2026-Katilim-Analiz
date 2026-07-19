@@ -453,3 +453,101 @@ def test_unrelated_word_sharing_the_month_stem_is_not_a_term() -> None:
     draft = extract_rules(document)
 
     assert draft.terms == ()
+
+
+def test_gift_voucher_value_is_extracted_as_a_reward() -> None:
+    document = make_document(
+        ("heading", "Konut Finansmanı"),
+        ("paragraph", "Kampanya kapsamında 5.000 TL değerinde alışveriş çeki verilmektedir."),
+    )
+
+    draft = extract_rules(document)
+
+    assert len(draft.rewards) == 1
+    reward = draft.rewards[0].value
+    assert reward.money is not None
+    assert reward.money.amount == Decimal("5000")
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "100.000 TL'lik çekilişe katılma şansı yakalayın.",
+        "50.000 TL kura ile talihlilere verilecektir.",
+    ],
+)
+def test_prize_draw_is_not_recorded_as_a_granted_reward(sentence: str) -> None:
+    """A chance at a prize is not an amount the campaign grants."""
+
+    document = make_document(("heading", "Kampanya"), ("paragraph", sentence))
+
+    draft = extract_rules(document)
+
+    assert draft.rewards == ()
+
+
+#: The three campaign texts the competition specification works through, with the
+#: comparison table it expects from them.  They are kept verbatim so that a rule
+#: change that quietly drops one of the four comparison dimensions fails here
+#: rather than in front of a jury.
+_SPEC_SCENARIO = {
+    "A": (
+        (
+            "paragraph",
+            "Yeni ev sahibi olmak isteyen müşterilerimize özel %1,89 kâr payı oranı "
+            "ile 120 aya kadar konut finansmanı fırsatı sunulmaktadır.",
+        ),
+        ("paragraph", "Kampanya kapsamında 50.000 TL'ye kadar dosya masrafı alınmamaktadır."),
+        ("paragraph", "Kampanya 31 Aralık 2026 tarihine kadar geçerlidir."),
+    ),
+    "B": (
+        (
+            "paragraph",
+            "Konut finansmanında avantajlı ödeme seçenekleri. %1,95 kâr payı oranı "
+            "ile 120 ay vadeye kadar finansman imkanı sunulmaktadır.",
+        ),
+        ("paragraph", "Kampanya kapsamında ekspertiz ücreti banka tarafından karşılanmaktadır."),
+    ),
+    "C": (
+        (
+            "paragraph",
+            "Yeni konut alımlarına özel %1,87 kâr payı oranı ile 96 ay vadeli "
+            "konut finansmanı fırsatı.",
+        ),
+        ("paragraph", "Kampanya kapsamında 5.000 TL değerinde alışveriş çeki verilmektedir."),
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("bank", "rate", "months"),
+    [("A", "1.89", 120), ("B", "1.95", 120), ("C", "1.87", 96)],
+)
+def test_specification_scenario_yields_its_published_rate_and_term(
+    bank: str, rate: str, months: int
+) -> None:
+    document = make_document(("heading", "Konut Finansmanı"), *_SPEC_SCENARIO[bank])
+
+    draft = extract_rules(document)
+
+    assert draft.product_family is not None
+    assert draft.product_family.value is ProductFamily.FINANCING
+    assert draft.rates[0].value.value_percent == Decimal(rate)
+    assert draft.terms[0].value.maximum_months == months
+
+
+def test_specification_scenario_separates_waived_absent_and_rewarded_costs() -> None:
+    """The table distinguishes a stated waiver from silence; so must the rules."""
+
+    drafts = {
+        bank: extract_rules(make_document(("heading", "Konut Finansmanı"), *blocks))
+        for bank, blocks in _SPEC_SCENARIO.items()
+    }
+
+    assert drafts["A"].fees[0].value.waived is True
+    assert drafts["A"].fees[0].value.waiver_limit is not None
+    assert drafts["A"].fees[0].value.waiver_limit.amount == Decimal("50000")
+    assert drafts["B"].fees[0].value.waived is True
+    assert drafts["C"].fees == (), "C states no fee at all, which stays unknown"
+    assert drafts["C"].rewards[0].value.money is not None
+    assert drafts["C"].rewards[0].value.money.amount == Decimal("5000")

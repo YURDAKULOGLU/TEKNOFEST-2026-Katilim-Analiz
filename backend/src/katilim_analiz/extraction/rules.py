@@ -80,6 +80,16 @@ _FEE_WAIVER_MARKER = re.compile(
 )
 #: A waiver that only holds up to a stated ceiling ("50.000 TL'ye kadar").
 _FEE_WAIVER_LIMIT = re.compile(r"\bkadar\b", re.I)
+#: Vouchers and gift cards carry a stated lira value and are named as a phrase,
+#: because the bare stem also begins unrelated words such as the raffle below.
+_VOUCHER_MARKER = re.compile(
+    r"\b(?:alışveriş|alisveris|hediye)\s+(?:çeki|ceki|kartı|karti)\b"
+    r"|\bhediye\s+(?:çek|cek)\w*",
+    re.I,
+)
+#: A draw is a chance at a prize, not a reward the campaign grants, so its
+#: prize figure must never be recorded as an amount the customer receives.
+_RAFFLE_MARKER = re.compile(r"\b(?:çekiliş|cekilis|kura)\w*", re.I)
 _ELIGIBILITY_MARKER = re.compile(
     r"\b(?:yararlanabilir|yararlanmak|koşul|kosul|şart|sart|gerekmektedir|"
     r"zorunlu|yalnızca|yalnizca|sadece|üye\s+işyeri|uye\s+isyeri)\b",
@@ -508,6 +518,15 @@ def _reward_from_span(span: TextSpan) -> RewardValue | None:
             points=points,
         )
     if re.search(r"\b(?:nakit\s+iade|para\s+iadesi)\b", lowered):
+        money = normalize_money(text)
+        if money.value is not None:
+            return RewardValue(
+                raw=text,
+                kind=RewardKind.MONEY,
+                basis=RewardBasis.CAMPAIGN_TOTAL,
+                money=money.value,
+            )
+    if _VOUCHER_MARKER.search(lowered) is not None and _RAFFLE_MARKER.search(lowered) is None:
         money = normalize_money(text)
         if money.value is not None:
             return RewardValue(
