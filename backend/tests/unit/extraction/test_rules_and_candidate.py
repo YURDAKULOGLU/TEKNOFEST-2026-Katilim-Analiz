@@ -373,3 +373,83 @@ def test_candidate_validation_rejects_fact_without_evidence(
         validate_candidate(tampered, campaign_document)
 
     assert error.value.code == "unsupported_fact"
+
+
+def test_stated_waiver_is_not_read_as_the_fee_it_rules_out() -> None:
+    """The bounding figure in a waiver must never be published as a charge."""
+
+    document = make_document(
+        ("heading", "Yeni Ev Sahiplerine Özel Konut Finansmanı"),
+        (
+            "paragraph",
+            "Kampanya kapsamında 50.000 TL'ye kadar dosya masrafı alınmamaktadır.",
+        ),
+    )
+
+    draft = extract_rules(document)
+
+    assert len(draft.fees) == 1
+    fee = draft.fees[0].value
+    assert fee.waived is True
+    assert fee.money is None, "the waived amount is a ceiling, not a charge"
+    assert fee.waiver_limit is not None
+    assert fee.waiver_limit.amount == Decimal("50000")
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Dosya masrafı alınmıyor.",
+        "Masrafsız finansman fırsatı.",
+        "Ekspertiz ücreti banka tarafından karşılanmaktadır.",
+        "Tahsis ücreti bulunmamaktadır.",
+    ],
+)
+def test_turkish_waiver_wordings_are_recognised(sentence: str) -> None:
+    document = make_document(("heading", "Konut Finansmanı"), ("paragraph", sentence))
+
+    draft = extract_rules(document)
+
+    assert len(draft.fees) == 1
+    assert draft.fees[0].value.waived is True
+    assert draft.fees[0].value.waiver_limit is None
+
+
+def test_charged_fees_are_still_extracted_as_amounts() -> None:
+    document = make_document(
+        ("heading", "Konut Finansmanı"),
+        ("paragraph", "Tahsis ücreti 1.500 TL'dir."),
+    )
+
+    draft = extract_rules(document)
+
+    assert len(draft.fees) == 1
+    fee = draft.fees[0].value
+    assert fee.waived is False
+    assert fee.money is not None
+    assert fee.money.amount == Decimal("1500")
+
+
+def test_inflected_month_term_reaches_the_normalizer() -> None:
+    """Turkish suffixes the marker used to hide: "120 aya kadar"."""
+
+    document = make_document(
+        ("heading", "Konut Finansmanı"),
+        ("paragraph", "120 aya kadar konut finansmanı fırsatı sunulmaktadır."),
+    )
+
+    draft = extract_rules(document)
+
+    assert len(draft.terms) == 1
+    assert draft.terms[0].value.maximum_months == 120
+
+
+def test_unrelated_word_sharing_the_month_stem_is_not_a_term() -> None:
+    document = make_document(
+        ("heading", "Kampanya"),
+        ("paragraph", "Kampanya 3 ayrı ürün kategorisinde geçerlidir."),
+    )
+
+    draft = extract_rules(document)
+
+    assert draft.terms == ()

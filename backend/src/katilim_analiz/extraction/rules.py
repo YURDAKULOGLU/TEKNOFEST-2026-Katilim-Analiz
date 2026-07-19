@@ -55,7 +55,31 @@ _DATE_MARKER = re.compile(
     r"eylül|eylul|ekim|kasım|kasim|aralık|aralik)\b|bu\s+ay\s+sonuna",
     re.I,
 )
-_TERM_MARKER = re.compile(r"\b(?:vade|vadeli|\d+\s*(?:ay|aylık|yıl|yıllık|sene))\b", re.I)
+# Turkish inflects the unit itself, as in "120 aya kadar", so a bare word
+# boundary after the unit would hide the term from a normalizer that can already
+# read it.  Suffixes are enumerated rather than left open so that an unrelated
+# word sharing the stem, such as the "ayri" in "3 ayri urun", stays excluded.
+_TERM_UNIT_SUFFIX = r"(?:[ae]|[dt][ae]|[dt][ae]n|[ıi]|[ıi]n|l[ıi][kğ][ıi]?|lar|ler)?"
+_TERM_MARKER = re.compile(
+    rf"\b(?:vade|vadeli|\d+\s*(?:ay|yıl|yil|sene){_TERM_UNIT_SUFFIX})\b",
+    re.I,
+)
+# The stem carries case and derivation suffixes in Turkish, so the marker ends at
+# the stem and lets the suffix run on; a trailing word boundary would miss both
+# the possessive and the "-siz" derivation that states the fee does not apply.
+_FEE_MARKER = re.compile(r"\b(?:ücret|ucret|masraf|tahsis|aidat)", re.I)
+#: Phrases stating the fee is not charged, including the negated verb forms that
+#: campaign pages actually use and the "covered by the bank" wording.
+_FEE_WAIVER_MARKER = re.compile(
+    r"\b(?:ücretsiz|ucretsiz|masrafsız|masrafsiz)\b"
+    r"|\b(?:alınma|alinma|alınmıyor|alinmiyor|yansıtılma|yansitilma)\w*"
+    r"|\b(?:tahsil\s+edilme|talep\s+edilme)\w*"
+    r"|\b(?:banka\s+tarafından\s+karşılan|banka\s+tarafindan\s+karsilan)\w*"
+    r"|\b(?:yoktur|bulunmamaktadır|bulunmamaktadir)\b",
+    re.I,
+)
+#: A waiver that only holds up to a stated ceiling ("50.000 TL'ye kadar").
+_FEE_WAIVER_LIMIT = re.compile(r"\bkadar\b", re.I)
 _ELIGIBILITY_MARKER = re.compile(
     r"\b(?:yararlanabilir|yararlanmak|koşul|kosul|şart|sart|gerekmektedir|"
     r"zorunlu|yalnızca|yalnizca|sadece|üye\s+işyeri|uye\s+isyeri)\b",
@@ -426,7 +450,7 @@ def _dedupe_bound[T](facts: Iterable[BoundFact[T]]) -> tuple[BoundFact[T], ...]:
 def _fee_from_span(span: TextSpan) -> FeeValue | None:
     text = span.quote
     lowered = text.casefold()
-    if not re.search(r"\b(?:ücret|ucret|masraf|tahsis|aidat)\b", lowered):
+    if _FEE_MARKER.search(lowered) is None:
         return None
     kind = FeeKind.OTHER
     basis = FeeBasis.ONE_TIME
@@ -443,6 +467,18 @@ def _fee_from_span(span: TextSpan) -> FeeValue | None:
         basis = FeeBasis.PER_TRANSACTION
 
     money = normalize_money(text)
+    # A waiver is decided before any amount is read.  A sentence waiving the fee
+    # up to 50.000 TL carries a figure that bounds the waiver, and reading that
+    # figure as the fee would publish the exact opposite of what the source says.
+    if _FEE_WAIVER_MARKER.search(lowered) is not None:
+        return FeeValue(
+            raw=text,
+            kind=kind,
+            basis=basis,
+            description=text,
+            waived=True,
+            waiver_limit=money.value if _FEE_WAIVER_LIMIT.search(lowered) is not None else None,
+        )
     if money.value is not None:
         return FeeValue(raw=text, money=money.value, kind=kind, basis=basis)
     rate = normalize_rate(text)
@@ -453,8 +489,6 @@ def _fee_from_span(span: TextSpan) -> FeeValue | None:
             kind=kind,
             basis=FeeBasis.PERCENT_OF_AMOUNT,
         )
-    if re.search(r"\b(?:ücretsiz|ucretsiz|masrafsız|masrafsiz|alınmayacak|alinmayacak)\b", lowered):
-        return FeeValue(raw=text, kind=kind, basis=basis, description=text)
     return None
 
 

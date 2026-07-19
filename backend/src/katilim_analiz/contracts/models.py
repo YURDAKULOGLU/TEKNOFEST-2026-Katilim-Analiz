@@ -195,12 +195,26 @@ class FeeValue(ContractModel):
     kind: FeeKind
     basis: FeeBasis
     description: ShortText | None = None
+    #: The source states this fee is not charged.  A stated waiver is evidence,
+    #: unlike an absent fee, which stays unknown and is never read as zero.
+    waived: bool = False
+    #: Ceiling a waiver is limited to, as in "50.000 TL'ye kadar masraf yok".
+    waiver_limit: MoneyValue | None = None
     status: EvidenceStatus = EvidenceStatus.STATED
 
     @model_validator(mode="after")
     def concrete_fee_value(self) -> FeeValue:
-        if self.money is None and self.rate is None and self.description is None:
-            raise ValueError("fee requires money, rate, or an explicit description")
+        if (
+            self.money is None
+            and self.rate is None
+            and self.description is None
+            and not self.waived
+        ):
+            raise ValueError("fee requires money, rate, an explicit description, or a waiver")
+        if self.waived and (self.money is not None or self.rate is not None):
+            raise ValueError("a waived fee cannot also carry a charged amount or rate")
+        if self.waiver_limit is not None and not self.waived:
+            raise ValueError("waiver_limit only applies to a waived fee")
         if self.basis is FeeBasis.PERCENT_OF_AMOUNT and self.rate is None:
             raise ValueError("percentage fee basis requires a rate")
         return self
