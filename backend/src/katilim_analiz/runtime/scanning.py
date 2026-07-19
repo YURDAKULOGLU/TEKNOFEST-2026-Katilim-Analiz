@@ -113,12 +113,20 @@ class CampaignScanResult:
         return any(source.review_required for source in self.sources)
 
     @property
+    def has_blocked_sources(self) -> bool:
+        """Report sources that refuse automated access, such as a CAPTCHA wall.
+
+        This is a steady state the collection policy deliberately accepts rather
+        than circumvents, so it is reported without failing the run.
+        """
+
+        return any(source.status is CampaignSourceScanStatus.BLOCKED for source in self.sources)
+
+    @property
     def has_failures(self) -> bool:
-        failed_statuses = {
-            CampaignSourceScanStatus.BLOCKED,
-            CampaignSourceScanStatus.FAILED,
-        }
-        return any(source.status in failed_statuses for source in self.sources)
+        """Report failures a retry could plausibly clear."""
+
+        return any(source.status is CampaignSourceScanStatus.FAILED for source in self.sources)
 
 
 class CampaignIndexCollector(Protocol):

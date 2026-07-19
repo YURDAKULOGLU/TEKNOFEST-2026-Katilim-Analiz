@@ -303,6 +303,24 @@ async def test_index_failure_retains_and_enqueues_known_targets() -> None:
 
 
 @pytest.mark.asyncio
+async def test_captcha_walled_source_is_reported_without_failing_the_run() -> None:
+    """A bank that refuses robots must not turn every scheduled scan into a failure."""
+
+    store = FakeScanStore()
+    scanner = CampaignScanner(
+        bank_registry=_bank_registry(),
+        campaign_registry=_campaign_registry(),
+        collector=FakeCollector(_fetch(b"challenge", status=FetchStatus.BLOCKED)),
+        store=store,
+    )
+
+    result = await scanner.run("scan-blocked")
+
+    assert result.has_blocked_sources is True
+    assert result.has_failures is False
+
+
+@pytest.mark.asyncio
 async def test_changed_unsegmented_collection_is_review_only_not_campaign_notification() -> None:
     html = b"<main><h2>Campaign A</h2><h2>Campaign B</h2></main>"
     store = FakeScanStore()

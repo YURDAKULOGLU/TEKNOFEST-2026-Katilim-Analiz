@@ -155,6 +155,7 @@ def _scan_summary(result: CampaignScanResult, scan_job_name: str | None) -> dict
         "deduplicated_jobs": result.deduplicated_jobs,
         "review_required": result.review_required,
         "has_failures": result.has_failures,
+        "has_blocked_sources": result.has_blocked_sources,
         "sources": [
             {
                 "bank_id": source.bank_id,
