@@ -16,6 +16,7 @@ from katilim_analiz.contracts import (
 )
 from katilim_analiz.extraction import CandidateValidationError, build_candidate, validate_candidate
 from katilim_analiz.extraction.rules import extract_rules
+from katilim_analiz.llm.contracts import ModelFactField
 
 _NOW = datetime(2026, 7, 18, 12, 1, tzinfo=UTC)
 
@@ -573,3 +574,38 @@ def test_waiver_ceiling_survives_every_waiver_wording(sentence: str) -> None:
     assert fee.money is None
     assert fee.waiver_limit is not None
     assert fee.waiver_limit.amount == Decimal("50000")
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Dosya masrafı alınmaktadır.",
+        "Tahsis ücreti 1.500 TL olarak alınmaktadır.",
+        "Yıllık kart aidatı tahsil edilmektedir.",
+    ],
+)
+def test_charged_fee_is_never_recorded_as_waived(sentence: str) -> None:
+    """Turkish negates with an infix, so the charged and waived forms differ by
+    two letters in the middle of the verb. Reading one as the other publishes
+    the opposite of the source."""
+
+    document = make_document(("heading", "Konut Finansmanı"), ("paragraph", sentence))
+
+    draft = extract_rules(document)
+
+    assert all(not fee.value.waived for fee in draft.fees)
+
+
+def test_unsettled_polarity_abstains_instead_of_guessing() -> None:
+    """A miss leaves the field for the model; a guess would publish a figure the
+    source may be ruling out."""
+
+    document = make_document(
+        ("heading", "Konut Finansmanı"),
+        ("paragraph", "Dosya masrafı 1.500 TL olarak yansıtılmayabilir."),
+    )
+
+    draft = extract_rules(document)
+
+    assert draft.fees == ()
+    assert ModelFactField.FEE in draft.unresolved_fields
