@@ -1,0 +1,2965 @@
+{
+  "components": {
+    "schemas": {
+      "AnswerCitation": {
+        "additionalProperties": false,
+        "properties": {
+          "block_id": {
+            "minLength": 1,
+            "title": "Block Id",
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "quote": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Quote",
+            "type": "string"
+          },
+          "source_document_id": {
+            "minLength": 1,
+            "title": "Source Document Id",
+            "type": "string"
+          },
+          "source_title": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Title"
+          },
+          "source_url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Source Url",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CitationStatus"
+          }
+        },
+        "required": [
+          "id",
+          "source_document_id",
+          "block_id",
+          "source_url",
+          "source_title",
+          "quote",
+          "status"
+        ],
+        "title": "AnswerCitation",
+        "type": "object"
+      },
+      "CampaignChangeEvent": {
+        "additionalProperties": false,
+        "description": "Public envelope for one strictly validated campaign-change outbox event.",
+        "properties": {
+          "campaign_key": {
+            "maxLength": 191,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]{0,190}$",
+            "title": "Campaign Key",
+            "type": "string"
+          },
+          "change_kind": {
+            "enum": [
+              "created",
+              "updated"
+            ],
+            "title": "Change Kind",
+            "type": "string"
+          },
+          "created_at": {
+            "format": "date-time",
+            "title": "Created At",
+            "type": "string"
+          },
+          "id": {
+            "format": "uuid",
+            "title": "Id",
+            "type": "string"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "previous_record_id": {
+            "anyOf": [
+              {
+                "maxLength": 191,
+                "minLength": 1,
+                "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]{0,190}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Previous Record Id"
+          },
+          "record_id": {
+            "maxLength": 191,
+            "minLength": 1,
+            "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]{0,190}$",
+            "title": "Record Id",
+            "type": "string"
+          },
+          "record_status": {
+            "$ref": "#/components/schemas/RecordStatus"
+          },
+          "record_version": {
+            "minimum": 1.0,
+            "title": "Record Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "campaign_key",
+          "record_id",
+          "record_version",
+          "change_kind",
+          "record_status",
+          "previous_record_id",
+          "observed_at",
+          "created_at"
+        ],
+        "title": "CampaignChangeEvent",
+        "type": "object"
+      },
+      "CampaignData": {
+        "additionalProperties": false,
+        "properties": {
+          "bank_id": {
+            "minLength": 1,
+            "title": "Bank Id",
+            "type": "string"
+          },
+          "campaign_type": {
+            "$ref": "#/components/schemas/CampaignType"
+          },
+          "comparison_context": {
+            "$ref": "#/components/schemas/ComparisonContext"
+          },
+          "customer_segments": {
+            "items": {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Customer Segments",
+            "type": "array"
+          },
+          "eligibility_conditions": {
+            "items": {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Eligibility Conditions",
+            "type": "array"
+          },
+          "fees": {
+            "items": {
+              "$ref": "#/components/schemas/FeeValue"
+            },
+            "maxItems": 20,
+            "title": "Fees",
+            "type": "array"
+          },
+          "financing_amounts": {
+            "items": {
+              "$ref": "#/components/schemas/MoneyValue"
+            },
+            "maxItems": 20,
+            "title": "Financing Amounts",
+            "type": "array"
+          },
+          "product_family": {
+            "$ref": "#/components/schemas/ProductFamily"
+          },
+          "rates": {
+            "items": {
+              "$ref": "#/components/schemas/RateValue"
+            },
+            "maxItems": 20,
+            "title": "Rates",
+            "type": "array"
+          },
+          "rewards": {
+            "items": {
+              "$ref": "#/components/schemas/RewardValue"
+            },
+            "maxItems": 20,
+            "title": "Rewards",
+            "type": "array"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "terms": {
+            "items": {
+              "$ref": "#/components/schemas/TermRange"
+            },
+            "maxItems": 20,
+            "title": "Terms",
+            "type": "array"
+          },
+          "title": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "validity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ValidityWindow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "bank_id",
+          "title",
+          "product_family",
+          "campaign_type",
+          "summary",
+          "rates",
+          "financing_amounts",
+          "terms",
+          "fees",
+          "rewards",
+          "validity",
+          "customer_segments",
+          "eligibility_conditions",
+          "comparison_context"
+        ],
+        "title": "CampaignData",
+        "type": "object"
+      },
+      "CampaignDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign": {
+            "$ref": "#/components/schemas/CampaignSummary"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceProjection"
+            },
+            "maxItems": 1000,
+            "title": "Evidence",
+            "type": "array"
+          },
+          "extraction": {
+            "$ref": "#/components/schemas/ExtractionProjection"
+          },
+          "record_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Record Sha256",
+            "type": "string"
+          },
+          "source_document_id": {
+            "minLength": 1,
+            "title": "Source Document Id",
+            "type": "string"
+          },
+          "source_title": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Source Title"
+          },
+          "source_url": {
+            "format": "uri",
+            "maxLength": 2083,
+            "minLength": 1,
+            "title": "Source Url",
+            "type": "string"
+          },
+          "validation_issues": {
+            "items": {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Validation Issues",
+            "type": "array"
+          }
+        },
+        "required": [
+          "campaign",
+          "source_document_id",
+          "source_url",
+          "source_title",
+          "record_sha256",
+          "extraction",
+          "evidence",
+          "validation_issues"
+        ],
+        "title": "CampaignDetail",
+        "type": "object"
+      },
+      "CampaignFacets": {
+        "additionalProperties": false,
+        "properties": {
+          "banks": {
+            "items": {
+              "$ref": "#/components/schemas/FacetOption"
+            },
+            "maxItems": 100,
+            "title": "Banks",
+            "type": "array"
+          },
+          "currencies": {
+            "items": {
+              "$ref": "#/components/schemas/FacetOption"
+            },
+            "maxItems": 100,
+            "title": "Currencies",
+            "type": "array"
+          },
+          "customer_segments": {
+            "items": {
+              "$ref": "#/components/schemas/FacetOption"
+            },
+            "maxItems": 100,
+            "title": "Customer Segments",
+            "type": "array"
+          },
+          "product_families": {
+            "items": {
+              "$ref": "#/components/schemas/FacetOption"
+            },
+            "maxItems": 100,
+            "title": "Product Families",
+            "type": "array"
+          },
+          "sales_channels": {
+            "items": {
+              "$ref": "#/components/schemas/FacetOption"
+            },
+            "maxItems": 100,
+            "title": "Sales Channels",
+            "type": "array"
+          }
+        },
+        "required": [
+          "banks",
+          "product_families",
+          "currencies",
+          "customer_segments",
+          "sales_channels"
+        ],
+        "title": "CampaignFacets",
+        "type": "object"
+      },
+      "CampaignListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "format": "date-time",
+            "title": "As Of",
+            "type": "string"
+          },
+          "facets": {
+            "$ref": "#/components/schemas/CampaignFacets"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CampaignSummary"
+            },
+            "maxItems": 100,
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor",
+          "facets",
+          "as_of"
+        ],
+        "title": "CampaignListResponse",
+        "type": "object"
+      },
+      "CampaignSummary": {
+        "additionalProperties": false,
+        "properties": {
+          "bank_id": {
+            "minLength": 1,
+            "title": "Bank Id",
+            "type": "string"
+          },
+          "bank_name": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Bank Name",
+            "type": "string"
+          },
+          "campaign_key": {
+            "minLength": 1,
+            "title": "Campaign Key",
+            "type": "string"
+          },
+          "campaign_type": {
+            "$ref": "#/components/schemas/CampaignType"
+          },
+          "currency": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Currency"
+          },
+          "customer_segments": {
+            "items": {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 50,
+            "title": "Customer Segments",
+            "type": "array"
+          },
+          "evidence_count": {
+            "minimum": 0.0,
+            "title": "Evidence Count",
+            "type": "integer"
+          },
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "primary_value": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/PrimaryValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "product_family": {
+            "$ref": "#/components/schemas/ProductFamily"
+          },
+          "sales_channel": {
+            "$ref": "#/components/schemas/SalesChannel"
+          },
+          "status": {
+            "$ref": "#/components/schemas/RecordStatus"
+          },
+          "summary": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Summary"
+          },
+          "title": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "validity": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ValidityWindow"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "version": {
+            "minimum": 1.0,
+            "title": "Version",
+            "type": "integer"
+          }
+        },
+        "required": [
+          "id",
+          "campaign_key",
+          "version",
+          "bank_id",
+          "bank_name",
+          "title",
+          "product_family",
+          "campaign_type",
+          "summary",
+          "currency",
+          "customer_segments",
+          "sales_channel",
+          "validity",
+          "observed_at",
+          "status",
+          "evidence_count",
+          "primary_value"
+        ],
+        "title": "CampaignSummary",
+        "type": "object"
+      },
+      "CampaignType": {
+        "enum": [
+          "financing_rate",
+          "profit_share",
+          "installment",
+          "cashback",
+          "discount",
+          "points",
+          "fee_waiver",
+          "welcome",
+          "other",
+          "unknown"
+        ],
+        "title": "CampaignType",
+        "type": "string"
+      },
+      "ChatAnswer": {
+        "additionalProperties": false,
+        "properties": {
+          "answer": {
+            "maxLength": 5000,
+            "minLength": 1,
+            "title": "Answer",
+            "type": "string"
+          },
+          "citations": {
+            "items": {
+              "$ref": "#/components/schemas/AnswerCitation"
+            },
+            "maxItems": 20,
+            "title": "Citations",
+            "type": "array"
+          },
+          "insufficient_evidence": {
+            "title": "Insufficient Evidence",
+            "type": "boolean"
+          },
+          "plan": {
+            "$ref": "#/components/schemas/ChatQueryPlan"
+          },
+          "warnings": {
+            "items": {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "answer",
+          "plan",
+          "citations",
+          "insufficient_evidence",
+          "warnings"
+        ],
+        "title": "ChatAnswer",
+        "type": "object"
+      },
+      "ChatQueryPlan": {
+        "additionalProperties": false,
+        "properties": {
+          "bank_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 10,
+            "title": "Bank Ids",
+            "type": "array"
+          },
+          "campaign_type": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/CampaignType"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "comparison_dimensions": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonDimension"
+            },
+            "maxItems": 5,
+            "title": "Comparison Dimensions",
+            "type": "array"
+          },
+          "intent": {
+            "$ref": "#/components/schemas/QueryIntent"
+          },
+          "keywords": {
+            "items": {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 20,
+            "title": "Keywords",
+            "type": "array"
+          },
+          "limit": {
+            "default": 5,
+            "maximum": 20.0,
+            "minimum": 1.0,
+            "title": "Limit",
+            "type": "integer"
+          },
+          "product_family": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ProductFamily"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          }
+        },
+        "required": [
+          "intent",
+          "bank_ids",
+          "product_family",
+          "campaign_type",
+          "comparison_dimensions",
+          "keywords",
+          "limit"
+        ],
+        "title": "ChatQueryPlan",
+        "type": "object"
+      },
+      "ChatRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "question": {
+            "maxLength": 1000,
+            "minLength": 2,
+            "title": "Question",
+            "type": "string"
+          }
+        },
+        "required": [
+          "question"
+        ],
+        "title": "ChatRequest",
+        "type": "object"
+      },
+      "CitationStatus": {
+        "enum": [
+          "verified",
+          "missing",
+          "mismatch"
+        ],
+        "title": "CitationStatus",
+        "type": "string"
+      },
+      "ComparisonContext": {
+        "additionalProperties": false,
+        "properties": {
+          "customer_segment_keys": {
+            "items": {
+              "pattern": "^[a-z0-9][a-z0-9_:-]{0,63}$",
+              "type": "string"
+            },
+            "maxItems": 30,
+            "title": "Customer Segment Keys",
+            "type": "array"
+          },
+          "new_customer_only": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "New Customer Only"
+          },
+          "product_currency": {
+            "anyOf": [
+              {
+                "pattern": "^[A-Z]{3}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Currency"
+          },
+          "product_mechanism": {
+            "anyOf": [
+              {
+                "pattern": "^[a-z0-9][a-z0-9_:-]{0,63}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Product Mechanism"
+          },
+          "sales_channel": {
+            "$ref": "#/components/schemas/SalesChannel",
+            "default": "unknown"
+          },
+          "secured": {
+            "anyOf": [
+              {
+                "type": "boolean"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Secured"
+          }
+        },
+        "required": [
+          "product_currency",
+          "customer_segment_keys",
+          "sales_channel",
+          "new_customer_only",
+          "product_mechanism",
+          "secured"
+        ],
+        "title": "ComparisonContext",
+        "type": "object"
+      },
+      "ComparisonDimension": {
+        "enum": [
+          "rate",
+          "term",
+          "fee",
+          "reward",
+          "eligibility"
+        ],
+        "title": "ComparisonDimension",
+        "type": "string"
+      },
+      "ComparisonItem": {
+        "additionalProperties": false,
+        "properties": {
+          "campaign_id": {
+            "minLength": 1,
+            "title": "Campaign Id",
+            "type": "string"
+          },
+          "comparable": {
+            "title": "Comparable",
+            "type": "boolean"
+          },
+          "dimension": {
+            "$ref": "#/components/schemas/ComparisonDimension"
+          },
+          "display_value": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Display Value",
+            "type": "string"
+          },
+          "evidence_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Evidence Ids",
+            "type": "array"
+          },
+          "rank": {
+            "anyOf": [
+              {
+                "minimum": 1.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Rank"
+          },
+          "reason_code": {
+            "minLength": 1,
+            "title": "Reason Code",
+            "type": "string"
+          }
+        },
+        "required": [
+          "campaign_id",
+          "dimension",
+          "rank",
+          "display_value",
+          "comparable",
+          "reason_code",
+          "evidence_ids"
+        ],
+        "title": "ComparisonItem",
+        "type": "object"
+      },
+      "ComparisonRequest": {
+        "additionalProperties": false,
+        "properties": {
+          "as_of": {
+            "anyOf": [
+              {
+                "format": "date-time",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "As Of"
+          },
+          "campaign_ids": {
+            "items": {
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 10,
+            "minItems": 2,
+            "title": "Campaign Ids",
+            "type": "array"
+          },
+          "dimensions": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonDimension"
+            },
+            "maxItems": 5,
+            "minItems": 1,
+            "title": "Dimensions",
+            "type": "array"
+          }
+        },
+        "required": [
+          "campaign_ids",
+          "dimensions"
+        ],
+        "title": "ComparisonRequest",
+        "type": "object"
+      },
+      "ComparisonResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "canonical_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Canonical Sha256",
+            "type": "string"
+          },
+          "generated_at": {
+            "format": "date-time",
+            "title": "Generated At",
+            "type": "string"
+          },
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/ComparisonItem"
+            },
+            "maxItems": 100,
+            "title": "Items",
+            "type": "array"
+          },
+          "ruleset_version": {
+            "minLength": 1,
+            "title": "Ruleset Version",
+            "type": "string"
+          },
+          "warnings": {
+            "items": {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            "title": "Warnings",
+            "type": "array"
+          }
+        },
+        "required": [
+          "ruleset_version",
+          "generated_at",
+          "items",
+          "warnings",
+          "canonical_sha256"
+        ],
+        "title": "ComparisonResponse",
+        "type": "object"
+      },
+      "CoverageEntry": {
+        "additionalProperties": false,
+        "properties": {
+          "bank_id": {
+            "minLength": 1,
+            "title": "Bank Id",
+            "type": "string"
+          },
+          "bank_name": {
+            "minLength": 1,
+            "title": "Bank Name",
+            "type": "string"
+          },
+          "campaign_count": {
+            "default": 0,
+            "description": "En güncel, insan tarafından doğrulanmış kampanya kaydı sayısı; çıkarım adaylarını içermez.",
+            "minimum": 0.0,
+            "title": "Campaign Count",
+            "type": "integer"
+          },
+          "observed_at": {
+            "format": "date-time",
+            "title": "Observed At",
+            "type": "string"
+          },
+          "reason": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reason"
+          },
+          "source_count": {
+            "default": 0,
+            "minimum": 0.0,
+            "title": "Source Count",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/CoverageStatus"
+          }
+        },
+        "required": [
+          "bank_id",
+          "bank_name",
+          "observed_at",
+          "status",
+          "source_count",
+          "campaign_count",
+          "reason"
+        ],
+        "title": "CoverageEntry",
+        "type": "object"
+      },
+      "CoverageStatus": {
+        "enum": [
+          "success",
+          "not_found",
+          "unreachable",
+          "blocked",
+          "partial"
+        ],
+        "title": "CoverageStatus",
+        "type": "string"
+      },
+      "EvidenceProjection": {
+        "additionalProperties": false,
+        "properties": {
+          "block_id": {
+            "minLength": 1,
+            "title": "Block Id",
+            "type": "string"
+          },
+          "field_pointer": {
+            "minLength": 1,
+            "title": "Field Pointer",
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "quote": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Quote",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EvidenceStatus"
+          }
+        },
+        "required": [
+          "id",
+          "field_pointer",
+          "quote",
+          "status",
+          "block_id"
+        ],
+        "title": "EvidenceProjection",
+        "type": "object"
+      },
+      "EvidenceRef": {
+        "additionalProperties": false,
+        "properties": {
+          "block_id": {
+            "minLength": 1,
+            "title": "Block Id",
+            "type": "string"
+          },
+          "end_char": {
+            "exclusiveMinimum": 0.0,
+            "title": "End Char",
+            "type": "integer"
+          },
+          "evidence_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Evidence Sha256",
+            "type": "string"
+          },
+          "field_pointer": {
+            "pattern": "^(?:/(?:[^~/]|~[01])*)*$",
+            "title": "Field Pointer",
+            "type": "string"
+          },
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "quote": {
+            "maxLength": 1000,
+            "minLength": 1,
+            "title": "Quote",
+            "type": "string"
+          },
+          "source_document_id": {
+            "minLength": 1,
+            "title": "Source Document Id",
+            "type": "string"
+          },
+          "start_char": {
+            "minimum": 0.0,
+            "title": "Start Char",
+            "type": "integer"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EvidenceStatus"
+          }
+        },
+        "required": [
+          "id",
+          "field_pointer",
+          "source_document_id",
+          "block_id",
+          "quote",
+          "start_char",
+          "end_char",
+          "evidence_sha256",
+          "status"
+        ],
+        "title": "EvidenceRef",
+        "type": "object"
+      },
+      "EvidenceStatus": {
+        "enum": [
+          "stated",
+          "inferred",
+          "unknown",
+          "ambiguous"
+        ],
+        "title": "EvidenceStatus",
+        "type": "string"
+      },
+      "ExtractionCandidate": {
+        "additionalProperties": false,
+        "properties": {
+          "data": {
+            "$ref": "#/components/schemas/CampaignData"
+          },
+          "evidence": {
+            "items": {
+              "$ref": "#/components/schemas/EvidenceRef"
+            },
+            "maxItems": 1000,
+            "title": "Evidence",
+            "type": "array"
+          },
+          "id": {
+            "minLength": 1,
+            "title": "Id",
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Issues",
+            "type": "array"
+          },
+          "metadata": {
+            "$ref": "#/components/schemas/ExtractionMetadata"
+          },
+          "source_document_id": {
+            "minLength": 1,
+            "title": "Source Document Id",
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "source_document_id",
+          "data",
+          "evidence",
+          "metadata",
+          "issues"
+        ],
+        "title": "ExtractionCandidate",
+        "type": "object"
+      },
+      "ExtractionMetadata": {
+        "additionalProperties": false,
+        "properties": {
+          "completed_at": {
+            "format": "date-time",
+            "title": "Completed At",
+            "type": "string"
+          },
+          "extractor_version": {
+            "minLength": 1,
+            "title": "Extractor Version",
+            "type": "string"
+          },
+          "method": {
+            "$ref": "#/components/schemas/ExtractionMethod"
+          },
+          "model_digest": {
+            "anyOf": [
+              {
+                "pattern": "^[a-f0-9]{64}$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Digest"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "prompt_version": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Prompt Version"
+          },
+          "schema_version": {
+            "minLength": 1,
+            "title": "Schema Version",
+            "type": "string"
+          },
+          "started_at": {
+            "format": "date-time",
+            "title": "Started At",
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "extractor_version",
+          "schema_version",
+          "prompt_version",
+          "model_id",
+          "model_digest",
+          "started_at",
+          "completed_at"
+        ],
+        "title": "ExtractionMetadata",
+        "type": "object"
+      },
+      "ExtractionMethod": {
+        "enum": [
+          "rule",
+          "llm",
+          "hybrid",
+          "manual"
+        ],
+        "title": "ExtractionMethod",
+        "type": "string"
+      },
+      "ExtractionPreviewRequest": {
+        "additionalProperties": false,
+        "description": "Bounded operator text; no URL or execution authority crosses this boundary.",
+        "properties": {
+          "bank_id": {
+            "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+            "title": "Bank Id",
+            "type": "string"
+          },
+          "text": {
+            "maxLength": 20000,
+            "minLength": 1,
+            "title": "Text",
+            "type": "string"
+          }
+        },
+        "required": [
+          "bank_id",
+          "text"
+        ],
+        "title": "ExtractionPreviewRequest",
+        "type": "object"
+      },
+      "ExtractionPreviewResponse": {
+        "additionalProperties": false,
+        "description": "Non-persistent candidate output that can never represent human validation.",
+        "properties": {
+          "accepted_model_facts": {
+            "minimum": 0.0,
+            "title": "Accepted Model Facts",
+            "type": "integer"
+          },
+          "candidate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/ExtractionCandidate"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "human_verified": {
+            "const": false,
+            "default": false,
+            "title": "Human Verified",
+            "type": "boolean"
+          },
+          "input_sha256": {
+            "pattern": "^[a-f0-9]{64}$",
+            "title": "Input Sha256",
+            "type": "string"
+          },
+          "issues": {
+            "items": {
+              "maxLength": 500,
+              "minLength": 1,
+              "type": "string"
+            },
+            "maxItems": 100,
+            "title": "Issues",
+            "type": "array"
+          },
+          "model_attempted": {
+            "title": "Model Attempted",
+            "type": "boolean"
+          },
+          "persisted": {
+            "const": false,
+            "default": false,
+            "title": "Persisted",
+            "type": "boolean"
+          },
+          "scope": {
+            "const": "unverified_preview",
+            "default": "unverified_preview",
+            "title": "Scope",
+            "type": "string"
+          },
+          "status": {
+            "enum": [
+              "needs_review",
+              "abstained"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "scope",
+          "human_verified",
+          "persisted",
+          "status",
+          "input_sha256",
+          "candidate",
+          "issues",
+          "model_attempted",
+          "accepted_model_facts"
+        ],
+        "title": "ExtractionPreviewResponse",
+        "type": "object"
+      },
+      "ExtractionProjection": {
+        "additionalProperties": false,
+        "properties": {
+          "extractor_version": {
+            "minLength": 1,
+            "title": "Extractor Version",
+            "type": "string"
+          },
+          "method": {
+            "$ref": "#/components/schemas/ExtractionMethod"
+          },
+          "model_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Model Id"
+          },
+          "schema_version": {
+            "minLength": 1,
+            "title": "Schema Version",
+            "type": "string"
+          }
+        },
+        "required": [
+          "method",
+          "extractor_version",
+          "schema_version",
+          "model_id"
+        ],
+        "title": "ExtractionProjection",
+        "type": "object"
+      },
+      "FacetOption": {
+        "additionalProperties": false,
+        "properties": {
+          "count": {
+            "minimum": 0.0,
+            "title": "Count",
+            "type": "integer"
+          },
+          "label": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "value",
+          "label",
+          "count"
+        ],
+        "title": "FacetOption",
+        "type": "object"
+      },
+      "FeeBasis": {
+        "enum": [
+          "one_time",
+          "per_month",
+          "per_year",
+          "per_transaction",
+          "percent_of_amount",
+          "unspecified"
+        ],
+        "title": "FeeBasis",
+        "type": "string"
+      },
+      "FeeKind": {
+        "enum": [
+          "allocation",
+          "annual",
+          "monthly",
+          "transaction",
+          "early_exit",
+          "other",
+          "unknown"
+        ],
+        "title": "FeeKind",
+        "type": "string"
+      },
+      "FeeValue": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "$ref": "#/components/schemas/FeeBasis"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/FeeKind"
+          },
+          "money": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MoneyValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RateValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "raw": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Raw",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EvidenceStatus",
+            "default": "stated"
+          }
+        },
+        "required": [
+          "raw",
+          "money",
+          "rate",
+          "kind",
+          "basis",
+          "description",
+          "status"
+        ],
+        "title": "FeeValue",
+        "type": "object"
+      },
+      "GrossNetBasis": {
+        "enum": [
+          "gross",
+          "net",
+          "unspecified"
+        ],
+        "title": "GrossNetBasis",
+        "type": "string"
+      },
+      "HealthChecks": {
+        "additionalProperties": false,
+        "properties": {
+          "database": {
+            "enum": [
+              "ok",
+              "failed"
+            ],
+            "title": "Database",
+            "type": "string"
+          },
+          "migration": {
+            "enum": [
+              "ok",
+              "failed",
+              "out_of_date"
+            ],
+            "title": "Migration",
+            "type": "string"
+          },
+          "model": {
+            "enum": [
+              "ok",
+              "failed",
+              "not_required"
+            ],
+            "title": "Model",
+            "type": "string"
+          }
+        },
+        "required": [
+          "database",
+          "migration",
+          "model"
+        ],
+        "title": "HealthChecks",
+        "type": "object"
+      },
+      "HealthResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "checks": {
+            "$ref": "#/components/schemas/HealthChecks"
+          },
+          "status": {
+            "enum": [
+              "ok",
+              "degraded"
+            ],
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "checks"
+        ],
+        "title": "HealthResponse",
+        "type": "object"
+      },
+      "LiveResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "status": {
+            "const": "ok",
+            "default": "ok",
+            "title": "Status",
+            "type": "string"
+          }
+        },
+        "title": "LiveResponse",
+        "type": "object"
+      },
+      "MoneyValue": {
+        "additionalProperties": false,
+        "properties": {
+          "amount": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Amount",
+            "type": "string"
+          },
+          "currency": {
+            "pattern": "^[A-Z]{3}$",
+            "title": "Currency",
+            "type": "string"
+          },
+          "raw": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Raw",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EvidenceStatus",
+            "default": "stated"
+          }
+        },
+        "required": [
+          "raw",
+          "amount",
+          "currency",
+          "status"
+        ],
+        "title": "MoneyValue",
+        "type": "object"
+      },
+      "NotificationListResponse": {
+        "additionalProperties": false,
+        "properties": {
+          "items": {
+            "items": {
+              "$ref": "#/components/schemas/CampaignChangeEvent"
+            },
+            "maxItems": 100,
+            "title": "Items",
+            "type": "array"
+          },
+          "next_cursor": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Next Cursor"
+          }
+        },
+        "required": [
+          "items",
+          "next_cursor"
+        ],
+        "title": "NotificationListResponse",
+        "type": "object"
+      },
+      "PrimaryValue": {
+        "additionalProperties": false,
+        "properties": {
+          "label": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Label",
+            "type": "string"
+          },
+          "value": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Value",
+            "type": "string"
+          }
+        },
+        "required": [
+          "label",
+          "value"
+        ],
+        "title": "PrimaryValue",
+        "type": "object"
+      },
+      "ProblemDetail": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "minLength": 1,
+            "title": "Code",
+            "type": "string"
+          },
+          "correlation_id": {
+            "anyOf": [
+              {
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Correlation Id"
+          },
+          "detail": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Detail"
+          },
+          "errors": {
+            "items": {
+              "additionalProperties": true,
+              "type": "object"
+            },
+            "title": "Errors",
+            "type": "array"
+          },
+          "instance": {
+            "anyOf": [
+              {
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Instance"
+          },
+          "status": {
+            "maximum": 599.0,
+            "minimum": 400.0,
+            "title": "Status",
+            "type": "integer"
+          },
+          "title": {
+            "minLength": 1,
+            "title": "Title",
+            "type": "string"
+          },
+          "type": {
+            "default": "about:blank",
+            "title": "Type",
+            "type": "string"
+          }
+        },
+        "required": [
+          "type",
+          "title",
+          "status",
+          "detail",
+          "instance",
+          "code",
+          "correlation_id",
+          "errors"
+        ],
+        "title": "ProblemDetail",
+        "type": "object"
+      },
+      "ProductFamily": {
+        "enum": [
+          "financing",
+          "card",
+          "investment",
+          "participation_account",
+          "other",
+          "unknown"
+        ],
+        "title": "ProductFamily",
+        "type": "string"
+      },
+      "QueryIntent": {
+        "enum": [
+          "list",
+          "detail",
+          "compare",
+          "coverage",
+          "glossary",
+          "unknown"
+        ],
+        "title": "QueryIntent",
+        "type": "string"
+      },
+      "RateKind": {
+        "enum": [
+          "financing_profit_rate",
+          "annual_cost_rate",
+          "profit_share_distribution_rate",
+          "historical_return_rate",
+          "discount_rate",
+          "reward_rate",
+          "unknown"
+        ],
+        "title": "RateKind",
+        "type": "string"
+      },
+      "RatePeriod": {
+        "enum": [
+          "monthly",
+          "annual",
+          "term_total",
+          "unspecified"
+        ],
+        "title": "RatePeriod",
+        "type": "string"
+      },
+      "RateValue": {
+        "additionalProperties": false,
+        "properties": {
+          "basis_label": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Basis Label"
+          },
+          "gross_net_basis": {
+            "$ref": "#/components/schemas/GrossNetBasis",
+            "default": "unspecified"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/RateKind"
+          },
+          "period": {
+            "$ref": "#/components/schemas/RatePeriod"
+          },
+          "raw": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Raw",
+            "type": "string"
+          },
+          "reference_ends_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Ends On"
+          },
+          "reference_starts_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Reference Starts On"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EvidenceStatus",
+            "default": "stated"
+          },
+          "term_months": {
+            "anyOf": [
+              {
+                "maximum": 1200.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Term Months"
+          },
+          "value_percent": {
+            "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+            "title": "Value Percent",
+            "type": "string"
+          }
+        },
+        "required": [
+          "raw",
+          "value_percent",
+          "kind",
+          "period",
+          "gross_net_basis",
+          "reference_starts_on",
+          "reference_ends_on",
+          "term_months",
+          "basis_label",
+          "status"
+        ],
+        "title": "RateValue",
+        "type": "object"
+      },
+      "RecordStatus": {
+        "enum": [
+          "validated",
+          "needs_review",
+          "rejected"
+        ],
+        "title": "RecordStatus",
+        "type": "string"
+      },
+      "RewardBasis": {
+        "enum": [
+          "campaign_total",
+          "per_customer",
+          "per_transaction",
+          "per_month",
+          "unspecified"
+        ],
+        "title": "RewardBasis",
+        "type": "string"
+      },
+      "RewardKind": {
+        "enum": [
+          "money",
+          "points",
+          "discount",
+          "free_service",
+          "other"
+        ],
+        "title": "RewardKind",
+        "type": "string"
+      },
+      "RewardValue": {
+        "additionalProperties": false,
+        "properties": {
+          "basis": {
+            "$ref": "#/components/schemas/RewardBasis",
+            "default": "unspecified"
+          },
+          "description": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Description"
+          },
+          "kind": {
+            "$ref": "#/components/schemas/RewardKind"
+          },
+          "maximum_money": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MoneyValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "maximum_points": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Maximum Points"
+          },
+          "minimum_spend": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MoneyValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "money": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/MoneyValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "points": {
+            "anyOf": [
+              {
+                "pattern": "^(?!^[-+.]*$)[+-]?0*\\d*\\.?\\d*$",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Points"
+          },
+          "program_name": {
+            "anyOf": [
+              {
+                "maxLength": 500,
+                "minLength": 1,
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Program Name"
+          },
+          "rate": {
+            "anyOf": [
+              {
+                "$ref": "#/components/schemas/RateValue"
+              },
+              {
+                "type": "null"
+              }
+            ]
+          },
+          "raw": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Raw",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EvidenceStatus",
+            "default": "stated"
+          }
+        },
+        "required": [
+          "raw",
+          "kind",
+          "basis",
+          "program_name",
+          "money",
+          "rate",
+          "points",
+          "minimum_spend",
+          "maximum_money",
+          "maximum_points",
+          "description",
+          "status"
+        ],
+        "title": "RewardValue",
+        "type": "object"
+      },
+      "SalesChannel": {
+        "enum": [
+          "all",
+          "digital",
+          "mobile",
+          "web",
+          "branch",
+          "unknown"
+        ],
+        "title": "SalesChannel",
+        "type": "string"
+      },
+      "TermRange": {
+        "additionalProperties": false,
+        "properties": {
+          "maximum_months": {
+            "maximum": 1200.0,
+            "minimum": 0.0,
+            "title": "Maximum Months",
+            "type": "integer"
+          },
+          "minimum_months": {
+            "anyOf": [
+              {
+                "maximum": 1200.0,
+                "minimum": 0.0,
+                "type": "integer"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Minimum Months"
+          },
+          "raw": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Raw",
+            "type": "string"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EvidenceStatus",
+            "default": "stated"
+          }
+        },
+        "required": [
+          "raw",
+          "minimum_months",
+          "maximum_months",
+          "status"
+        ],
+        "title": "TermRange",
+        "type": "object"
+      },
+      "ValidityFilter": {
+        "enum": [
+          "active",
+          "upcoming",
+          "expired",
+          "unknown"
+        ],
+        "title": "ValidityFilter",
+        "type": "string"
+      },
+      "ValidityWindow": {
+        "additionalProperties": false,
+        "properties": {
+          "ends_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Ends On"
+          },
+          "raw": {
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Raw",
+            "type": "string"
+          },
+          "starts_on": {
+            "anyOf": [
+              {
+                "format": "date",
+                "type": "string"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Starts On"
+          },
+          "status": {
+            "$ref": "#/components/schemas/EvidenceStatus",
+            "default": "stated"
+          }
+        },
+        "required": [
+          "raw",
+          "starts_on",
+          "ends_on",
+          "status"
+        ],
+        "title": "ValidityWindow",
+        "type": "object"
+      }
+    }
+  },
+  "info": {
+    "description": "Kanıt temelli katılım bankacılığı kampanya analiz API'si.",
+    "title": "Katılım Analiz",
+    "version": "0.1.0"
+  },
+  "openapi": "3.1.0",
+  "paths": {
+    "/api/v1/campaigns": {
+      "get": {
+        "operationId": "list_campaigns_api_v1_campaigns_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "bank_id",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 64,
+                  "pattern": "^[a-z0-9][a-z0-9-]{0,63}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Bank Id"
+            }
+          },
+          {
+            "in": "query",
+            "name": "product_family",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ProductFamily"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Product Family"
+            }
+          },
+          {
+            "in": "query",
+            "name": "currency",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "pattern": "^[A-Z]{3}$",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Currency"
+            }
+          },
+          {
+            "in": "query",
+            "name": "customer_segment",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 100,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Customer Segment"
+            }
+          },
+          {
+            "in": "query",
+            "name": "sales_channel",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/SalesChannel"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Sales Channel"
+            }
+          },
+          {
+            "in": "query",
+            "name": "validity",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "$ref": "#/components/schemas/ValidityFilter"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Validity"
+            }
+          },
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 500,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Geçersiz istek"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Kaynak bulunamadı"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sözleşme doğrulama hatası"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sunucu hatası"
+          }
+        },
+        "summary": "List Campaigns",
+        "tags": [
+          "campaigns"
+        ]
+      }
+    },
+    "/api/v1/campaigns/{campaign_id}": {
+      "get": {
+        "operationId": "get_campaign_api_v1_campaigns__campaign_id__get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "campaign_id",
+            "required": true,
+            "schema": {
+              "maxLength": 191,
+              "minLength": 1,
+              "pattern": "^[A-Za-z0-9][A-Za-z0-9:._-]{0,190}$",
+              "title": "Campaign Id",
+              "type": "string"
+            }
+          },
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/CampaignDetail"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Geçersiz istek"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Kaynak bulunamadı"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sözleşme doğrulama hatası"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sunucu hatası"
+          }
+        },
+        "summary": "Get Campaign",
+        "tags": [
+          "campaigns"
+        ]
+      }
+    },
+    "/api/v1/chat": {
+      "post": {
+        "operationId": "chat_api_v1_chat_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ChatRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ChatAnswer"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Geçersiz istek"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Kaynak bulunamadı"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sözleşme doğrulama hatası"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sunucu hatası"
+          }
+        },
+        "summary": "Chat",
+        "tags": [
+          "chat"
+        ]
+      }
+    },
+    "/api/v1/comparisons": {
+      "post": {
+        "operationId": "comparisons_api_v1_comparisons_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ComparisonRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ComparisonResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Geçersiz istek"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Kaynak bulunamadı"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sözleşme doğrulama hatası"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sunucu hatası"
+          }
+        },
+        "summary": "Comparisons",
+        "tags": [
+          "comparisons"
+        ]
+      }
+    },
+    "/api/v1/coverage": {
+      "get": {
+        "operationId": "coverage_api_v1_coverage_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "as_of",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "format": "date-time",
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "As Of"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "items": {
+                    "$ref": "#/components/schemas/CoverageEntry"
+                  },
+                  "title": "Response Coverage Api V1 Coverage Get",
+                  "type": "array"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Geçersiz istek"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Kaynak bulunamadı"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sözleşme doğrulama hatası"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sunucu hatası"
+          }
+        },
+        "summary": "Coverage",
+        "tags": [
+          "coverage"
+        ]
+      }
+    },
+    "/api/v1/notifications": {
+      "get": {
+        "operationId": "list_notifications_api_v1_notifications_get",
+        "parameters": [
+          {
+            "in": "query",
+            "name": "cursor",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "maxLength": 500,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "Cursor"
+            }
+          },
+          {
+            "in": "query",
+            "name": "limit",
+            "required": false,
+            "schema": {
+              "default": 20,
+              "maximum": 100,
+              "minimum": 1,
+              "title": "Limit",
+              "type": "integer"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/NotificationListResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Geçersiz istek"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Kaynak bulunamadı"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sözleşme doğrulama hatası"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sunucu hatası"
+          }
+        },
+        "summary": "Kampanya değişiklik bildirimlerini salt okunur listele",
+        "tags": [
+          "notifications"
+        ]
+      }
+    },
+    "/api/v1/previews/extractions": {
+      "post": {
+        "operationId": "preview_extraction_api_v1_previews_extractions_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExtractionPreviewRequest"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ExtractionPreviewResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Geçersiz istek"
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Kaynak bulunamadı"
+          },
+          "422": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sözleşme doğrulama hatası"
+          },
+          "500": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/ProblemDetail"
+                }
+              }
+            },
+            "description": "Sunucu hatası"
+          }
+        },
+        "summary": "Yapıştırılan metinden doğrulanmamış çıkarım önizlemesi üret",
+        "tags": [
+          "previews"
+        ]
+      }
+    },
+    "/health/live": {
+      "get": {
+        "operationId": "live_health_live_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/LiveResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          }
+        },
+        "summary": "İşlem liveness kontrolü",
+        "tags": [
+          "health"
+        ]
+      }
+    },
+    "/health/ready": {
+      "get": {
+        "operationId": "ready_health_ready_get",
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Successful Response"
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HealthResponse"
+                }
+              }
+            },
+            "description": "Servis hazır değil"
+          }
+        },
+        "summary": "Bağımlılık readiness kontrolü",
+        "tags": [
+          "health"
+        ]
+      }
+    }
+  }
+}

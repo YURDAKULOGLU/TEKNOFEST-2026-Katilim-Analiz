@@ -1,0 +1,25 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://katilim-analiz.local/datasets/splits.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "dataset_version", "near_duplicate_threshold", "policy", "splits", "cross_split_leaks"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schema_version": {"const": "1.0"},
+    "dataset_version": {"type": "string", "minLength": 1},
+    "near_duplicate_threshold": {"type": "number", "minimum": 0, "maximum": 1},
+    "policy": {"type": "string", "minLength": 1},
+    "splits": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["train", "development", "test"],
+      "properties": {
+        "train": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "development": {"type": "array", "uniqueItems": true, "items": {"type": "string"}},
+        "test": {"type": "array", "uniqueItems": true, "items": {"type": "string"}}
+      }
+    },
+    "cross_split_leaks": {"type": "array", "items": {"type": "object"}}
+  }
+}

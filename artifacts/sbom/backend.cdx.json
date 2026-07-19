@@ -1,0 +1,1054 @@
+{
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "bom-ref": "pkg:pypi/alembic@1.18.5",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/alembic/1.18.5/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/alembic/1.18.5/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "alembic",
+      "purl": "pkg:pypi/alembic@1.18.5",
+      "scope": "required",
+      "type": "library",
+      "version": "1.18.5"
+    },
+    {
+      "bom-ref": "pkg:pypi/annotated-doc@0.0.4",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/annotated-doc/0.0.4/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/annotated-doc/0.0.4/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "annotated-doc",
+      "purl": "pkg:pypi/annotated-doc@0.0.4",
+      "scope": "required",
+      "type": "library",
+      "version": "0.0.4"
+    },
+    {
+      "bom-ref": "pkg:pypi/annotated-types@0.7.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/annotated-types/0.7.0/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/project/annotated-types/0.7.0/"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "annotated-types",
+      "purl": "pkg:pypi/annotated-types@0.7.0",
+      "scope": "required",
+      "type": "library",
+      "version": "0.7.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/anyio@4.14.2",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/anyio/4.14.2/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/anyio/4.14.2/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "anyio",
+      "properties": [
+        {
+          "name": "katilim:environment-marker",
+          "value": "python_full_version < '3.13'"
+        }
+      ],
+      "purl": "pkg:pypi/anyio@4.14.2",
+      "scope": "required",
+      "type": "library",
+      "version": "4.14.2"
+    },
+    {
+      "bom-ref": "pkg:pypi/asyncpg@0.31.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/asyncpg/0.31.0/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/asyncpg/0.31.0/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "name": "asyncpg",
+      "purl": "pkg:pypi/asyncpg@0.31.0",
+      "scope": "required",
+      "type": "library",
+      "version": "0.31.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/beautifulsoup4@4.15.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/beautifulsoup4/4.15.0/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/project/beautifulsoup4/4.15.0/"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "beautifulsoup4",
+      "purl": "pkg:pypi/beautifulsoup4@4.15.0",
+      "scope": "required",
+      "type": "library",
+      "version": "4.15.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/certifi@2026.6.17",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/certifi/2026.6.17/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/project/certifi/2026.6.17/"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MPL-2.0"
+          }
+        }
+      ],
+      "name": "certifi",
+      "purl": "pkg:pypi/certifi@2026.6.17",
+      "scope": "required",
+      "type": "library",
+      "version": "2026.6.17"
+    },
+    {
+      "bom-ref": "pkg:pypi/click@8.4.2",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/click/8.4.2/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/click/8.4.2/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "name": "click",
+      "properties": [
+        {
+          "name": "katilim:environment-marker",
+          "value": "sys_platform == 'win32'"
+        }
+      ],
+      "purl": "pkg:pypi/click@8.4.2",
+      "scope": "required",
+      "type": "library",
+      "version": "8.4.2"
+    },
+    {
+      "bom-ref": "pkg:pypi/colorama@0.4.6",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/colorama/0.4.6/json"
+        },
+        {
+          "type": "license",
+          "url": "https://github.com/tartley/colorama/tree/0.4.6"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "name": "colorama",
+      "purl": "pkg:pypi/colorama@0.4.6",
+      "scope": "required",
+      "type": "library",
+      "version": "0.4.6"
+    },
+    {
+      "bom-ref": "pkg:pypi/fastapi@0.139.2",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/fastapi/0.139.2/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/fastapi/0.139.2/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "fastapi",
+      "purl": "pkg:pypi/fastapi@0.139.2",
+      "scope": "required",
+      "type": "library",
+      "version": "0.139.2"
+    },
+    {
+      "bom-ref": "pkg:pypi/greenlet@3.5.3",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/greenlet/3.5.3/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/greenlet/3.5.3/json"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT AND PSF-2.0"
+        }
+      ],
+      "name": "greenlet",
+      "purl": "pkg:pypi/greenlet@3.5.3",
+      "scope": "required",
+      "type": "library",
+      "version": "3.5.3"
+    },
+    {
+      "bom-ref": "pkg:pypi/h11@0.16.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/h11/0.16.0/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/project/h11/0.16.0/"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "h11",
+      "purl": "pkg:pypi/h11@0.16.0",
+      "scope": "required",
+      "type": "library",
+      "version": "0.16.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/httpcore@1.0.9",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/httpcore/1.0.9/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/httpcore/1.0.9/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "name": "httpcore",
+      "purl": "pkg:pypi/httpcore@1.0.9",
+      "scope": "required",
+      "type": "library",
+      "version": "1.0.9"
+    },
+    {
+      "bom-ref": "pkg:pypi/httptools@0.8.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/httptools/0.8.0/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/httptools/0.8.0/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "httptools",
+      "purl": "pkg:pypi/httptools@0.8.0",
+      "scope": "required",
+      "type": "library",
+      "version": "0.8.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/httpx@0.28.1",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/httpx/0.28.1/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/project/httpx/0.28.1/"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "name": "httpx",
+      "purl": "pkg:pypi/httpx@0.28.1",
+      "scope": "required",
+      "type": "library",
+      "version": "0.28.1"
+    },
+    {
+      "bom-ref": "pkg:pypi/idna@3.18",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/idna/3.18/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/idna/3.18/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "name": "idna",
+      "purl": "pkg:pypi/idna@3.18",
+      "scope": "required",
+      "type": "library",
+      "version": "3.18"
+    },
+    {
+      "bom-ref": "pkg:pypi/mako@1.3.12",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/mako/1.3.12/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/project/Mako/1.3.12/"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "mako",
+      "purl": "pkg:pypi/mako@1.3.12",
+      "scope": "required",
+      "type": "library",
+      "version": "1.3.12"
+    },
+    {
+      "bom-ref": "pkg:pypi/markupsafe@3.0.3",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/markupsafe/3.0.3/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/markupsafe/3.0.3/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "name": "markupsafe",
+      "purl": "pkg:pypi/markupsafe@3.0.3",
+      "scope": "required",
+      "type": "library",
+      "version": "3.0.3"
+    },
+    {
+      "bom-ref": "pkg:pypi/pydantic-core@2.46.4",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/pydantic-core/2.46.4/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/pydantic-core/2.46.4/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "pydantic-core",
+      "purl": "pkg:pypi/pydantic-core@2.46.4",
+      "scope": "required",
+      "type": "library",
+      "version": "2.46.4"
+    },
+    {
+      "bom-ref": "pkg:pypi/pydantic-settings@2.14.2",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/pydantic-settings/2.14.2/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/pydantic-settings/2.14.2/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "pydantic-settings",
+      "purl": "pkg:pypi/pydantic-settings@2.14.2",
+      "scope": "required",
+      "type": "library",
+      "version": "2.14.2"
+    },
+    {
+      "bom-ref": "pkg:pypi/pydantic@2.13.4",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/pydantic/2.13.4/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/pydantic/2.13.4/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "pydantic",
+      "purl": "pkg:pypi/pydantic@2.13.4",
+      "scope": "required",
+      "type": "library",
+      "version": "2.13.4"
+    },
+    {
+      "bom-ref": "pkg:pypi/python-dotenv@1.2.2",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/python-dotenv/1.2.2/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/project/python-dotenv/1.2.2/"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "name": "python-dotenv",
+      "purl": "pkg:pypi/python-dotenv@1.2.2",
+      "scope": "required",
+      "type": "library",
+      "version": "1.2.2"
+    },
+    {
+      "bom-ref": "pkg:pypi/pyyaml@6.0.3",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/pyyaml/6.0.3/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/project/PyYAML/6.0.3/"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "pyyaml",
+      "purl": "pkg:pypi/pyyaml@6.0.3",
+      "scope": "required",
+      "type": "library",
+      "version": "6.0.3"
+    },
+    {
+      "bom-ref": "pkg:pypi/soupsieve@2.8.4",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/soupsieve/2.8.4/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/soupsieve/2.8.4/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "soupsieve",
+      "purl": "pkg:pypi/soupsieve@2.8.4",
+      "scope": "required",
+      "type": "library",
+      "version": "2.8.4"
+    },
+    {
+      "bom-ref": "pkg:pypi/sqlalchemy@2.0.51",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/sqlalchemy/2.0.51/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/project/SQLAlchemy/2.0.51/"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "sqlalchemy",
+      "properties": [
+        {
+          "name": "katilim:environment-marker",
+          "value": "platform_machine == 'AMD64' or platform_machine == 'WIN32' or platform_machine == 'aarch64' or platform_machine == 'amd64' or platform_machine == 'ppc64le' or platform_machine == 'win32' or platform_machine == 'x86_64'"
+        }
+      ],
+      "purl": "pkg:pypi/sqlalchemy@2.0.51",
+      "scope": "required",
+      "type": "library",
+      "version": "2.0.51"
+    },
+    {
+      "bom-ref": "pkg:pypi/starlette@1.3.1",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/starlette/1.3.1/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/starlette/1.3.1/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "name": "starlette",
+      "properties": [
+        {
+          "name": "katilim:environment-marker",
+          "value": "python_full_version < '3.13'"
+        }
+      ],
+      "purl": "pkg:pypi/starlette@1.3.1",
+      "scope": "required",
+      "type": "library",
+      "version": "1.3.1"
+    },
+    {
+      "bom-ref": "pkg:pypi/typing-extensions@4.16.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/typing-extensions/4.16.0/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/typing-extensions/4.16.0/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "PSF-2.0"
+          }
+        }
+      ],
+      "name": "typing-extensions",
+      "purl": "pkg:pypi/typing-extensions@4.16.0",
+      "scope": "required",
+      "type": "library",
+      "version": "4.16.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/typing-inspection@0.4.2",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/typing-inspection/0.4.2/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/typing-inspection/0.4.2/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "typing-inspection",
+      "purl": "pkg:pypi/typing-inspection@0.4.2",
+      "scope": "required",
+      "type": "library",
+      "version": "0.4.2"
+    },
+    {
+      "bom-ref": "pkg:pypi/uvicorn@0.51.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/uvicorn/0.51.0/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/uvicorn/0.51.0/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "name": "uvicorn",
+      "purl": "pkg:pypi/uvicorn@0.51.0",
+      "scope": "required",
+      "type": "library",
+      "version": "0.51.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/uvloop@0.22.1",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/uvloop/0.22.1/json"
+        },
+        {
+          "type": "license",
+          "url": "https://github.com/MagicStack/uvloop/tree/v0.22.1"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "Apache-2.0 OR MIT"
+        }
+      ],
+      "name": "uvloop",
+      "purl": "pkg:pypi/uvloop@0.22.1",
+      "scope": "required",
+      "type": "library",
+      "version": "0.22.1"
+    },
+    {
+      "bom-ref": "pkg:pypi/watchfiles@1.2.0",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/watchfiles/1.2.0/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/project/watchfiles/1.2.0/"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "watchfiles",
+      "purl": "pkg:pypi/watchfiles@1.2.0",
+      "scope": "required",
+      "type": "library",
+      "version": "1.2.0"
+    },
+    {
+      "bom-ref": "pkg:pypi/websockets@16.1.1",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://pypi.org/pypi/websockets/16.1.1/json"
+        },
+        {
+          "type": "license",
+          "url": "https://pypi.org/pypi/websockets/16.1.1/json"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "name": "websockets",
+      "purl": "pkg:pypi/websockets@16.1.1",
+      "scope": "required",
+      "type": "library",
+      "version": "16.1.1"
+    }
+  ],
+  "dependencies": [
+    {
+      "dependsOn": [
+        "pkg:pypi/mako@1.3.12",
+        "pkg:pypi/sqlalchemy@2.0.51",
+        "pkg:pypi/typing-extensions@4.16.0"
+      ],
+      "ref": "pkg:pypi/alembic@1.18.5"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/annotated-doc@0.0.4"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/annotated-types@0.7.0"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/idna@3.18",
+        "pkg:pypi/typing-extensions@4.16.0"
+      ],
+      "ref": "pkg:pypi/anyio@4.14.2"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/asyncpg@0.31.0"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/soupsieve@2.8.4",
+        "pkg:pypi/typing-extensions@4.16.0"
+      ],
+      "ref": "pkg:pypi/beautifulsoup4@4.15.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/certifi@2026.6.17"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/colorama@0.4.6"
+      ],
+      "ref": "pkg:pypi/click@8.4.2"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/colorama@0.4.6"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/annotated-doc@0.0.4",
+        "pkg:pypi/pydantic@2.13.4",
+        "pkg:pypi/starlette@1.3.1",
+        "pkg:pypi/typing-extensions@4.16.0",
+        "pkg:pypi/typing-inspection@0.4.2"
+      ],
+      "ref": "pkg:pypi/fastapi@0.139.2"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/greenlet@3.5.3"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/h11@0.16.0"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/certifi@2026.6.17",
+        "pkg:pypi/h11@0.16.0"
+      ],
+      "ref": "pkg:pypi/httpcore@1.0.9"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/httptools@0.8.0"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/anyio@4.14.2",
+        "pkg:pypi/certifi@2026.6.17",
+        "pkg:pypi/httpcore@1.0.9",
+        "pkg:pypi/idna@3.18"
+      ],
+      "ref": "pkg:pypi/httpx@0.28.1"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/idna@3.18"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/alembic@1.18.5",
+        "pkg:pypi/asyncpg@0.31.0",
+        "pkg:pypi/beautifulsoup4@4.15.0",
+        "pkg:pypi/fastapi@0.139.2",
+        "pkg:pypi/httpx@0.28.1",
+        "pkg:pypi/pydantic-settings@2.14.2",
+        "pkg:pypi/pydantic@2.13.4",
+        "pkg:pypi/sqlalchemy@2.0.51",
+        "pkg:pypi/uvicorn@0.51.0"
+      ],
+      "ref": "pkg:pypi/katilim-analiz@0.1.0"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/markupsafe@3.0.3"
+      ],
+      "ref": "pkg:pypi/mako@1.3.12"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/markupsafe@3.0.3"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/typing-extensions@4.16.0"
+      ],
+      "ref": "pkg:pypi/pydantic-core@2.46.4"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/pydantic@2.13.4",
+        "pkg:pypi/python-dotenv@1.2.2",
+        "pkg:pypi/typing-inspection@0.4.2"
+      ],
+      "ref": "pkg:pypi/pydantic-settings@2.14.2"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/annotated-types@0.7.0",
+        "pkg:pypi/pydantic-core@2.46.4",
+        "pkg:pypi/typing-extensions@4.16.0",
+        "pkg:pypi/typing-inspection@0.4.2"
+      ],
+      "ref": "pkg:pypi/pydantic@2.13.4"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/python-dotenv@1.2.2"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/pyyaml@6.0.3"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/soupsieve@2.8.4"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/greenlet@3.5.3",
+        "pkg:pypi/typing-extensions@4.16.0"
+      ],
+      "ref": "pkg:pypi/sqlalchemy@2.0.51"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/anyio@4.14.2",
+        "pkg:pypi/typing-extensions@4.16.0"
+      ],
+      "ref": "pkg:pypi/starlette@1.3.1"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/typing-extensions@4.16.0"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/typing-extensions@4.16.0"
+      ],
+      "ref": "pkg:pypi/typing-inspection@0.4.2"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/click@8.4.2",
+        "pkg:pypi/h11@0.16.0",
+        "pkg:pypi/httptools@0.8.0",
+        "pkg:pypi/python-dotenv@1.2.2",
+        "pkg:pypi/pyyaml@6.0.3",
+        "pkg:pypi/uvloop@0.22.1",
+        "pkg:pypi/watchfiles@1.2.0",
+        "pkg:pypi/websockets@16.1.1"
+      ],
+      "ref": "pkg:pypi/uvicorn@0.51.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/uvloop@0.22.1"
+    },
+    {
+      "dependsOn": [
+        "pkg:pypi/anyio@4.14.2"
+      ],
+      "ref": "pkg:pypi/watchfiles@1.2.0"
+    },
+    {
+      "dependsOn": [],
+      "ref": "pkg:pypi/websockets@16.1.1"
+    }
+  ],
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:pypi/katilim-analiz@0.1.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "name": "katilim-analiz",
+      "purl": "pkg:pypi/katilim-analiz@0.1.0",
+      "type": "application",
+      "version": "0.1.0"
+    },
+    "tools": {
+      "components": [
+        {
+          "name": "katilim-license-generator",
+          "type": "application",
+          "version": "1.0.0"
+        }
+      ]
+    }
+  },
+  "specVersion": "1.7",
+  "version": 1
+}

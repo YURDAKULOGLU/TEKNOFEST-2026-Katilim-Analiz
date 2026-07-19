@@ -1,0 +1,12 @@
+{
+  "schema_version": "1.0",
+  "profile_id": "rules-only-v0.1",
+  "profile_type": "extraction",
+  "status": "completed_unscored",
+  "generated_at": "2026-07-18T22:39:39+03:00",
+  "model_called": false,
+  "source": "datasets/derived/v0.1/campaigns.jsonl",
+  "records": 4,
+  "eligible_gold_examples": 0,
+  "reason": "The live rule-only run completed, but no bank annotation has completed human review; an extraction score would be invalid."
+}

@@ -1,0 +1,72 @@
+{
+  "schema_version": "1.0",
+  "ruleset_version": "comparison-v1",
+  "cases": [
+    {
+      "case_id": "lower-financing-rate-ranks-first",
+      "review_status": "verified",
+      "as_of": "2026-07-18",
+      "dimension": "rate",
+      "records": [
+        {"id": "rate-low", "rate": {"value_percent": "1.50"}},
+        {"id": "rate-high", "rate": {"value_percent": "2.00"}}
+      ],
+      "expected": {"all_comparable": true, "ranks": {"rate-low": 1, "rate-high": 2}}
+    },
+    {
+      "case_id": "monthly-and-annual-rates-rejected",
+      "review_status": "verified",
+      "as_of": "2026-07-18",
+      "dimension": "rate",
+      "records": [
+        {"id": "monthly", "rate": {"value_percent": "1.50", "period": "monthly"}},
+        {"id": "annual", "rate": {"value_percent": "18.00", "period": "annual"}}
+      ],
+      "expected": {"all_comparable": false, "reason_codes": ["rate_period_mismatch"]}
+    },
+    {
+      "case_id": "product-family-mismatch-rejected",
+      "review_status": "verified",
+      "as_of": "2026-07-18",
+      "dimension": "rate",
+      "records": [
+        {"id": "financing", "product_family": "financing", "rate": {"value_percent": "1.50"}},
+        {"id": "card", "product_family": "card", "rate": {"value_percent": "1.50"}}
+      ],
+      "expected": {"all_comparable": false, "reason_codes": ["product_family_mismatch"]}
+    },
+    {
+      "case_id": "customer-segment-mismatch-rejected",
+      "review_status": "verified",
+      "as_of": "2026-07-18",
+      "dimension": "rate",
+      "records": [
+        {"id": "retail", "segments": ["bireysel"], "rate": {"value_percent": "1.50"}},
+        {"id": "sme", "segments": ["kobi"], "rate": {"value_percent": "1.50"}}
+      ],
+      "expected": {"all_comparable": false, "reason_codes": ["customer_segment_context_mismatch"]}
+    },
+    {
+      "case_id": "missing-rate-evidence-rejected",
+      "review_status": "verified",
+      "as_of": "2026-07-18",
+      "dimension": "rate",
+      "records": [
+        {"id": "evidenced", "rate": {"value_percent": "1.50"}, "rate_evidence": true},
+        {"id": "unsupported", "rate": {"value_percent": "1.60"}, "rate_evidence": false}
+      ],
+      "expected": {"all_comparable": false, "reason_codes": ["peer_rate_evidence_missing", "rate_evidence_missing"]}
+    },
+    {
+      "case_id": "rate-kind-mismatch-rejected",
+      "review_status": "verified",
+      "as_of": "2026-07-18",
+      "dimension": "rate",
+      "records": [
+        {"id": "profit", "rate": {"kind": "financing_profit_rate", "value_percent": "1.50"}},
+        {"id": "cost", "rate": {"kind": "annual_cost_rate", "value_percent": "1.50"}}
+      ],
+      "expected": {"all_comparable": false, "reason_codes": ["rate_kind_mismatch"]}
+    }
+  ]
+}

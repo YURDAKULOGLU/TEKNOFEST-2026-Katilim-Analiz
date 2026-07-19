@@ -1,0 +1,24 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: katilim-analiz-config
+data:
+  APP_ENV: production
+  APP_HOST: 0.0.0.0
+  APP_PORT: "8000"
+  APP_ALLOWED_HOSTS: localhost,127.0.0.1,api,api.katilim-analiz.svc,api.katilim-analiz.svc.cluster.local
+  APP_CORS_ORIGINS: ""
+  LOG_LEVEL: INFO
+  LOG_FORMAT: json
+  MODEL_PROFILE: rules_only
+  MODEL_PROVIDER: ollama
+  OLLAMA_BASE_URL: http://ollama:11434
+  OLLAMA_MODEL: qwen3.5:4b
+  OLLAMA_MODEL_DIGEST: 2a654d98e6fba55d452b7043684e9b57a947e393bbffa62485a7aac05ee4eefd
+  MODEL_TIMEOUT_SECONDS: "120"
+  MODEL_MAX_CONTEXT: "4096"
+  MODEL_CONCURRENCY: "1"
+  MODEL_KEEP_ALIVE: "-1"
+  INGEST_NETWORK_ENABLED: "false"
+  INGEST_PER_HOST_DELAY_SECONDS: "3"
+  INGEST_MAX_BYTES: "5000000"

@@ -1,0 +1,119 @@
+{
+  "$schema": "../schemas/discovery-candidates.schema.json",
+  "schema_version": "1.0",
+  "registry_version": "2026-07-18.2",
+  "observed_at": "2026-07-18T22:47:46+03:00",
+  "method": "Official-domain web search and official-site navigation; search previews are discovery hints only.",
+  "banks": [
+    {
+      "bank_id": "adil-katilim",
+      "candidates": [
+        {
+          "url": "https://www.adilkatilim.com.tr/",
+          "kind": "homepage",
+          "discovery_source_url": "https://www.adilkatilim.com.tr/",
+          "note": "Official site says mobile service is forthcoming; no public campaign detail page was found."
+        }
+      ]
+    },
+    {
+      "bank_id": "albaraka-turk",
+      "candidates": [
+        {
+          "url": "https://www.albaraka.com.tr/tr/kampanyalar/detay/dijital-musterilere-ozel-pratik-finansman-kart",
+          "kind": "campaign_detail",
+          "discovery_source_url": "https://www.albaraka.com.tr/tr/kampanyalar/detay/dijital-musterilere-ozel-pratik-finansman-kart",
+          "note": "The official campaign detail returned HTTP 200 after its exact canonical host was admitted from the recorded BDDK-host redirect chain."
+        }
+      ]
+    },
+    {
+      "bank_id": "dunya-katilim",
+      "candidates": [
+        {
+          "url": "https://dunyakatilim.com.tr/kampanyalar/network",
+          "kind": "campaign_detail",
+          "discovery_source_url": "https://dunyakatilim.com.tr/kampanyalar/",
+          "note": "Active official Paraf campaign observed through the official campaign listing."
+        }
+      ]
+    },
+    {
+      "bank_id": "hayat-finans",
+      "candidates": [
+        {
+          "url": "https://hayatfinans.com.tr/kampanyalar/hayatfinansla-islem-yaptikca-kazan",
+          "kind": "campaign_detail",
+          "discovery_source_url": "https://hayatfinans.com.tr/kampanyalar",
+          "note": "Official campaign detail observed in the current campaign listing."
+        }
+      ]
+    },
+    {
+      "bank_id": "kuveyt-turk",
+      "candidates": [
+        {
+          "url": "https://www.kuveytturk.com.tr/kampanyalar/kendim-icin/musteri-ol-kampanyalari/yeni-kuveyt-turk-mobil-musterilerine-10000-mile-varan-firsat",
+          "kind": "campaign_detail",
+          "discovery_source_url": "https://www.kuveytturk.com.tr/kampanyalar/kendim-icin/kart-kampanyalari",
+          "note": "Official campaign detail with a 2026 validity window."
+        }
+      ]
+    },
+    {
+      "bank_id": "tom-katilim",
+      "candidates": [
+        {
+          "url": "https://www.tombank.com.tr/kampanyalar.html",
+          "kind": "campaign_listing",
+          "discovery_source_url": "https://www.tombank.com.tr/",
+          "note": "Official TOM Bank campaign listing linked from the homepage."
+        }
+      ]
+    },
+    {
+      "bank_id": "emlak-katilim",
+      "candidates": [
+        {
+          "url": "https://www.emlakkatilim.com.tr/tr/bireysel/kampanyalar/kampanya/mtv-odemenizi-emlak-katilim-mobilden-yapin-500-tlye-varan-nakit-iade-kazanin",
+          "kind": "campaign_detail",
+          "discovery_source_url": "https://www.emlakkatilim.com.tr/tr/bireysel/kampanyalar/kampanya/mtv-odemenizi-emlak-katilim-mobilden-yapin-500-tlye-varan-nakit-iade-kazanin",
+          "note": "The official campaign detail returned HTTP 200 after its exact canonical host was admitted from the recorded HTTPS redirect of the BDDK-listed host; the listed HTTP endpoint itself timed out."
+        }
+      ]
+    },
+    {
+      "bank_id": "turkiye-finans",
+      "candidates": [
+        {
+          "url": "https://www.turkiyefinans.com.tr/tr-tr/kampanyalar/Sayfalar/katilim-hesabi-kampanyasi.aspx",
+          "kind": "campaign_detail",
+          "discovery_source_url": "https://www.turkiyefinans.com.tr/tr-tr/kampanyalar/sayfalar/default.aspx",
+          "note": "Official participation-account campaign detail current on the observation date."
+        }
+      ]
+    },
+    {
+      "bank_id": "vakif-katilim",
+      "candidates": [
+        {
+          "url": "https://www.vakifkatilim.com.tr/tr/kendim-icin/kampanyalar/detay/mtv-odemelerinde-vade-farksiz-3-taksit",
+          "kind": "campaign_detail",
+          "discovery_source_url": "https://www.vakifkatilim.com.tr/tr",
+          "note": "Official current campaign linked from the homepage."
+        }
+      ]
+    },
+    {
+      "bank_id": "ziraat-katilim",
+      "candidates": [
+        {
+          "url": "https://www.ziraatkatilim.com.tr/kart-kampanyalari/puffyde-6ya-varan-taksit",
+          "kind": "campaign_detail",
+          "discovery_source_url": "https://www.ziraatkatilim.com.tr/kampanyalar/hobi-ve-oyuncak",
+          "note": "Official card-campaign detail whose published validity includes the observation date."
+        }
+      ]
+    }
+  ]
+}

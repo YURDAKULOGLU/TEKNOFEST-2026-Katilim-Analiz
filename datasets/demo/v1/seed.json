@@ -1,0 +1,337 @@
+{
+  "schema_version": "1.0",
+  "dataset_id": "katilim-demo-seed",
+  "dataset_version": "1.0.0",
+  "created_at": "2026-07-19T01:00:00+03:00",
+  "source_registry_version": "2026-07-18.2",
+  "source_coverage": {
+    "path": "datasets/coverage/2026-07-18.json",
+    "sha256": "f78207e6930f38fb56a91d64afc29a7834822a13e4813919aa056e37de0e2e83"
+  },
+  "source_examples": {
+    "path": "datasets/gold/v0.1/examples.jsonl",
+    "sha256": "509db5769ad9e17b0b296bc09449f01586c4a7a1e1f464b4632b39ef73b1f0a7"
+  },
+  "coverage": [
+    {
+      "bank_id": "adil-katilim",
+      "bank_name": "ADİL KATILIM BANKASI A.Ş.",
+      "observed_at": "2026-07-18T23:01:04+03:00",
+      "status": "blocked",
+      "source_count": 0,
+      "source_candidate_count": 0,
+      "reason": "access_challenge: CAPTCHA or interactive authentication challenge detected"
+    },
+    {
+      "bank_id": "albaraka-turk",
+      "bank_name": "ALBARAKA TÜRK KATILIM BANKASI A.Ş.",
+      "observed_at": "2026-07-18T23:01:07+03:00",
+      "status": "success",
+      "source_count": 1,
+      "source_candidate_count": 1,
+      "reason": "official_candidate_fetched_and_cleaned"
+    },
+    {
+      "bank_id": "dunya-katilim",
+      "bank_name": "DÜNYA KATILIM BANKASI A.Ş.",
+      "observed_at": "2026-07-18T23:01:10+03:00",
+      "status": "success",
+      "source_count": 1,
+      "source_candidate_count": 1,
+      "reason": "official_candidate_fetched_and_cleaned"
+    },
+    {
+      "bank_id": "hayat-finans",
+      "bank_name": "HAYAT FİNANS KATILIM BANKASI A.Ş.",
+      "observed_at": "2026-07-18T23:01:12+03:00",
+      "status": "blocked",
+      "source_count": 0,
+      "source_candidate_count": 0,
+      "reason": "access_challenge: CAPTCHA or interactive authentication challenge detected"
+    },
+    {
+      "bank_id": "kuveyt-turk",
+      "bank_name": "KUVEYT TÜRK KATILIM BANKASI A.Ş.",
+      "observed_at": "2026-07-18T23:01:15+03:00",
+      "status": "blocked",
+      "source_count": 0,
+      "source_candidate_count": 0,
+      "reason": "access_challenge: CAPTCHA or interactive authentication challenge detected"
+    },
+    {
+      "bank_id": "tom-katilim",
+      "bank_name": "T.O.M. KATILIM BANKASI A.Ş.",
+      "observed_at": "2026-07-18T23:01:17+03:00",
+      "status": "success",
+      "source_count": 1,
+      "source_candidate_count": 3,
+      "reason": "official_candidate_fetched_and_cleaned"
+    },
+    {
+      "bank_id": "emlak-katilim",
+      "bank_name": "TÜRKİYE EMLAK KATILIM BANKASI A.Ş.",
+      "observed_at": "2026-07-18T23:01:19+03:00",
+      "status": "success",
+      "source_count": 1,
+      "source_candidate_count": 1,
+      "reason": "official_candidate_fetched_and_cleaned"
+    },
+    {
+      "bank_id": "turkiye-finans",
+      "bank_name": "TÜRKİYE FİNANS KATILIM BANKASI A.Ş.",
+      "observed_at": "2026-07-18T23:01:22+03:00",
+      "status": "blocked",
+      "source_count": 0,
+      "source_candidate_count": 0,
+      "reason": "access_challenge: CAPTCHA or interactive authentication challenge detected"
+    },
+    {
+      "bank_id": "vakif-katilim",
+      "bank_name": "VAKIF KATILIM BANKASI A.Ş.",
+      "observed_at": "2026-07-18T23:01:25+03:00",
+      "status": "success",
+      "source_count": 1,
+      "source_candidate_count": 1,
+      "reason": "official_candidate_fetched_and_cleaned"
+    },
+    {
+      "bank_id": "ziraat-katilim",
+      "bank_name": "ZİRAAT KATILIM BANKASI A.Ş.",
+      "observed_at": "2026-07-18T23:01:27+03:00",
+      "status": "success",
+      "source_count": 1,
+      "source_candidate_count": 1,
+      "reason": "official_candidate_fetched_and_cleaned"
+    }
+  ],
+  "campaigns": [
+    {
+      "seed_id": "dunya-network-20260718",
+      "source_example_id": "gold-dunya-network-20260718",
+      "bank_id": "dunya-katilim",
+      "source_url": "https://dunyakatilim.com.tr/kampanyalar/network",
+      "observed_at": "2026-07-18T22:23:08+03:00",
+      "source_raw_sha256": "79432eee23531da2f5210dc1e709265e36b67910463295f072573b72f7b3276e",
+      "source_clean_sha256": "c68cd257e2dc3651ccd2c7805cb301de4a49bf99835d4bf4ec5ec523f1196ffc",
+      "human_review_status": "pending",
+      "title": "Network’te 4 Taksit Fırsatı!",
+      "product_family": "unknown",
+      "campaign_type": "installment",
+      "rates": [],
+      "validity": {
+        "raw": "Bitiş Tarihi: 31 Temmuz 2026",
+        "starts_on": null,
+        "ends_on": "2026-07-31",
+        "status": "stated"
+      },
+      "evidence": [
+        {
+          "field_pointer": "/data/title",
+          "quote": "Network’te 4 Taksit Fırsatı!",
+          "evidence_sha256": "79f7ba2d8b0517742617deb8ce64978ce51353ddcd28cc7eeb3da77f46d0fdb8",
+          "source_block_id": "block:922861ee28693fa103238a685f2896ddc7bc2bd9ee7dd32ee5bd3a597c7cf2bc",
+          "source_start_char": 0,
+          "source_end_char": 28,
+          "status": "stated"
+        },
+        {
+          "field_pointer": "/data/campaign_type",
+          "quote": "Taksit",
+          "evidence_sha256": "266b0b2d7f4f25c4517d6db3d4e564aae1169ee07c92bcbad504b33d04a08820",
+          "source_block_id": "block:922861ee28693fa103238a685f2896ddc7bc2bd9ee7dd32ee5bd3a597c7cf2bc",
+          "source_start_char": 13,
+          "source_end_char": 19,
+          "status": "inferred"
+        },
+        {
+          "field_pointer": "/data/validity",
+          "quote": "Bitiş Tarihi: 31 Temmuz 2026",
+          "evidence_sha256": "d9efc073c5111c0d6b7b7675eb46e2fcf05c064259e4bd6d5bdc2ab0f36be62e",
+          "source_block_id": "block:d4e267f484c4f09a177c9b926659b512fe9c7e5e7c611458773bc3d3eb8118d1",
+          "source_start_char": 0,
+          "source_end_char": 28,
+          "status": "stated"
+        }
+      ],
+      "issues": ["human_review_pending", "machine_proposal_not_gold"]
+    },
+    {
+      "seed_id": "tom-restoran-20260718",
+      "source_example_id": "gold-tom-restoran-20260718",
+      "bank_id": "tom-katilim",
+      "source_url": "https://www.tombank.com.tr/kampanyalar.html",
+      "observed_at": "2026-07-18T22:23:16+03:00",
+      "source_raw_sha256": "bea1ab76fbe401aae3ba1317bfb9708ea294ee44c9fb4a808f20e04074768fa8",
+      "source_clean_sha256": "db5f6272012e1c66ad32bed7576c44e6d06dc15b380e11a49850b75324f2b189",
+      "human_review_status": "pending",
+      "title": "Restoran harcamalarında %10 İade Kazan!",
+      "product_family": "card",
+      "campaign_type": "unknown",
+      "rates": [
+        {
+          "raw": "Restoran harcamalarında %10",
+          "value_percent": "10",
+          "kind": "unknown",
+          "period": "unspecified",
+          "gross_net_basis": "unspecified",
+          "status": "stated"
+        }
+      ],
+      "validity": null,
+      "evidence": [
+        {
+          "field_pointer": "/data/title",
+          "quote": "Restoran harcamalarında %10 İade Kazan!",
+          "evidence_sha256": "77ec414722d1dd97acb70f72ff394b9be57954ab431f006a976861de5ebb6c9e",
+          "source_block_id": "block:2f80870ebf71a19dfe2d4516ca09cf6ad725d40dac21247a017165c812b1e44e",
+          "source_start_char": 0,
+          "source_end_char": 39,
+          "status": "stated"
+        },
+        {
+          "field_pointer": "/data/product_family",
+          "quote": "Kredi Kartı",
+          "evidence_sha256": "5ca9bbf62b75e96211e3a822243e3e43a3e9760cd1d43d93716f6dafa55eaf18",
+          "source_block_id": "block:3d66e0b079b13eb18d97743bccc741927f1905738e83a4cb95db771b74e04ba9",
+          "source_start_char": 27,
+          "source_end_char": 38,
+          "status": "inferred"
+        },
+        {
+          "field_pointer": "/data/campaign_type",
+          "quote": "Restoran harcamalarında %10 İade Kazan!",
+          "evidence_sha256": "77ec414722d1dd97acb70f72ff394b9be57954ab431f006a976861de5ebb6c9e",
+          "source_block_id": "block:2f80870ebf71a19dfe2d4516ca09cf6ad725d40dac21247a017165c812b1e44e",
+          "source_start_char": 0,
+          "source_end_char": 39,
+          "status": "inferred"
+        },
+        {
+          "field_pointer": "/data/rates/0",
+          "quote": "Restoran harcamalarında %10",
+          "evidence_sha256": "9b9f870302feaa8a0e57dec646ed6abd31b367b0def9d4087eaa1ef46d8b4bfc",
+          "source_block_id": "block:2f80870ebf71a19dfe2d4516ca09cf6ad725d40dac21247a017165c812b1e44e",
+          "source_start_char": 0,
+          "source_end_char": 27,
+          "status": "stated"
+        }
+      ],
+      "issues": [
+        "human_review_pending",
+        "machine_proposal_not_gold",
+        "source_proposal_abstained:campaign_type",
+        "source_proposal_downgraded:rate_context"
+      ]
+    },
+    {
+      "seed_id": "vakif-mtv-20260718",
+      "source_example_id": "gold-vakif-mtv-20260718",
+      "bank_id": "vakif-katilim",
+      "source_url": "https://www.vakifkatilim.com.tr/tr/kendim-icin/kampanyalar/detay/mtv-odemelerinde-vade-farksiz-3-taksit",
+      "observed_at": "2026-07-18T22:23:21+03:00",
+      "source_raw_sha256": "963807d2a3463acee87c5c0db0aba45f10049ae05514f3b5a3404a540b1cd12c",
+      "source_clean_sha256": "d859a166a49f779f70aa35ba58500c2626e20433380aaee5fc138f0dea48c980",
+      "human_review_status": "pending",
+      "title": "MTV Ödemelerinde Vade Farksız 3 Taksit",
+      "product_family": "card",
+      "campaign_type": "installment",
+      "rates": [],
+      "validity": {
+        "raw": "01 Temmuz 2026 - 31 Temmuz 2026",
+        "starts_on": "2026-07-01",
+        "ends_on": "2026-07-31",
+        "status": "stated"
+      },
+      "evidence": [
+        {
+          "field_pointer": "/data/title",
+          "quote": "MTV Ödemelerinde Vade Farksız 3 Taksit",
+          "evidence_sha256": "64b4d67911f884d635dcac3ba5e43bac4120bcfa999217f909a9688036aa1712",
+          "source_block_id": "block:5321b8675c67f5b737bd82edf43595bcd5c1a1a31ea53c58f9b6f0f8f6b678b1",
+          "source_start_char": 0,
+          "source_end_char": 38,
+          "status": "stated"
+        },
+        {
+          "field_pointer": "/data/product_family",
+          "quote": "Kredi Kartı",
+          "evidence_sha256": "5ca9bbf62b75e96211e3a822243e3e43a3e9760cd1d43d93716f6dafa55eaf18",
+          "source_block_id": "block:7d3607b735d0e638872eed8918c559dadc09ad0a56f440053397255971208b43",
+          "source_start_char": 80,
+          "source_end_char": 91,
+          "status": "inferred"
+        },
+        {
+          "field_pointer": "/data/campaign_type",
+          "quote": "Taksit",
+          "evidence_sha256": "266b0b2d7f4f25c4517d6db3d4e564aae1169ee07c92bcbad504b33d04a08820",
+          "source_block_id": "block:5321b8675c67f5b737bd82edf43595bcd5c1a1a31ea53c58f9b6f0f8f6b678b1",
+          "source_start_char": 32,
+          "source_end_char": 38,
+          "status": "inferred"
+        },
+        {
+          "field_pointer": "/data/validity",
+          "quote": "01 Temmuz 2026 - 31 Temmuz 2026",
+          "evidence_sha256": "a5c2be3452d86eb9913393360a00ab1a679f473d9324ddc7071dc641493b74d3",
+          "source_block_id": "block:26c1e1ab6fa4fd05f81698ba0f2a968bd6fb44896848cfba7816222e0c9f53c6",
+          "source_start_char": 0,
+          "source_end_char": 31,
+          "status": "stated"
+        }
+      ],
+      "issues": ["human_review_pending", "machine_proposal_not_gold"]
+    },
+    {
+      "seed_id": "ziraat-puffy-20260718",
+      "source_example_id": "gold-ziraat-puffy-20260718",
+      "bank_id": "ziraat-katilim",
+      "source_url": "https://www.ziraatkatilim.com.tr/kart-kampanyalari/puffyde-6ya-varan-taksit",
+      "observed_at": "2026-07-18T22:23:23+03:00",
+      "source_raw_sha256": "efcd33dbd062de9d2083a09fc516bf6c461704a64dec537fdd4f6d1f47e198ed",
+      "source_clean_sha256": "85c8e96708f13b897d20307e4b57a3b9ca88d26878bff3b8f2d6fb8eafca7897",
+      "human_review_status": "pending",
+      "title": "Puffy'de 6'ya varan Taksit",
+      "product_family": "card",
+      "campaign_type": "installment",
+      "rates": [],
+      "validity": null,
+      "evidence": [
+        {
+          "field_pointer": "/data/title",
+          "quote": "Puffy'de 6'ya varan Taksit",
+          "evidence_sha256": "a1953e4fe54c9ea665c6ba2be904b26b8eaa7f9583abd850c762868e57ce107f",
+          "source_block_id": "block:80267591a7615b614432642471d65ad6ad683e9ed3d8ea137bff2a92f7ed5513",
+          "source_start_char": 0,
+          "source_end_char": 26,
+          "status": "stated"
+        },
+        {
+          "field_pointer": "/data/product_family",
+          "quote": "kartınız",
+          "evidence_sha256": "5df9994385aa97db8946b0ae232101fd1e805723ce6ca6ee48cf44d6207bb85f",
+          "source_block_id": "block:d9564e30f178ba65d99d7a88979e25a571766a0ca1188bf514d7f39718b41e58",
+          "source_start_char": 30,
+          "source_end_char": 38,
+          "status": "inferred"
+        },
+        {
+          "field_pointer": "/data/campaign_type",
+          "quote": "Puffy'de 6'ya varan Taksit",
+          "evidence_sha256": "a1953e4fe54c9ea665c6ba2be904b26b8eaa7f9583abd850c762868e57ce107f",
+          "source_block_id": "block:80267591a7615b614432642471d65ad6ad683e9ed3d8ea137bff2a92f7ed5513",
+          "source_start_char": 0,
+          "source_end_char": 26,
+          "status": "inferred"
+        }
+      ],
+      "issues": ["human_review_pending", "machine_proposal_not_gold"]
+    }
+  ],
+  "limitations": [
+    "All four campaign examples remain machine proposals with pending human review.",
+    "The demo replays only short published evidence quotes; it does not redistribute raw HTML or full cleaned pages.",
+    "Coverage source_candidate_count values describe the bounded collector snapshot; the public dashboard reports zero validated records until human review.",
+    "The TOM cashback label and reward-rate context are intentionally downgraded because current deterministic validation cannot support those semantic claims."
+  ]
+}

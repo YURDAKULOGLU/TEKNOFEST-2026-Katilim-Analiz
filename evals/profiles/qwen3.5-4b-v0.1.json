@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "profile_id": "qwen3.5-4b-v0.1",
+  "profile_type": "extraction_and_security",
+  "status": "not_run",
+  "generated_at": "2026-07-18T22:35:00+03:00",
+  "model": "qwen3.5:4b",
+  "model_digest": "2a654d98e6fba55d452b7043684e9b57a947e393bbffa62485a7aac05ee4eefd",
+  "runtime": "Ollama local",
+  "timeout_seconds": 120,
+  "keep_alive": "-1",
+  "structured_output_required": true,
+  "think": false,
+  "eligible_gold_examples": 0,
+  "reason": "A slow CPU model run was not spent on an unverified gold set. No partial or timed-out result is represented as completed."
+}

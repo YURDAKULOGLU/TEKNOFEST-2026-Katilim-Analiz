@@ -1,0 +1,17 @@
+{
+  "schema_version": "1.0",
+  "updated_at": "2026-07-18T22:10:00+03:00",
+  "active_phase": "v1-api-interface-and-evaluation",
+  "delivery_order": ["V1", "V1.1", "V1.2", "V1.3"],
+  "gate_policy": "A version cannot start until all blocking EVAL pointers for the previous version pass.",
+  "phases": [
+    {"id": "P0", "name": "Research and contracts", "status": "completed"},
+    {"id": "P1", "name": "V1 domain and ingestion", "status": "completed"},
+    {"id": "P2", "name": "V1 API and interface", "status": "in_progress"},
+    {"id": "P3", "name": "V1 data, evaluation, and packaging", "status": "in_progress"},
+    {"id": "P4", "name": "V1.1 notifications", "status": "pending"},
+    {"id": "P5", "name": "V1.2 local administration", "status": "pending"},
+    {"id": "P6", "name": "V1.3 integration boundary", "status": "pending"},
+    {"id": "P7", "name": "Independent review and publication", "status": "pending"}
+  ]
+}

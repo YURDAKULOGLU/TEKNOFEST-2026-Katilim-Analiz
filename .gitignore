@@ -1,0 +1,42 @@
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.tmp/
+.mypy_cache/
+.ruff_cache/
+.coverage
+htmlcov/
+.venv/
+dist/
+build/
+*.egg-info/
+
+# Node
+node_modules/
+web/dist/
+web/coverage/
+*.tsbuildinfo
+
+# Runtime and private source material
+.env
+!.env.example
+/runtime/
+data/raw/
+data/private/
+*.sqlite
+*.sqlite3
+*.db
+*.db-wal
+*.db-shm
+/models/
+
+# Generated deliverables
+artifacts/generated/
+reports/generated/
+
+# Editors / OS
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db

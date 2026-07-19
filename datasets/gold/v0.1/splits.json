@@ -1,0 +1,13 @@
+{
+  "$schema": "../../schemas/splits.schema.json",
+  "schema_version": "1.0",
+  "dataset_version": "0.1.0",
+  "near_duplicate_threshold": 0.85,
+  "policy": "A bank, source hash, and duplicate group may occur in only one split. Near-duplicate source excerpts cannot cross splits.",
+  "splits": {
+    "train": [],
+    "development": ["gold-dunya-network-20260718", "gold-tom-restoran-20260718"],
+    "test": ["gold-vakif-mtv-20260718", "gold-ziraat-puffy-20260718"]
+  },
+  "cross_split_leaks": []
+}

@@ -1,0 +1,60 @@
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: demo-seed
+  labels:
+    app.kubernetes.io/name: katilim-analiz
+    app.kubernetes.io/part-of: katilim-analiz
+    app.kubernetes.io/component: demo-seed
+spec:
+  backoffLimit: 3
+  ttlSecondsAfterFinished: 600
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: katilim-analiz
+        app.kubernetes.io/part-of: katilim-analiz
+        app.kubernetes.io/component: demo-seed
+    spec:
+      restartPolicy: OnFailure
+      serviceAccountName: katilim-analiz
+      automountServiceAccountToken: false
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: demo-seed
+          image: ghcr.io/yurdakuloglu/katilim-analiz:dev
+          imagePullPolicy: IfNotPresent
+          args: ["katilim-analiz", "demo-seed"]
+          envFrom:
+            - configMapRef:
+                name: katilim-analiz-config
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: katilim-analiz-runtime
+                  key: database-url
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
+          volumeMounts:
+            - name: tmp
+              mountPath: /tmp
+      volumes:
+        - name: tmp
+          emptyDir:
+            sizeLimit: 64Mi

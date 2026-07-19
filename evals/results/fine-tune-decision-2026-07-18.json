@@ -1,0 +1,16 @@
+{
+  "schema_version": "1.0",
+  "decision": "not_authorized",
+  "decided_at": "2026-07-18T22:35:00+03:00",
+  "verified_gold_examples": 0,
+  "rules_only_profile": "completed_unscored",
+  "base_4b_profile": "not_run",
+  "held_out_macro_f1_delta": null,
+  "bootstrap_confidence_interval": null,
+  "critical_precision_regression": null,
+  "authority_escapes": null,
+  "unsupported_assertions": null,
+  "latency_regression": null,
+  "ram_regression": null,
+  "reason": "The prerequisite held-out, human-verified benchmark does not exist yet; the fine-tuning gate cannot be evaluated."
+}

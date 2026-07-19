@@ -1,0 +1,57 @@
+{
+  "bomFormat": "CycloneDX",
+  "components": [],
+  "dependencies": [],
+  "metadata": {
+    "component": {
+      "bom-ref": "urn:sha256:2a654d98e6fba55d452b7043684e9b57a947e393bbffa62485a7aac05ee4eefd",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://ollama.com/library/qwen3.5:4b"
+        },
+        {
+          "type": "documentation",
+          "url": "https://huggingface.co/Qwen/Qwen3.5-4B"
+        }
+      ],
+      "hashes": [
+        {
+          "alg": "SHA-256",
+          "content": "2a654d98e6fba55d452b7043684e9b57a947e393bbffa62485a7aac05ee4eefd"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "name": "qwen3.5:4b",
+      "properties": [
+        {
+          "name": "katilim:ollama-manifest-digest",
+          "value": "2a654d98e6fba55d452b7043684e9b57a947e393bbffa62485a7aac05ee4eefd"
+        },
+        {
+          "name": "katilim:quantization",
+          "value": "Q4_K_M"
+        }
+      ],
+      "type": "machine-learning-model",
+      "version": "2a654d98e6fba55d452b7043684e9b57a947e393bbffa62485a7aac05ee4eefd"
+    },
+    "tools": {
+      "components": [
+        {
+          "name": "katilim-license-generator",
+          "type": "application",
+          "version": "1.0.0"
+        }
+      ]
+    }
+  },
+  "specVersion": "1.7",
+  "version": 1
+}

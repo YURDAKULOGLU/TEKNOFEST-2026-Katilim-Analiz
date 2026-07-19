@@ -1,0 +1,27 @@
+{
+  "collector_profile": "bounded-live-collector/1.1",
+  "contains_full_cleaned_text": false,
+  "contains_raw_html": false,
+  "dataset_id": "katilim-campaign-derived",
+  "dataset_version": "0.1.0",
+  "extractor_profile": "rules-only:hybrid-extractor/1.1",
+  "generated_at": "2026-07-18T23:01:29+03:00",
+  "human_review_counts": {
+    "pending": 8,
+    "rejected": 0,
+    "verified": 0
+  },
+  "known_limitations": [
+    "4 coverage entries were blocked; offline replay does not fetch or bypass them.",
+    "TOM listing segmentation is bound to the observed repeated DOM structure and abstains when that structure is not recognized.",
+    "Rules-only candidates retain unresolved semantic fields and require review.",
+    "No derived row is eligible as gold until the two-reviewer workflow is complete."
+  ],
+  "licence_boundary": "Structured team-authored derivations are Apache-2.0; source URLs and hashes identify third-party official bank pages without transferring rights.",
+  "record_count": 8,
+  "replay_profile": "offline-coverage-replay/1.0",
+  "replayed_raw_artifact_count": 6,
+  "schema_version": "1.0",
+  "source_coverage_sha256": "1348b898329cbe71d275be193bfc8b0cd7b7bb1059e3d39e5e8ffb15876bb9b0",
+  "source_registry_version": "2026-07-18.2"
+}

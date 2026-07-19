@@ -1,0 +1,59 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.invalid/katilim-analiz/pointers.schema.json",
+  "title": "Pointer graph",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "requirements", "enhancements", "decisions", "evaluations", "work_packages"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schema_version": {"type": "string", "const": "1.0"},
+    "requirements": {"$ref": "#/$defs/nodeMap"},
+    "enhancements": {"$ref": "#/$defs/nodeMap"},
+    "decisions": {"$ref": "#/$defs/nodeMap"},
+    "evaluations": {"$ref": "#/$defs/nodeMap"},
+    "work_packages": {"$ref": "#/$defs/workPackageMap"}
+  },
+  "$defs": {
+    "stringList": {"type": "array", "items": {"type": "string"}, "uniqueItems": true},
+    "node": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "version", "status", "source"],
+      "properties": {
+        "title": {"type": "string", "minLength": 3},
+        "version": {"enum": ["V1", "V1.1", "V1.2", "V1.3", "all"]},
+        "status": {"enum": ["proposed", "accepted", "in_progress", "completed", "passed", "failed", "superseded"]},
+        "source": {"type": "string", "minLength": 1},
+        "links": {"$ref": "#/$defs/stringList"},
+        "blocking": {"type": "boolean"}
+      }
+    },
+    "nodeMap": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/node"}
+    },
+    "workPackage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["title", "version", "status", "source", "owns", "depends_on", "checks"],
+      "properties": {
+        "title": {"type": "string", "minLength": 3},
+        "version": {"enum": ["V1", "V1.1", "V1.2", "V1.3", "all"]},
+        "status": {"enum": ["proposed", "accepted", "in_progress", "completed", "passed", "failed", "superseded"]},
+        "source": {"type": "string", "minLength": 1},
+        "links": {"$ref": "#/$defs/stringList"},
+        "blocking": {"type": "boolean"},
+        "owns": {"$ref": "#/$defs/stringList"},
+        "depends_on": {"$ref": "#/$defs/stringList"},
+        "checks": {"$ref": "#/$defs/stringList"}
+      }
+    },
+    "workPackageMap": {
+      "type": "object",
+      "minProperties": 1,
+      "additionalProperties": {"$ref": "#/$defs/workPackage"}
+    }
+  }
+}

@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://katilim-analiz.local/datasets/gold-manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "dataset_id", "dataset_version", "created_at", "source_registry_version", "examples_path", "splits_path", "example_count", "review_counts", "licence_boundary", "evaluation_eligibility", "reason"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schema_version": {"const": "1.0"},
+    "dataset_id": {"const": "katilim-campaign-gold"},
+    "dataset_version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "source_registry_version": {"type": "string", "minLength": 1},
+    "examples_path": {"type": "string", "minLength": 1},
+    "splits_path": {"type": "string", "minLength": 1},
+    "example_count": {"type": "integer", "minimum": 0},
+    "review_counts": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["verified", "pending", "rejected"],
+      "properties": {
+        "verified": {"type": "integer", "minimum": 0},
+        "pending": {"type": "integer", "minimum": 0},
+        "rejected": {"type": "integer", "minimum": 0}
+      }
+    },
+    "licence_boundary": {"type": "string", "minLength": 1},
+    "evaluation_eligibility": {"enum": ["eligible", "insufficient_data"]},
+    "reason": {"type": "string", "minLength": 1}
+  }
+}

@@ -1,0 +1,91 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: campaign-scan
+  labels:
+    app.kubernetes.io/name: katilim-analiz
+    app.kubernetes.io/part-of: katilim-analiz
+    app.kubernetes.io/component: campaign-scan
+spec:
+  schedule: "17 */6 * * *"
+  timeZone: Europe/Istanbul
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 900
+  successfulJobsHistoryLimit: 2
+  failedJobsHistoryLimit: 3
+  jobTemplate:
+    metadata:
+      labels:
+        app.kubernetes.io/name: katilim-analiz
+        app.kubernetes.io/part-of: katilim-analiz
+        app.kubernetes.io/component: campaign-scan
+    spec:
+      backoffLimit: 3
+      activeDeadlineSeconds: 1800
+      ttlSecondsAfterFinished: 86400
+      template:
+        metadata:
+          labels:
+            app.kubernetes.io/name: katilim-analiz
+            app.kubernetes.io/part-of: katilim-analiz
+            app.kubernetes.io/component: campaign-scan
+        spec:
+          serviceAccountName: katilim-analiz
+          automountServiceAccountToken: false
+          restartPolicy: Never
+          terminationGracePeriodSeconds: 30
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            runAsGroup: 10001
+            fsGroup: 10001
+            seccompProfile:
+              type: RuntimeDefault
+          containers:
+            - name: campaign-scan
+              image: ghcr.io/yurdakuloglu/katilim-analiz:dev
+              imagePullPolicy: IfNotPresent
+              args: ["katilim-analiz", "scan"]
+              envFrom:
+                - configMapRef:
+                    name: katilim-analiz-config
+              env:
+                - name: DATABASE_URL
+                  valueFrom:
+                    secretKeyRef:
+                      name: katilim-analiz-runtime
+                      key: database-url
+                - name: SCAN_RUN_ID
+                  valueFrom:
+                    fieldRef:
+                      apiVersion: v1
+                      fieldPath: metadata.labels['batch.kubernetes.io/controller-uid']
+                - name: SCAN_JOB_NAME
+                  valueFrom:
+                    fieldRef:
+                      apiVersion: v1
+                      fieldPath: metadata.labels['batch.kubernetes.io/job-name']
+              resources:
+                requests:
+                  cpu: 100m
+                  memory: 192Mi
+                limits:
+                  cpu: "1"
+                  memory: 512Mi
+              securityContext:
+                allowPrivilegeEscalation: false
+                readOnlyRootFilesystem: true
+                capabilities:
+                  drop: ["ALL"]
+              volumeMounts:
+                - name: tmp
+                  mountPath: /tmp
+                - name: private-data
+                  mountPath: /app/data/private
+          volumes:
+            - name: tmp
+              emptyDir:
+                sizeLimit: 128Mi
+            - name: private-data
+              persistentVolumeClaim:
+                claimName: private-data

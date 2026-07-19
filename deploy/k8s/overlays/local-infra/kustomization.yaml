@@ -1,0 +1,21 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: katilim-analiz
+resources:
+  - namespace.yaml
+  - ../../components/local-services
+generatorOptions:
+  disableNameSuffixHash: true
+secretGenerator:
+  - name: katilim-analiz-runtime
+    literals:
+      - postgres-db=katilim_analiz
+      - postgres-user=katilim
+      - postgres-password=local-development-only
+      - database-url=postgresql+asyncpg://katilim:local-development-only@postgres:5432/katilim_analiz
+      - migration-database-url=postgresql+asyncpg://katilim:local-development-only@postgres:5432/katilim_analiz
+labels:
+  - pairs:
+      app.kubernetes.io/name: katilim-analiz
+      app.kubernetes.io/part-of: katilim-analiz
+      app.kubernetes.io/managed-by: kustomize

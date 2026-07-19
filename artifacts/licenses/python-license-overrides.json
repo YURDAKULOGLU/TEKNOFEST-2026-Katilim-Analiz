@@ -1,0 +1,89 @@
+{
+  "schema_version": "1.0",
+  "overrides": [
+    {
+      "expression": "MIT",
+      "name": "annotated-types",
+      "reason": "Exact PyPI release classifies the package under the MIT License.",
+      "source_url": "https://pypi.org/project/annotated-types/0.7.0/",
+      "version": "0.7.0"
+    },
+    {
+      "expression": "MIT",
+      "name": "beautifulsoup4",
+      "reason": "Exact PyPI release metadata states MIT License.",
+      "source_url": "https://pypi.org/project/beautifulsoup4/4.15.0/",
+      "version": "4.15.0"
+    },
+    {
+      "expression": "MPL-2.0",
+      "name": "certifi",
+      "reason": "Exact PyPI release metadata states MPL-2.0.",
+      "source_url": "https://pypi.org/project/certifi/2026.6.17/",
+      "version": "2026.6.17"
+    },
+    {
+      "expression": "BSD-3-Clause",
+      "name": "colorama",
+      "reason": "The exact upstream tag and PyPI description identify BSD 3-Clause.",
+      "source_url": "https://github.com/tartley/colorama/tree/0.4.6",
+      "version": "0.4.6"
+    },
+    {
+      "expression": "MIT",
+      "name": "h11",
+      "reason": "Exact PyPI release metadata states MIT.",
+      "source_url": "https://pypi.org/project/h11/0.16.0/",
+      "version": "0.16.0"
+    },
+    {
+      "expression": "BSD-3-Clause",
+      "name": "httpx",
+      "reason": "Exact PyPI release metadata states BSD-3-Clause.",
+      "source_url": "https://pypi.org/project/httpx/0.28.1/",
+      "version": "0.28.1"
+    },
+    {
+      "expression": "MIT",
+      "name": "mako",
+      "reason": "Exact PyPI release metadata states MIT.",
+      "source_url": "https://pypi.org/project/Mako/1.3.12/",
+      "version": "1.3.12"
+    },
+    {
+      "expression": "BSD-3-Clause",
+      "name": "python-dotenv",
+      "reason": "Exact PyPI release metadata states BSD-3-Clause.",
+      "source_url": "https://pypi.org/project/python-dotenv/1.2.2/",
+      "version": "1.2.2"
+    },
+    {
+      "expression": "MIT",
+      "name": "pyyaml",
+      "reason": "Exact PyPI release metadata states MIT.",
+      "source_url": "https://pypi.org/project/PyYAML/6.0.3/",
+      "version": "6.0.3"
+    },
+    {
+      "expression": "MIT",
+      "name": "sqlalchemy",
+      "reason": "Exact PyPI release metadata states MIT.",
+      "source_url": "https://pypi.org/project/SQLAlchemy/2.0.51/",
+      "version": "2.0.51"
+    },
+    {
+      "expression": "Apache-2.0 OR MIT",
+      "name": "uvloop",
+      "reason": "The exact upstream release is dual-licensed under Apache-2.0 and MIT.",
+      "source_url": "https://github.com/MagicStack/uvloop/tree/v0.22.1",
+      "version": "0.22.1"
+    },
+    {
+      "expression": "MIT",
+      "name": "watchfiles",
+      "reason": "Exact PyPI release metadata states MIT.",
+      "source_url": "https://pypi.org/project/watchfiles/1.2.0/",
+      "version": "1.2.0"
+    }
+  ]
+}

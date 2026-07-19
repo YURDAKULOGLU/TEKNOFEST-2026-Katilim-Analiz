@@ -1,0 +1,76 @@
+{
+  "$schema": "./official-redirects.schema.json",
+  "schema_version": "1.0",
+  "registry_version": "2026-07-18.2",
+  "registry_source_url": "https://www.bddk.org.tr/Kurulus/Liste/77",
+  "observed_at": "2026-07-18T22:47:46+03:00",
+  "method": "Direct HTTP response-header probes with automatic redirects disabled; every Location was followed as a separate probe.",
+  "observations": [
+    {
+      "bank_id": "albaraka-turk",
+      "listed_homepage_url": "http://www.albarakaturk.com.tr",
+      "canonical_hosts_added": ["www.albaraka.com.tr"],
+      "verified_final_url": "https://www.albaraka.com.tr/tr",
+      "probes": [
+        {
+          "url": "http://www.albarakaturk.com.tr",
+          "outcome": "response",
+          "http_status": 302,
+          "location": "https://www.albarakaturk.com.tr/"
+        },
+        {
+          "url": "https://www.albarakaturk.com.tr/",
+          "outcome": "response",
+          "http_status": 301,
+          "location": "https://www.albaraka.com.tr/"
+        },
+        {
+          "url": "https://www.albaraka.com.tr/",
+          "outcome": "response",
+          "http_status": 301,
+          "location": "/tr"
+        },
+        {
+          "url": "https://www.albaraka.com.tr/tr",
+          "outcome": "response",
+          "http_status": 200,
+          "location": null
+        }
+      ],
+      "note": "The BDDK-listed URL remains the registry provenance; only the exact canonical host observed in its redirect chain was added."
+    },
+    {
+      "bank_id": "emlak-katilim",
+      "listed_homepage_url": "http://www.emlakbank.com.tr/",
+      "canonical_hosts_added": ["www.emlakkatilim.com.tr"],
+      "verified_final_url": "https://www.emlakkatilim.com.tr/tr",
+      "probes": [
+        {
+          "url": "http://www.emlakbank.com.tr/",
+          "outcome": "connect_timeout",
+          "http_status": null,
+          "location": null
+        },
+        {
+          "url": "https://www.emlakbank.com.tr/",
+          "outcome": "response",
+          "http_status": 302,
+          "location": "https://www.emlakkatilim.com.tr/"
+        },
+        {
+          "url": "https://www.emlakkatilim.com.tr/",
+          "outcome": "response",
+          "http_status": 301,
+          "location": "/tr"
+        },
+        {
+          "url": "https://www.emlakkatilim.com.tr/tr",
+          "outcome": "response",
+          "http_status": 200,
+          "location": null
+        }
+      ],
+      "note": "The BDDK-listed HTTP endpoint did not answer; the canonical host was admitted only from the observed HTTPS redirect on the same listed host, without changing BDDK provenance."
+    }
+  ]
+}

@@ -1,0 +1,16 @@
+{"case_id":"money-tr-decimal","expected":{"amount":"1250.50","currency":"TRY"},"kind":"money","kwargs":{},"raw":"1.250,50 TL","review_status":"verified"}
+{"case_id":"money-tr-thousands","expected":{"amount":"50000","currency":"TRY"},"kind":"money","kwargs":{},"raw":"50.000 TL","review_status":"verified"}
+{"case_id":"money-tr-scale","expected":{"amount":"1200000.0","currency":"TRY"},"kind":"money","kwargs":{},"raw":"1,2 milyon TL","review_status":"verified"}
+{"case_id":"money-explicit-waiver","expected":{"amount":"0","currency":"TRY"},"kind":"money","kwargs":{"allow_fee_waiver":true,"currency_hint":"TRY"},"raw":"ücretsiz","review_status":"verified"}
+{"case_id":"rate-monthly-decimal","expected":{"kind":"unknown","period":"monthly","value_percent":"1.89"},"kind":"rate","kwargs":{},"raw":"%1,89 aylık kâr payı oranı","review_status":"verified"}
+{"case_id":"rate-annual-cost-text","expected":{"kind":"unknown","period":"annual","value_percent":"24"},"kind":"rate","kwargs":{},"raw":"yıllık %24 maliyet oranı","review_status":"verified"}
+{"case_id":"rate-profit-share-gross","expected":{"gross_net_basis":"gross","kind":"profit_share_distribution_rate","period":"annual","value_percent":"99"},"kind":"rate","kwargs":{},"raw":"brüt yıllık kâr paylaşım oranı %99","review_status":"verified"}
+{"case_id":"rate-basis-points","expected":{"kind":"unknown","period":"unspecified","value_percent":"1"},"kind":"rate","kwargs":{},"raw":"100 baz puan","review_status":"verified"}
+{"case_id":"date-turkish-month","expected":"2026-07-31","kind":"date","kwargs":{},"raw":"31 Temmuz 2026","review_status":"verified"}
+{"case_id":"date-numeric-dotted","expected":"2026-07-31","kind":"date","kwargs":{},"raw":"31.07.2026","review_status":"verified"}
+{"case_id":"date-relative-injected","expected":"2026-07-19","kind":"date","kwargs":{"reference_date":"2026-07-18"},"raw":"yarın","review_status":"verified"}
+{"case_id":"date-numeric-slashed","expected":"2026-07-18","kind":"date","kwargs":{},"raw":"18/07/2026","review_status":"verified"}
+{"case_id":"term-exact-months","expected":[{"maximum_months":36,"minimum_months":36}],"kind":"term","kwargs":{},"raw":"36 ay","review_status":"verified"}
+{"case_id":"term-month-range","expected":[{"maximum_months":6,"minimum_months":1}],"kind":"term","kwargs":{},"raw":"1-6 ay","review_status":"verified"}
+{"case_id":"term-discrete-options","expected":[{"maximum_months":3,"minimum_months":3},{"maximum_months":6,"minimum_months":6},{"maximum_months":12,"minimum_months":12}],"kind":"term","kwargs":{},"raw":"3, 6 ve 12 ay seçenekleri","review_status":"verified"}
+{"case_id":"term-years-to-months","expected":[{"maximum_months":24,"minimum_months":24}],"kind":"term","kwargs":{},"raw":"2 yıl","review_status":"verified"}

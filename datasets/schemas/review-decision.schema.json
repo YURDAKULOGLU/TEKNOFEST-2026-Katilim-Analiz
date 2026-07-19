@@ -1,0 +1,63 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://katilim-analiz.local/datasets/review-decision.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "$schema",
+    "schema_version",
+    "example_id",
+    "candidate_fingerprint",
+    "source_raw_sha256",
+    "source_clean_sha256",
+    "source_excerpt_sha256",
+    "reviewer_id",
+    "decision",
+    "reviewed_at",
+    "review_notes"
+  ],
+  "properties": {
+    "$schema": {
+      "const": "https://katilim-analiz.local/datasets/review-decision.schema.json"
+    },
+    "schema_version": {"const": "1.0"},
+    "example_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 256,
+      "pattern": "^(?!\\s)(?!.*\\s$)[^\\u0000-\\u001F\\u007F]+$"
+    },
+    "candidate_fingerprint": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_raw_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_clean_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "source_excerpt_sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "reviewer_id": {
+      "type": "string",
+      "minLength": 1,
+      "maxLength": 128,
+      "pattern": "^(?!\\s)(?!.*\\s$)[^\\u0000-\\u001F\\u007F]+$"
+    },
+    "decision": {"enum": [null, "approve", "reject"]},
+    "reviewed_at": {
+      "oneOf": [
+        {"type": "null"},
+        {"type": "string", "format": "date-time"}
+      ]
+    },
+    "review_notes": {"type": "string", "maxLength": 2000}
+  },
+  "oneOf": [
+    {
+      "properties": {
+        "decision": {"const": null},
+        "reviewed_at": {"const": null}
+      }
+    },
+    {
+      "properties": {
+        "decision": {"enum": ["approve", "reject"]},
+        "reviewed_at": {"type": "string", "format": "date-time"}
+      }
+    }
+  ]
+}

@@ -1,0 +1,179 @@
+{
+  "inputs": {
+    "backend_uv_lock_sha256": "4f99288b616f96a26077c1d6f3210e289d0c61691f34ace5122b404efc6bf639",
+    "frontend_pnpm_lock_sha256": "21530804df05d97eef9eebd23382e64c8d9d9ab43a4f78a489123a5b3997c384",
+    "model_manifest_sha256": "2a654d98e6fba55d452b7043684e9b57a947e393bbffa62485a7aac05ee4eefd",
+    "oci": {
+      "digest_reference": "ghcr.io/yurdakuloglu/katilim-analiz@sha256:13db851181a21d12f8431d16f62127c2c67d645ed7094cc65c131783c6e3c9cd",
+      "requested_reference": "ghcr.io/yurdakuloglu/katilim-analiz:dev",
+      "sha256": "13db851181a21d12f8431d16f62127c2c67d645ed7094cc65c131783c6e3c9cd",
+      "syft_version": "1.48.0"
+    }
+  },
+  "inventories": {
+    "backend": {
+      "artifact": "artifacts/sbom/backend.cdx.json",
+      "component_count": 32,
+      "incompatible_runtime_licenses": [],
+      "non_spdx_named_declarations": [],
+      "unresolved_runtime_licenses": [],
+      "verdict": "PASS"
+    },
+    "data": {
+      "items": [
+        {
+          "license": "Apache-2.0",
+          "scope": "team-authored schemas, normalization/comparison/security cases and annotations",
+          "source": "LICENSE and datasets/PROVENANCE.md",
+          "status": "licensed"
+        },
+        {
+          "license": null,
+          "scope": "BDDK registry facts, bank names, canonical URLs and live coverage observations",
+          "source": "https://www.bddk.org.tr/Kurulus/Liste/77",
+          "status": "third-party-rights-retained"
+        },
+        {
+          "license": null,
+          "scope": "short bank-site evidence excerpts in derived, gold and demo datasets",
+          "source": "datasets/PROVENANCE.md and per-record source_url fields",
+          "status": "third-party-rights-retained-not-relicensed"
+        },
+        {
+          "license": null,
+          "scope": "full fetched HTML and cleaned page text",
+          "source": "docs/legal/data-boundary.md",
+          "status": "private-runtime-only-not-distributed"
+        }
+      ],
+      "verdict": "PASS_WITH_RIGHTS_BOUNDARY"
+    },
+    "frontend": {
+      "artifact": "artifacts/sbom/frontend.cdx.json",
+      "component_count": 47,
+      "incompatible_runtime_licenses": [],
+      "non_spdx_named_declarations": [],
+      "unresolved_runtime_licenses": [],
+      "verdict": "PASS"
+    },
+    "model": {
+      "artifact": "artifacts/sbom/model.cdx.json",
+      "digest": "2a654d98e6fba55d452b7043684e9b57a947e393bbffa62485a7aac05ee4eefd",
+      "license": "Apache-2.0",
+      "name": "qwen3.5:4b",
+      "official_sources": [
+        "https://ollama.com/library/qwen3.5:4b",
+        "https://huggingface.co/Qwen/Qwen3.5-4B"
+      ],
+      "verdict": "PASS"
+    },
+    "oci": {
+      "artifact": "artifacts/sbom/oci.cdx.json",
+      "component_count": 139,
+      "image": {
+        "digest_reference": "ghcr.io/yurdakuloglu/katilim-analiz@sha256:13db851181a21d12f8431d16f62127c2c67d645ed7094cc65c131783c6e3c9cd",
+        "requested_reference": "ghcr.io/yurdakuloglu/katilim-analiz:dev",
+        "sha256": "13db851181a21d12f8431d16f62127c2c67d645ed7094cc65c131783c6e3c9cd",
+        "syft_version": "1.48.0"
+      },
+      "incompatible_runtime_licenses": [],
+      "non_spdx_named_declarations": [
+        "Artistic",
+        "Autoconf",
+        "BSD-3-clause-Aaron-D-Gifford",
+        "BSD-3-clause-Cambridge",
+        "BSD-3-clause-GENERIC",
+        "BSD-3-clause-fjord",
+        "BSD-3-clause-with-weird-numbering",
+        "BSD-4-clause-POWERDOG",
+        "BSD-tcp_wrappers",
+        "BSD-variant",
+        "BSLA",
+        "BZIP",
+        "DONT-CHANGE-THE-GPL",
+        "Expat",
+        "FSF-manpages",
+        "FreeSoftware",
+        "GAP",
+        "GFDL",
+        "GFDL-1.3+-no-invariant",
+        "GFDL-3",
+        "GFDL-NIV-1.3",
+        "GFDL-NIV-1.3+",
+        "GPL",
+        "GPL-2+-autoconf-exception",
+        "GPL-2+-libtool-exception",
+        "GPL-3+-WITH-BISON-EXCEPTION",
+        "GPL-3+-autoconf-exception",
+        "HSIEH-BSD",
+        "HSIEH-DERIVATIVE",
+        "ISC+IBM",
+        "ISC-no-attribution",
+        "LGPL",
+        "MIT-like",
+        "MIT-old",
+        "MIT/X11",
+        "PD",
+        "PD-debian",
+        "REGCOMP",
+        "REGCOMP,",
+        "RFC-Reference",
+        "RRA-KEEP-THIS-NOTICE",
+        "SDBM-PUBLIC-DOMAIN",
+        "TCL-like",
+        "TEXT-TABS",
+        "TinySCHEME",
+        "Unicode",
+        "config-h",
+        "g10-permissive",
+        "noderivs",
+        "pcre",
+        "permissive",
+        "permissive-autoconf-m4",
+        "permissive-autoconf-m4-no-warranty",
+        "permissive-configure",
+        "permissive-fsf",
+        "permissive-like-automake-output",
+        "permissive-makefile-in",
+        "permissive-nowarranty",
+        "probably-PD",
+        "public-domain",
+        "public-domain-md4",
+        "public-domain-md5",
+        "public-domain-s-s-d",
+        "public-domain-sha1",
+        "same-as-rest-of-p11kit",
+        "sha256:40c7e1f2118531f038ca22999bd976901254e1bc5cd1b0f0211bdd064c599987",
+        "sha256:572ad60ad184d8f52c6dc66d83a61a68f137db560b3452ce00588c9ecf128a65",
+        "sha256:5a5e7ca0e9f3f9679977e3a3e9ede45ad92885a3297ea78e766979f9866c5a16",
+        "sha256:641806738b0c6a3d03168c2649e6b94205198bb66cd557e6bae3a20b71c9bb0b",
+        "sha256:936728f4181718f42951b881c1e8f1386bf6b2723c4fbc533c374d6f42c71816",
+        "sha256:95db2f9da663f2bfe2aabe9c72fce9d6c9ae767b912f397d7823f50bd55a1a7d",
+        "sha256:b32aecaae84643700a33bc9ee83fa9b36938d35aa7b61b5042092eca77ddb732",
+        "sha256:bb7e5c24b3e27bbba5671dd710d159a0066833bda4caa1d55d8027ffed539337",
+        "sha256:da8191658b3452ce9caf31638ba61dab31a38c619fa39df119812e050f592fd3",
+        "sha256:e00e6a86c598f9e24ced0180a70a5f2f2e45e133d93adf2b17ce8a06ce4b1b51",
+        "sha256:fd7e4aae7e7b05f217bcf2d02322825c360e66c52c4c2f1b28d784d6297a1c23"
+      ],
+      "policy_basis": "Debian main package declarations plus exact Python metadata; the aggregate OS component intentionally has no single license.",
+      "unresolved_runtime_licenses": [],
+      "verdict": "PASS"
+    }
+  },
+  "policy": {
+    "fail_closed_on_missing_or_forbidden_runtime_license": true,
+    "forbidden_markers": [
+      "NOASSERTION",
+      "NONE",
+      "PROPRIETARY",
+      "UNLICENSED"
+    ],
+    "legal_advice": false
+  },
+  "release_license_gate": {
+    "blocking_inventories": [],
+    "note": "PASS is an inventory/policy result, not legal advice or an obligation waiver.",
+    "verdict": "PASS"
+  },
+  "schema_version": "1.0"
+}

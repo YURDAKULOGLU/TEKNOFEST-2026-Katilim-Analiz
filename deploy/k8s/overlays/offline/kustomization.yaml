@@ -1,0 +1,18 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+namespace: katilim-analiz
+resources:
+  - ../local
+patches:
+  - path: delete-public-egress.yaml
+  - path: delete-campaign-scan.yaml
+  - target:
+      kind: ConfigMap
+      name: katilim-analiz-config
+    patch: |-
+      - op: replace
+        path: /data/APP_ENV
+        value: offline-kubernetes
+      - op: replace
+        path: /data/INGEST_NETWORK_ENABLED
+        value: "false"

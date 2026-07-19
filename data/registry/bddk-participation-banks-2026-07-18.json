@@ -1,0 +1,99 @@
+{
+  "$schema": "./bddk-participation-banks.schema.json",
+  "schema_version": "1.0",
+  "registry_id": "bddk-participation-banks",
+  "registry_version": "2026-07-18.2",
+  "source_observed_on": "2026-07-18",
+  "source_url": "https://www.bddk.org.tr/Kurulus/Liste/77",
+  "bank_count": 10,
+  "banks": [
+    {
+      "id": "adil-katilim",
+      "listing_order": 1,
+      "legal_name": "ADİL KATILIM BANKASI A.Ş.",
+      "listed_homepage_url": "https://www.adilkatilim.com.tr",
+      "allowed_hosts": ["adilkatilim.com.tr", "www.adilkatilim.com.tr"],
+      "digital_bank": true
+    },
+    {
+      "id": "albaraka-turk",
+      "listing_order": 2,
+      "legal_name": "ALBARAKA TÜRK KATILIM BANKASI A.Ş.",
+      "listed_homepage_url": "http://www.albarakaturk.com.tr",
+      "allowed_hosts": [
+        "albarakaturk.com.tr",
+        "www.albarakaturk.com.tr",
+        "www.albaraka.com.tr"
+      ],
+      "digital_bank": false
+    },
+    {
+      "id": "dunya-katilim",
+      "listing_order": 3,
+      "legal_name": "DÜNYA KATILIM BANKASI A.Ş.",
+      "listed_homepage_url": "https://www.dunyakatilim.com.tr",
+      "allowed_hosts": ["dunyakatilim.com.tr", "www.dunyakatilim.com.tr"],
+      "digital_bank": false
+    },
+    {
+      "id": "hayat-finans",
+      "listing_order": 4,
+      "legal_name": "HAYAT FİNANS KATILIM BANKASI A.Ş.",
+      "listed_homepage_url": "https://www.hayatfinans.com.tr",
+      "allowed_hosts": ["hayatfinans.com.tr", "www.hayatfinans.com.tr"],
+      "digital_bank": true
+    },
+    {
+      "id": "kuveyt-turk",
+      "listing_order": 5,
+      "legal_name": "KUVEYT TÜRK KATILIM BANKASI A.Ş.",
+      "listed_homepage_url": "http://www.kuveytturk.com.tr",
+      "allowed_hosts": ["kuveytturk.com.tr", "www.kuveytturk.com.tr"],
+      "digital_bank": false
+    },
+    {
+      "id": "tom-katilim",
+      "listing_order": 6,
+      "legal_name": "T.O.M. KATILIM BANKASI A.Ş.",
+      "listed_homepage_url": "https://www.tombank.com.tr/",
+      "allowed_hosts": ["tombank.com.tr", "www.tombank.com.tr"],
+      "digital_bank": true
+    },
+    {
+      "id": "emlak-katilim",
+      "listing_order": 7,
+      "legal_name": "TÜRKİYE EMLAK KATILIM BANKASI A.Ş.",
+      "listed_homepage_url": "http://www.emlakbank.com.tr/",
+      "allowed_hosts": [
+        "emlakbank.com.tr",
+        "www.emlakbank.com.tr",
+        "www.emlakkatilim.com.tr"
+      ],
+      "digital_bank": false
+    },
+    {
+      "id": "turkiye-finans",
+      "listing_order": 8,
+      "legal_name": "TÜRKİYE FİNANS KATILIM BANKASI A.Ş.",
+      "listed_homepage_url": "http://www.turkiyefinans.com.tr",
+      "allowed_hosts": ["turkiyefinans.com.tr", "www.turkiyefinans.com.tr"],
+      "digital_bank": false
+    },
+    {
+      "id": "vakif-katilim",
+      "listing_order": 9,
+      "legal_name": "VAKIF KATILIM BANKASI A.Ş.",
+      "listed_homepage_url": "http://www.vakifkatilim.com.tr",
+      "allowed_hosts": ["vakifkatilim.com.tr", "www.vakifkatilim.com.tr"],
+      "digital_bank": false
+    },
+    {
+      "id": "ziraat-katilim",
+      "listing_order": 10,
+      "legal_name": "ZİRAAT KATILIM BANKASI A.Ş.",
+      "listed_homepage_url": "http://www.ziraatkatilim.com.tr",
+      "allowed_hosts": ["ziraatkatilim.com.tr", "www.ziraatkatilim.com.tr"],
+      "digital_bank": false
+    }
+  ]
+}

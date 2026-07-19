@@ -1,0 +1,1470 @@
+{
+  "bomFormat": "CycloneDX",
+  "components": [
+    {
+      "bom-ref": "urn:katilim:npm:00edd00deb7f181fe6d797b8b69aff183b4efeee3edc559200982eed33405575",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@types/d3-shape/v/3.1.8"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@types/d3-shape",
+      "purl": "pkg:npm/%40types/d3-shape@3.1.8",
+      "scope": "required",
+      "type": "library",
+      "version": "3.1.8"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:13ccc486b35ab94ff166c75c703e47e222c34643f99b50209e936f370eb63bfd",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@types/react/v/19.2.17"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@types/react",
+      "purl": "pkg:npm/%40types/react@19.2.17",
+      "scope": "required",
+      "type": "library",
+      "version": "19.2.17"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:1d72c7877908ed3a9ca1a62a2ca918bf591741df9691ff7292d0449e51347cfd",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/react-is/v/18.3.1"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/facebook/react.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "react-is",
+      "purl": "pkg:npm/react-is@18.3.1",
+      "scope": "required",
+      "type": "library",
+      "version": "18.3.1"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:250791eee43beb03272cb47941ff2bd87d29379f134dcda57b89f3362ada1dcc",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/immer/v/11.1.15"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/immerjs/immer.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "immer",
+      "purl": "pkg:npm/immer@11.1.15",
+      "scope": "required",
+      "type": "library",
+      "version": "11.1.15"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:383ff7521a011e3304a8f6d8ab5cb8c266870398610898761f53d500cd69dedd",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/d3-scale/v/4.0.2"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/d3/d3-scale.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ],
+      "name": "d3-scale",
+      "purl": "pkg:npm/d3-scale@4.0.2",
+      "scope": "required",
+      "type": "library",
+      "version": "4.0.2"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:3b085faf485ace940ae5c914dbbcd9e6f5da650f49ce5fba04fd8e64193feffa",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/react/v/19.2.7"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/facebook/react.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "react",
+      "purl": "pkg:npm/react@19.2.7",
+      "scope": "required",
+      "type": "library",
+      "version": "19.2.7"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:3c3476b33ed82b4f7ce7803c8f68835da3c3cd3ada774da64b267132aa172d0d",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/react-redux/v/9.3.0"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "react-redux",
+      "purl": "pkg:npm/react-redux@9.3.0",
+      "scope": "required",
+      "type": "library",
+      "version": "9.3.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:436c905b6303674856c14d1e76d724c196841b5ee4f98262e667c48d3f14dcfe",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/clsx/v/2.1.1"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "clsx",
+      "purl": "pkg:npm/clsx@2.1.1",
+      "scope": "required",
+      "type": "library",
+      "version": "2.1.1"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:4521817f218734bd96917610042992b82aa48c996a31471e589aab80e637fd3c",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/csstype/v/3.2.3"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/frenic/csstype"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "csstype",
+      "purl": "pkg:npm/csstype@3.2.3",
+      "scope": "required",
+      "type": "library",
+      "version": "3.2.3"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:4636996d16b3e3ae44f3c50a0afb507fc0180593c951448a17e46483000f654f",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/react-dom/v/19.2.7"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/facebook/react.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "react-dom",
+      "purl": "pkg:npm/react-dom@19.2.7",
+      "scope": "required",
+      "type": "library",
+      "version": "19.2.7"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:5236a6af6bb7a2165a32ae1cc30e9eede4173bbe0dea203e05b4e6c49fc45412",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/tiny-invariant/v/1.3.3"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/alexreardon/tiny-invariant.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "tiny-invariant",
+      "purl": "pkg:npm/tiny-invariant@1.3.3",
+      "scope": "required",
+      "type": "library",
+      "version": "1.3.3"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:536e6c3a528a7abc06799f4e1328abd7e9a5b0dd969bcb7e784220afda50e64e",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/d3-format/v/3.1.2"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/d3/d3-format.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ],
+      "name": "d3-format",
+      "purl": "pkg:npm/d3-format@3.1.2",
+      "scope": "required",
+      "type": "library",
+      "version": "3.1.2"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:661ba0e8b743d5429bd6467797b69a89c28c0d28a3a2c06291c2fa726faa523d",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/d3-color/v/3.1.0"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/d3/d3-color.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ],
+      "name": "d3-color",
+      "purl": "pkg:npm/d3-color@3.1.0",
+      "scope": "required",
+      "type": "library",
+      "version": "3.1.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:6d9d4d660a59609648f9e2a3072e0408d431498cc126b63f0f14cde4d89f678a",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/eventemitter3/v/5.0.4"
+        },
+        {
+          "type": "vcs",
+          "url": "git://github.com/primus/eventemitter3.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "eventemitter3",
+      "purl": "pkg:npm/eventemitter3@5.0.4",
+      "scope": "required",
+      "type": "library",
+      "version": "5.0.4"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:73c4b5f226a6a095844a85c5a17f47798a53558b9d6d6bedf89c20f153108621",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/decimal.js-light/v/2.5.1"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/MikeMcl/decimal.js-light.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "decimal.js-light",
+      "purl": "pkg:npm/decimal.js-light@2.5.1",
+      "scope": "required",
+      "type": "library",
+      "version": "2.5.1"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:76d4508412fd4d4d324e0433eac3c81931fdcead8ff742743b8ab4807402422c",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/d3-interpolate/v/3.0.1"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/d3/d3-interpolate.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ],
+      "name": "d3-interpolate",
+      "purl": "pkg:npm/d3-interpolate@3.0.1",
+      "scope": "required",
+      "type": "library",
+      "version": "3.0.1"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:7e3961b6f3160321ba4fa38aab76828585ca5fc68bc01fb4a3230fc0fa32bdee",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@types/d3-time/v/3.0.4"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@types/d3-time",
+      "purl": "pkg:npm/%40types/d3-time@3.0.4",
+      "scope": "required",
+      "type": "library",
+      "version": "3.0.4"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:8de0f349c3d38e401fbb8703f2359b066d62ceb4d92e2bf96e3a471b6ae7daef",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@tanstack/react-query/v/5.101.2"
+        },
+        {
+          "type": "vcs",
+          "url": "git+https://github.com/TanStack/query.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@tanstack/react-query",
+      "purl": "pkg:npm/%40tanstack/react-query@5.101.2",
+      "scope": "required",
+      "type": "library",
+      "version": "5.101.2"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:907e388ebf59b48c462bd20ef29149d3bdc88ac93dc203498bbe03ff570f5946",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/use-sync-external-store/v/1.6.0"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/facebook/react.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "use-sync-external-store",
+      "purl": "pkg:npm/use-sync-external-store@1.6.0",
+      "scope": "required",
+      "type": "library",
+      "version": "1.6.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:9c12020ff45e77c5ea0f9085b150bf9d90f81ae6f6ee00c484d2b1b40dac2e49",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/reselect/v/5.2.0"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/reduxjs/reselect.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "reselect",
+      "purl": "pkg:npm/reselect@5.2.0",
+      "scope": "required",
+      "type": "library",
+      "version": "5.2.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:ac97501e21c785fcf915ad42a9256aadc2032aff8d9777948abc7c09d40390c5",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/d3-shape/v/3.2.0"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/d3/d3-shape.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ],
+      "name": "d3-shape",
+      "purl": "pkg:npm/d3-shape@3.2.0",
+      "scope": "required",
+      "type": "library",
+      "version": "3.2.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:b01ca6fa5e730eb0c64df64663a12b848000578f1039668e354d7d260f3197c3",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@types/d3-ease/v/3.0.2"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@types/d3-ease",
+      "purl": "pkg:npm/%40types/d3-ease@3.0.2",
+      "scope": "required",
+      "type": "library",
+      "version": "3.0.2"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:b06e23ad9ca3d675a3f5e461fd9188a487707b4498aed2410acdb4f9530af124",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/d3-time/v/3.1.0"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/d3/d3-time.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ],
+      "name": "d3-time",
+      "purl": "pkg:npm/d3-time@3.1.0",
+      "scope": "required",
+      "type": "library",
+      "version": "3.1.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:b0ac7b10a16f8e931976d1809b46362c8df44a2a1c69b39da01605ef8f68dc2e",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/redux/v/5.0.1"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "redux",
+      "purl": "pkg:npm/redux@5.0.1",
+      "scope": "required",
+      "type": "library",
+      "version": "5.0.1"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:b733f26b2e4988122591a77c993324bd0c487808636537ebd5624e7f390f4c63",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@types/d3-scale/v/4.0.9"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@types/d3-scale",
+      "purl": "pkg:npm/%40types/d3-scale@4.0.9",
+      "scope": "required",
+      "type": "library",
+      "version": "4.0.9"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:b9a0e5c8bd2eaa7cb654fd1ea0c2601cd1a4f36ab4d6744c6b32bc47f31d909e",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@standard-schema/utils/v/0.3.0"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/standard-schema/standard-schema"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@standard-schema/utils",
+      "purl": "pkg:npm/%40standard-schema/utils@0.3.0",
+      "scope": "required",
+      "type": "library",
+      "version": "0.3.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:ba5ef3b0ed5149637668fceb8d90a2b883d0e047a8bfa341d5dec342ce93ed06",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/d3-array/v/3.2.4"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/d3/d3-array.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ],
+      "name": "d3-array",
+      "purl": "pkg:npm/d3-array@3.2.4",
+      "scope": "required",
+      "type": "library",
+      "version": "3.2.4"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:be97c8bfef8acc926e2c513936e361eee3352f4cfe759ecd2678f6a44936dfeb",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/recharts/v/3.9.2"
+        },
+        {
+          "type": "vcs",
+          "url": "git+https://github.com/recharts/recharts.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "recharts",
+      "purl": "pkg:npm/recharts@3.9.2",
+      "scope": "required",
+      "type": "library",
+      "version": "3.9.2"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:c22fd8b401e67207e8c88a512c4f61fb4951107339d40ffc3fd6bfb12a9a3adc",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/lucide-react/v/1.25.0"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/lucide-icons/lucide.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ],
+      "name": "lucide-react",
+      "purl": "pkg:npm/lucide-react@1.25.0",
+      "scope": "required",
+      "type": "library",
+      "version": "1.25.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:c6c37e4d39dda996308b6806f8ad5dc5854135ce536758ff09acca90c87ac8ec",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@types/d3-path/v/3.1.1"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@types/d3-path",
+      "purl": "pkg:npm/%40types/d3-path@3.1.1",
+      "scope": "required",
+      "type": "library",
+      "version": "3.1.1"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:c8d08e6bb6ecc1fdaae5a1d0b746610765ca53d153475cd42431ae9080d7bcff",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/d3-path/v/3.1.0"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/d3/d3-path.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ],
+      "name": "d3-path",
+      "purl": "pkg:npm/d3-path@3.1.0",
+      "scope": "required",
+      "type": "library",
+      "version": "3.1.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:ccfb22bb0ca24a5dc5c988d2c3dfdf1dad9976ed074f9d6306ecb4e26796e732",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/d3-timer/v/3.0.1"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/d3/d3-timer.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ],
+      "name": "d3-timer",
+      "purl": "pkg:npm/d3-timer@3.0.1",
+      "scope": "required",
+      "type": "library",
+      "version": "3.0.1"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:d68cfe4125afc7d44e30e2035f88f902ef44c1ea57ec847d08ee1b1815b98e14",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@types/d3-interpolate/v/3.0.4"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@types/d3-interpolate",
+      "purl": "pkg:npm/%40types/d3-interpolate@3.0.4",
+      "scope": "required",
+      "type": "library",
+      "version": "3.0.4"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:d9c7659a05f23c9baea32fa9d7d4d9ca4a54ef77f24931316b206727c41eef16",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/internmap/v/2.0.3"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/mbostock/internmap.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ],
+      "name": "internmap",
+      "purl": "pkg:npm/internmap@2.0.3",
+      "scope": "required",
+      "type": "library",
+      "version": "2.0.3"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:df115d080f138392c2ebe7a6f02c7808c70dac4c3237b1c6c5452e67f3d828dc",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/d3-ease/v/3.0.1"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/d3/d3-ease.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "BSD-3-Clause"
+          }
+        }
+      ],
+      "name": "d3-ease",
+      "purl": "pkg:npm/d3-ease@3.0.1",
+      "scope": "required",
+      "type": "library",
+      "version": "3.0.1"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:e15feb0c17f999ac89fb87eeac05840dbba6778af2d09840c0070f7e8b333df3",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@types/use-sync-external-store/v/0.0.6"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@types/use-sync-external-store",
+      "purl": "pkg:npm/%40types/use-sync-external-store@0.0.6",
+      "scope": "required",
+      "type": "library",
+      "version": "0.0.6"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:e1bfdfe39ee8229f39a066cc957f61e0d49de43ab4542e71a3d96386617ce2c1",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@types/d3-color/v/3.1.3"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@types/d3-color",
+      "purl": "pkg:npm/%40types/d3-color@3.1.3",
+      "scope": "required",
+      "type": "library",
+      "version": "3.1.3"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:e9e171948df3cba2a0a367457b190a152c6bb4ce04271b201c6cdedee97703d1",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@standard-schema/spec/v/1.1.0"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/standard-schema/standard-schema"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@standard-schema/spec",
+      "purl": "pkg:npm/%40standard-schema/spec@1.1.0",
+      "scope": "required",
+      "type": "library",
+      "version": "1.1.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:eca0f5f07ae01f1b94165aab4b8776a3094a9ad1d4107fb38f013d6635020e81",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@tanstack/query-core/v/5.101.2"
+        },
+        {
+          "type": "vcs",
+          "url": "git+https://github.com/TanStack/query.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@tanstack/query-core",
+      "purl": "pkg:npm/%40tanstack/query-core@5.101.2",
+      "scope": "required",
+      "type": "library",
+      "version": "5.101.2"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:eeb679afdf9f13bf6c900616ee77ad2bfc2bcda8c8d7f388aad9b2a502b9f616",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/redux-thunk/v/3.1.0"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "redux-thunk",
+      "purl": "pkg:npm/redux-thunk@3.1.0",
+      "scope": "required",
+      "type": "library",
+      "version": "3.1.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:ef30f1dabebbc078d91fcf3e867fde205480eed22c01058bfe9c3fbacba1929c",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@types/d3-array/v/3.2.2"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@types/d3-array",
+      "purl": "pkg:npm/%40types/d3-array@3.2.2",
+      "scope": "required",
+      "type": "library",
+      "version": "3.2.2"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:effcea4806c24fd7fb653ce7f239304f00e3e836dc6705edb09b06478394693d",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/victory-vendor/v/37.3.6"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/FormidableLabs/victory"
+        }
+      ],
+      "licenses": [
+        {
+          "expression": "MIT AND ISC"
+        }
+      ],
+      "name": "victory-vendor",
+      "purl": "pkg:npm/victory-vendor@37.3.6",
+      "scope": "required",
+      "type": "library",
+      "version": "37.3.6"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:f06bb8901fddd66645a84cbc95590f49f9549383103cdff62960620c0835c4e8",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@reduxjs/toolkit/v/2.12.0"
+        },
+        {
+          "type": "vcs",
+          "url": "git+https://github.com/reduxjs/redux-toolkit.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@reduxjs/toolkit",
+      "purl": "pkg:npm/%40reduxjs/toolkit@2.12.0",
+      "scope": "required",
+      "type": "library",
+      "version": "2.12.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:f2c9c04e112413471998ac52a0d3491763d098c0c30b3439d41b2dc7f1775f36",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/@types/d3-timer/v/3.0.2"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/DefinitelyTyped/DefinitelyTyped.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "@types/d3-timer",
+      "purl": "pkg:npm/%40types/d3-timer@3.0.2",
+      "scope": "required",
+      "type": "library",
+      "version": "3.0.2"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:f446c78628ad418dc4695331d4b4bbdc07dcee7fe77ae46ecf38759a054023d7",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/d3-time-format/v/4.1.0"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/d3/d3-time-format.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "ISC"
+          }
+        }
+      ],
+      "name": "d3-time-format",
+      "purl": "pkg:npm/d3-time-format@4.1.0",
+      "scope": "required",
+      "type": "library",
+      "version": "4.1.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:f73ff41c8cdf6e1963bfecbf8794698c027885ae5d9cbf36a68238565342b27c",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/scheduler/v/0.27.0"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/facebook/react.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "scheduler",
+      "purl": "pkg:npm/scheduler@0.27.0",
+      "scope": "required",
+      "type": "library",
+      "version": "0.27.0"
+    },
+    {
+      "bom-ref": "urn:katilim:npm:fca1f04af99582eb4cf401c2d3bc0d492e774588632e7fb41da365e8fb838838",
+      "externalReferences": [
+        {
+          "type": "distribution",
+          "url": "https://www.npmjs.com/package/es-toolkit/v/1.49.0"
+        },
+        {
+          "type": "vcs",
+          "url": "https://github.com/toss/es-toolkit.git"
+        }
+      ],
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "name": "es-toolkit",
+      "purl": "pkg:npm/es-toolkit@1.49.0",
+      "scope": "required",
+      "type": "library",
+      "version": "1.49.0"
+    }
+  ],
+  "dependencies": [
+    {
+      "dependsOn": [
+        "urn:katilim:npm:3b085faf485ace940ae5c914dbbcd9e6f5da650f49ce5fba04fd8e64193feffa",
+        "urn:katilim:npm:4636996d16b3e3ae44f3c50a0afb507fc0180593c951448a17e46483000f654f",
+        "urn:katilim:npm:8de0f349c3d38e401fbb8703f2359b066d62ceb4d92e2bf96e3a471b6ae7daef",
+        "urn:katilim:npm:be97c8bfef8acc926e2c513936e361eee3352f4cfe759ecd2678f6a44936dfeb",
+        "urn:katilim:npm:c22fd8b401e67207e8c88a512c4f61fb4951107339d40ffc3fd6bfb12a9a3adc"
+      ],
+      "ref": "pkg:npm/katilim-analiz-web@0.1.0"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:c6c37e4d39dda996308b6806f8ad5dc5854135ce536758ff09acca90c87ac8ec"
+      ],
+      "ref": "urn:katilim:npm:00edd00deb7f181fe6d797b8b69aff183b4efeee3edc559200982eed33405575"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:4521817f218734bd96917610042992b82aa48c996a31471e589aab80e637fd3c"
+      ],
+      "ref": "urn:katilim:npm:13ccc486b35ab94ff166c75c703e47e222c34643f99b50209e936f370eb63bfd"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:1d72c7877908ed3a9ca1a62a2ca918bf591741df9691ff7292d0449e51347cfd"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:250791eee43beb03272cb47941ff2bd87d29379f134dcda57b89f3362ada1dcc"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:536e6c3a528a7abc06799f4e1328abd7e9a5b0dd969bcb7e784220afda50e64e",
+        "urn:katilim:npm:76d4508412fd4d4d324e0433eac3c81931fdcead8ff742743b8ab4807402422c",
+        "urn:katilim:npm:b06e23ad9ca3d675a3f5e461fd9188a487707b4498aed2410acdb4f9530af124",
+        "urn:katilim:npm:ba5ef3b0ed5149637668fceb8d90a2b883d0e047a8bfa341d5dec342ce93ed06",
+        "urn:katilim:npm:f446c78628ad418dc4695331d4b4bbdc07dcee7fe77ae46ecf38759a054023d7"
+      ],
+      "ref": "urn:katilim:npm:383ff7521a011e3304a8f6d8ab5cb8c266870398610898761f53d500cd69dedd"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:3b085faf485ace940ae5c914dbbcd9e6f5da650f49ce5fba04fd8e64193feffa"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:13ccc486b35ab94ff166c75c703e47e222c34643f99b50209e936f370eb63bfd",
+        "urn:katilim:npm:3b085faf485ace940ae5c914dbbcd9e6f5da650f49ce5fba04fd8e64193feffa",
+        "urn:katilim:npm:907e388ebf59b48c462bd20ef29149d3bdc88ac93dc203498bbe03ff570f5946",
+        "urn:katilim:npm:b0ac7b10a16f8e931976d1809b46362c8df44a2a1c69b39da01605ef8f68dc2e",
+        "urn:katilim:npm:e15feb0c17f999ac89fb87eeac05840dbba6778af2d09840c0070f7e8b333df3"
+      ],
+      "ref": "urn:katilim:npm:3c3476b33ed82b4f7ce7803c8f68835da3c3cd3ada774da64b267132aa172d0d"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:436c905b6303674856c14d1e76d724c196841b5ee4f98262e667c48d3f14dcfe"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:4521817f218734bd96917610042992b82aa48c996a31471e589aab80e637fd3c"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:3b085faf485ace940ae5c914dbbcd9e6f5da650f49ce5fba04fd8e64193feffa",
+        "urn:katilim:npm:f73ff41c8cdf6e1963bfecbf8794698c027885ae5d9cbf36a68238565342b27c"
+      ],
+      "ref": "urn:katilim:npm:4636996d16b3e3ae44f3c50a0afb507fc0180593c951448a17e46483000f654f"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:5236a6af6bb7a2165a32ae1cc30e9eede4173bbe0dea203e05b4e6c49fc45412"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:536e6c3a528a7abc06799f4e1328abd7e9a5b0dd969bcb7e784220afda50e64e"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:661ba0e8b743d5429bd6467797b69a89c28c0d28a3a2c06291c2fa726faa523d"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:6d9d4d660a59609648f9e2a3072e0408d431498cc126b63f0f14cde4d89f678a"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:73c4b5f226a6a095844a85c5a17f47798a53558b9d6d6bedf89c20f153108621"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:661ba0e8b743d5429bd6467797b69a89c28c0d28a3a2c06291c2fa726faa523d"
+      ],
+      "ref": "urn:katilim:npm:76d4508412fd4d4d324e0433eac3c81931fdcead8ff742743b8ab4807402422c"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:7e3961b6f3160321ba4fa38aab76828585ca5fc68bc01fb4a3230fc0fa32bdee"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:3b085faf485ace940ae5c914dbbcd9e6f5da650f49ce5fba04fd8e64193feffa",
+        "urn:katilim:npm:eca0f5f07ae01f1b94165aab4b8776a3094a9ad1d4107fb38f013d6635020e81"
+      ],
+      "ref": "urn:katilim:npm:8de0f349c3d38e401fbb8703f2359b066d62ceb4d92e2bf96e3a471b6ae7daef"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:3b085faf485ace940ae5c914dbbcd9e6f5da650f49ce5fba04fd8e64193feffa"
+      ],
+      "ref": "urn:katilim:npm:907e388ebf59b48c462bd20ef29149d3bdc88ac93dc203498bbe03ff570f5946"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:9c12020ff45e77c5ea0f9085b150bf9d90f81ae6f6ee00c484d2b1b40dac2e49"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:c8d08e6bb6ecc1fdaae5a1d0b746610765ca53d153475cd42431ae9080d7bcff"
+      ],
+      "ref": "urn:katilim:npm:ac97501e21c785fcf915ad42a9256aadc2032aff8d9777948abc7c09d40390c5"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:b01ca6fa5e730eb0c64df64663a12b848000578f1039668e354d7d260f3197c3"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:ba5ef3b0ed5149637668fceb8d90a2b883d0e047a8bfa341d5dec342ce93ed06"
+      ],
+      "ref": "urn:katilim:npm:b06e23ad9ca3d675a3f5e461fd9188a487707b4498aed2410acdb4f9530af124"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:b0ac7b10a16f8e931976d1809b46362c8df44a2a1c69b39da01605ef8f68dc2e"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:7e3961b6f3160321ba4fa38aab76828585ca5fc68bc01fb4a3230fc0fa32bdee"
+      ],
+      "ref": "urn:katilim:npm:b733f26b2e4988122591a77c993324bd0c487808636537ebd5624e7f390f4c63"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:b9a0e5c8bd2eaa7cb654fd1ea0c2601cd1a4f36ab4d6744c6b32bc47f31d909e"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:d9c7659a05f23c9baea32fa9d7d4d9ca4a54ef77f24931316b206727c41eef16"
+      ],
+      "ref": "urn:katilim:npm:ba5ef3b0ed5149637668fceb8d90a2b883d0e047a8bfa341d5dec342ce93ed06"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:1d72c7877908ed3a9ca1a62a2ca918bf591741df9691ff7292d0449e51347cfd",
+        "urn:katilim:npm:250791eee43beb03272cb47941ff2bd87d29379f134dcda57b89f3362ada1dcc",
+        "urn:katilim:npm:3b085faf485ace940ae5c914dbbcd9e6f5da650f49ce5fba04fd8e64193feffa",
+        "urn:katilim:npm:3c3476b33ed82b4f7ce7803c8f68835da3c3cd3ada774da64b267132aa172d0d",
+        "urn:katilim:npm:436c905b6303674856c14d1e76d724c196841b5ee4f98262e667c48d3f14dcfe",
+        "urn:katilim:npm:4636996d16b3e3ae44f3c50a0afb507fc0180593c951448a17e46483000f654f",
+        "urn:katilim:npm:5236a6af6bb7a2165a32ae1cc30e9eede4173bbe0dea203e05b4e6c49fc45412",
+        "urn:katilim:npm:6d9d4d660a59609648f9e2a3072e0408d431498cc126b63f0f14cde4d89f678a",
+        "urn:katilim:npm:73c4b5f226a6a095844a85c5a17f47798a53558b9d6d6bedf89c20f153108621",
+        "urn:katilim:npm:907e388ebf59b48c462bd20ef29149d3bdc88ac93dc203498bbe03ff570f5946",
+        "urn:katilim:npm:9c12020ff45e77c5ea0f9085b150bf9d90f81ae6f6ee00c484d2b1b40dac2e49",
+        "urn:katilim:npm:effcea4806c24fd7fb653ce7f239304f00e3e836dc6705edb09b06478394693d",
+        "urn:katilim:npm:f06bb8901fddd66645a84cbc95590f49f9549383103cdff62960620c0835c4e8",
+        "urn:katilim:npm:fca1f04af99582eb4cf401c2d3bc0d492e774588632e7fb41da365e8fb838838"
+      ],
+      "ref": "urn:katilim:npm:be97c8bfef8acc926e2c513936e361eee3352f4cfe759ecd2678f6a44936dfeb"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:3b085faf485ace940ae5c914dbbcd9e6f5da650f49ce5fba04fd8e64193feffa"
+      ],
+      "ref": "urn:katilim:npm:c22fd8b401e67207e8c88a512c4f61fb4951107339d40ffc3fd6bfb12a9a3adc"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:c6c37e4d39dda996308b6806f8ad5dc5854135ce536758ff09acca90c87ac8ec"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:c8d08e6bb6ecc1fdaae5a1d0b746610765ca53d153475cd42431ae9080d7bcff"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:ccfb22bb0ca24a5dc5c988d2c3dfdf1dad9976ed074f9d6306ecb4e26796e732"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:e1bfdfe39ee8229f39a066cc957f61e0d49de43ab4542e71a3d96386617ce2c1"
+      ],
+      "ref": "urn:katilim:npm:d68cfe4125afc7d44e30e2035f88f902ef44c1ea57ec847d08ee1b1815b98e14"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:d9c7659a05f23c9baea32fa9d7d4d9ca4a54ef77f24931316b206727c41eef16"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:df115d080f138392c2ebe7a6f02c7808c70dac4c3237b1c6c5452e67f3d828dc"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:e15feb0c17f999ac89fb87eeac05840dbba6778af2d09840c0070f7e8b333df3"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:e1bfdfe39ee8229f39a066cc957f61e0d49de43ab4542e71a3d96386617ce2c1"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:e9e171948df3cba2a0a367457b190a152c6bb4ce04271b201c6cdedee97703d1"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:eca0f5f07ae01f1b94165aab4b8776a3094a9ad1d4107fb38f013d6635020e81"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:b0ac7b10a16f8e931976d1809b46362c8df44a2a1c69b39da01605ef8f68dc2e"
+      ],
+      "ref": "urn:katilim:npm:eeb679afdf9f13bf6c900616ee77ad2bfc2bcda8c8d7f388aad9b2a502b9f616"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:ef30f1dabebbc078d91fcf3e867fde205480eed22c01058bfe9c3fbacba1929c"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:00edd00deb7f181fe6d797b8b69aff183b4efeee3edc559200982eed33405575",
+        "urn:katilim:npm:383ff7521a011e3304a8f6d8ab5cb8c266870398610898761f53d500cd69dedd",
+        "urn:katilim:npm:76d4508412fd4d4d324e0433eac3c81931fdcead8ff742743b8ab4807402422c",
+        "urn:katilim:npm:7e3961b6f3160321ba4fa38aab76828585ca5fc68bc01fb4a3230fc0fa32bdee",
+        "urn:katilim:npm:ac97501e21c785fcf915ad42a9256aadc2032aff8d9777948abc7c09d40390c5",
+        "urn:katilim:npm:b01ca6fa5e730eb0c64df64663a12b848000578f1039668e354d7d260f3197c3",
+        "urn:katilim:npm:b06e23ad9ca3d675a3f5e461fd9188a487707b4498aed2410acdb4f9530af124",
+        "urn:katilim:npm:b733f26b2e4988122591a77c993324bd0c487808636537ebd5624e7f390f4c63",
+        "urn:katilim:npm:ba5ef3b0ed5149637668fceb8d90a2b883d0e047a8bfa341d5dec342ce93ed06",
+        "urn:katilim:npm:ccfb22bb0ca24a5dc5c988d2c3dfdf1dad9976ed074f9d6306ecb4e26796e732",
+        "urn:katilim:npm:d68cfe4125afc7d44e30e2035f88f902ef44c1ea57ec847d08ee1b1815b98e14",
+        "urn:katilim:npm:df115d080f138392c2ebe7a6f02c7808c70dac4c3237b1c6c5452e67f3d828dc",
+        "urn:katilim:npm:ef30f1dabebbc078d91fcf3e867fde205480eed22c01058bfe9c3fbacba1929c",
+        "urn:katilim:npm:f2c9c04e112413471998ac52a0d3491763d098c0c30b3439d41b2dc7f1775f36"
+      ],
+      "ref": "urn:katilim:npm:effcea4806c24fd7fb653ce7f239304f00e3e836dc6705edb09b06478394693d"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:250791eee43beb03272cb47941ff2bd87d29379f134dcda57b89f3362ada1dcc",
+        "urn:katilim:npm:3b085faf485ace940ae5c914dbbcd9e6f5da650f49ce5fba04fd8e64193feffa",
+        "urn:katilim:npm:3c3476b33ed82b4f7ce7803c8f68835da3c3cd3ada774da64b267132aa172d0d",
+        "urn:katilim:npm:9c12020ff45e77c5ea0f9085b150bf9d90f81ae6f6ee00c484d2b1b40dac2e49",
+        "urn:katilim:npm:b0ac7b10a16f8e931976d1809b46362c8df44a2a1c69b39da01605ef8f68dc2e",
+        "urn:katilim:npm:b9a0e5c8bd2eaa7cb654fd1ea0c2601cd1a4f36ab4d6744c6b32bc47f31d909e",
+        "urn:katilim:npm:e9e171948df3cba2a0a367457b190a152c6bb4ce04271b201c6cdedee97703d1",
+        "urn:katilim:npm:eeb679afdf9f13bf6c900616ee77ad2bfc2bcda8c8d7f388aad9b2a502b9f616"
+      ],
+      "ref": "urn:katilim:npm:f06bb8901fddd66645a84cbc95590f49f9549383103cdff62960620c0835c4e8"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:f2c9c04e112413471998ac52a0d3491763d098c0c30b3439d41b2dc7f1775f36"
+    },
+    {
+      "dependsOn": [
+        "urn:katilim:npm:b06e23ad9ca3d675a3f5e461fd9188a487707b4498aed2410acdb4f9530af124"
+      ],
+      "ref": "urn:katilim:npm:f446c78628ad418dc4695331d4b4bbdc07dcee7fe77ae46ecf38759a054023d7"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:f73ff41c8cdf6e1963bfecbf8794698c027885ae5d9cbf36a68238565342b27c"
+    },
+    {
+      "dependsOn": [],
+      "ref": "urn:katilim:npm:fca1f04af99582eb4cf401c2d3bc0d492e774588632e7fb41da365e8fb838838"
+    }
+  ],
+  "metadata": {
+    "component": {
+      "bom-ref": "pkg:npm/katilim-analiz-web@0.1.0",
+      "licenses": [
+        {
+          "license": {
+            "id": "Apache-2.0"
+          }
+        }
+      ],
+      "name": "katilim-analiz-web",
+      "purl": "pkg:npm/katilim-analiz-web@0.1.0",
+      "type": "application",
+      "version": "0.1.0"
+    },
+    "tools": {
+      "components": [
+        {
+          "name": "katilim-license-generator",
+          "type": "application",
+          "version": "1.0.0"
+        }
+      ]
+    }
+  },
+  "specVersion": "1.7",
+  "version": 1
+}

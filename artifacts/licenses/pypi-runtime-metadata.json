@@ -1,0 +1,320 @@
+{
+  "packages": [
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "MIT",
+      "name": "alembic",
+      "project_url": "https://pypi.org/project/alembic/",
+      "source_url": "https://pypi.org/pypi/alembic/1.18.5/json",
+      "version": "1.18.5"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "MIT",
+      "name": "annotated-doc",
+      "project_url": "https://pypi.org/project/annotated-doc/",
+      "source_url": "https://pypi.org/pypi/annotated-doc/0.0.4/json",
+      "version": "0.0.4"
+    },
+    {
+      "license": null,
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_expression": null,
+      "name": "annotated-types",
+      "project_url": "https://pypi.org/project/annotated-types/",
+      "source_url": "https://pypi.org/pypi/annotated-types/0.7.0/json",
+      "version": "0.7.0"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "MIT",
+      "name": "anyio",
+      "project_url": "https://pypi.org/project/anyio/",
+      "source_url": "https://pypi.org/pypi/anyio/4.14.2/json",
+      "version": "4.14.2"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "Apache-2.0",
+      "name": "asyncpg",
+      "project_url": "https://pypi.org/project/asyncpg/",
+      "source_url": "https://pypi.org/pypi/asyncpg/0.31.0/json",
+      "version": "0.31.0"
+    },
+    {
+      "license": "MIT License",
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_expression": null,
+      "name": "beautifulsoup4",
+      "project_url": "https://pypi.org/project/beautifulsoup4/",
+      "source_url": "https://pypi.org/pypi/beautifulsoup4/4.15.0/json",
+      "version": "4.15.0"
+    },
+    {
+      "license": "MPL-2.0",
+      "license_classifiers": [
+        "License :: OSI Approved :: Mozilla Public License 2.0 (MPL 2.0)"
+      ],
+      "license_expression": null,
+      "name": "certifi",
+      "project_url": "https://pypi.org/project/certifi/",
+      "source_url": "https://pypi.org/pypi/certifi/2026.6.17/json",
+      "version": "2026.6.17"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "BSD-3-Clause",
+      "name": "click",
+      "project_url": "https://pypi.org/project/click/",
+      "source_url": "https://pypi.org/pypi/click/8.4.2/json",
+      "version": "8.4.2"
+    },
+    {
+      "license": "",
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_expression": null,
+      "name": "colorama",
+      "project_url": "https://pypi.org/project/colorama/",
+      "source_url": "https://pypi.org/pypi/colorama/0.4.6/json",
+      "version": "0.4.6"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "MIT",
+      "name": "fastapi",
+      "project_url": "https://pypi.org/project/fastapi/",
+      "source_url": "https://pypi.org/pypi/fastapi/0.139.2/json",
+      "version": "0.139.2"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "MIT AND PSF-2.0",
+      "name": "greenlet",
+      "project_url": "https://pypi.org/project/greenlet/",
+      "source_url": "https://pypi.org/pypi/greenlet/3.5.3/json",
+      "version": "3.5.3"
+    },
+    {
+      "license": "MIT",
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_expression": null,
+      "name": "h11",
+      "project_url": "https://pypi.org/project/h11/",
+      "source_url": "https://pypi.org/pypi/h11/0.16.0/json",
+      "version": "0.16.0"
+    },
+    {
+      "license": null,
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_expression": "BSD-3-Clause",
+      "name": "httpcore",
+      "project_url": "https://pypi.org/project/httpcore/",
+      "source_url": "https://pypi.org/pypi/httpcore/1.0.9/json",
+      "version": "1.0.9"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "MIT",
+      "name": "httptools",
+      "project_url": "https://pypi.org/project/httptools/",
+      "source_url": "https://pypi.org/pypi/httptools/0.8.0/json",
+      "version": "0.8.0"
+    },
+    {
+      "license": "BSD-3-Clause",
+      "license_classifiers": [
+        "License :: OSI Approved :: BSD License"
+      ],
+      "license_expression": null,
+      "name": "httpx",
+      "project_url": "https://pypi.org/project/httpx/",
+      "source_url": "https://pypi.org/pypi/httpx/0.28.1/json",
+      "version": "0.28.1"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "BSD-3-Clause",
+      "name": "idna",
+      "project_url": "https://pypi.org/project/idna/",
+      "source_url": "https://pypi.org/pypi/idna/3.18/json",
+      "version": "3.18"
+    },
+    {
+      "license": "MIT",
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_expression": null,
+      "name": "mako",
+      "project_url": "https://pypi.org/project/Mako/",
+      "source_url": "https://pypi.org/pypi/mako/1.3.12/json",
+      "version": "1.3.12"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "BSD-3-Clause",
+      "name": "markupsafe",
+      "project_url": "https://pypi.org/project/MarkupSafe/",
+      "source_url": "https://pypi.org/pypi/markupsafe/3.0.3/json",
+      "version": "3.0.3"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "MIT",
+      "name": "pydantic",
+      "project_url": "https://pypi.org/project/pydantic/",
+      "source_url": "https://pypi.org/pypi/pydantic/2.13.4/json",
+      "version": "2.13.4"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "MIT",
+      "name": "pydantic-core",
+      "project_url": "https://pypi.org/project/pydantic_core/",
+      "source_url": "https://pypi.org/pypi/pydantic-core/2.46.4/json",
+      "version": "2.46.4"
+    },
+    {
+      "license": null,
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_expression": "MIT",
+      "name": "pydantic-settings",
+      "project_url": "https://pypi.org/project/pydantic-settings/",
+      "source_url": "https://pypi.org/pypi/pydantic-settings/2.14.2/json",
+      "version": "2.14.2"
+    },
+    {
+      "license": "BSD-3-Clause",
+      "license_classifiers": [],
+      "license_expression": null,
+      "name": "python-dotenv",
+      "project_url": "https://pypi.org/project/python-dotenv/",
+      "source_url": "https://pypi.org/pypi/python-dotenv/1.2.2/json",
+      "version": "1.2.2"
+    },
+    {
+      "license": "MIT",
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_expression": null,
+      "name": "pyyaml",
+      "project_url": "https://pypi.org/project/PyYAML/",
+      "source_url": "https://pypi.org/pypi/pyyaml/6.0.3/json",
+      "version": "6.0.3"
+    },
+    {
+      "license": null,
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_expression": "MIT",
+      "name": "soupsieve",
+      "project_url": "https://pypi.org/project/soupsieve/",
+      "source_url": "https://pypi.org/pypi/soupsieve/2.8.4/json",
+      "version": "2.8.4"
+    },
+    {
+      "license": "MIT",
+      "license_classifiers": [],
+      "license_expression": null,
+      "name": "sqlalchemy",
+      "project_url": "https://pypi.org/project/SQLAlchemy/",
+      "source_url": "https://pypi.org/pypi/sqlalchemy/2.0.51/json",
+      "version": "2.0.51"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "BSD-3-Clause",
+      "name": "starlette",
+      "project_url": "https://pypi.org/project/starlette/",
+      "source_url": "https://pypi.org/pypi/starlette/1.3.1/json",
+      "version": "1.3.1"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "PSF-2.0",
+      "name": "typing-extensions",
+      "project_url": "https://pypi.org/project/typing-extensions/",
+      "source_url": "https://pypi.org/pypi/typing-extensions/4.16.0/json",
+      "version": "4.16.0"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "MIT",
+      "name": "typing-inspection",
+      "project_url": "https://pypi.org/project/typing-inspection/",
+      "source_url": "https://pypi.org/pypi/typing-inspection/0.4.2/json",
+      "version": "0.4.2"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "BSD-3-Clause",
+      "name": "uvicorn",
+      "project_url": "https://pypi.org/project/uvicorn/",
+      "source_url": "https://pypi.org/pypi/uvicorn/0.51.0/json",
+      "version": "0.51.0"
+    },
+    {
+      "license": "MIT License",
+      "license_classifiers": [
+        "License :: OSI Approved :: Apache Software License",
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_expression": null,
+      "name": "uvloop",
+      "project_url": "https://pypi.org/project/uvloop/",
+      "source_url": "https://pypi.org/pypi/uvloop/0.22.1/json",
+      "version": "0.22.1"
+    },
+    {
+      "license": "MIT",
+      "license_classifiers": [
+        "License :: OSI Approved :: MIT License"
+      ],
+      "license_expression": null,
+      "name": "watchfiles",
+      "project_url": "https://pypi.org/project/watchfiles/",
+      "source_url": "https://pypi.org/pypi/watchfiles/1.2.0/json",
+      "version": "1.2.0"
+    },
+    {
+      "license": null,
+      "license_classifiers": [],
+      "license_expression": "BSD-3-Clause",
+      "name": "websockets",
+      "project_url": "https://pypi.org/project/websockets/",
+      "source_url": "https://pypi.org/pypi/websockets/16.1.1/json",
+      "version": "16.1.1"
+    }
+  ],
+  "source": "PyPI JSON API"
+}

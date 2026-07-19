@@ -1,0 +1,15 @@
+{
+  "$schema": "../../schemas/gold-manifest.schema.json",
+  "schema_version": "1.0",
+  "dataset_id": "katilim-campaign-gold",
+  "dataset_version": "0.1.0",
+  "created_at": "2026-07-18T22:30:00+03:00",
+  "source_registry_version": "2026-07-18.1",
+  "examples_path": "examples.jsonl",
+  "splits_path": "splits.json",
+  "example_count": 4,
+  "review_counts": {"verified": 0, "pending": 4, "rejected": 0},
+  "licence_boundary": "Team annotations and schema are Apache-2.0. Official-bank excerpts remain third-party material and are included only as short verification evidence; no rights are transferred.",
+  "evaluation_eligibility": "insufficient_data",
+  "reason": "No example has completed the declared human-review workflow."
+}

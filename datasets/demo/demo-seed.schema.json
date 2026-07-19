@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://katilim-analiz.local/datasets/demo/demo-seed.schema.json",
+  "title": "Katılım Analiz versioned demo seed",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "dataset_id",
+    "dataset_version",
+    "created_at",
+    "source_registry_version",
+    "source_coverage",
+    "source_examples",
+    "coverage",
+    "campaigns",
+    "limitations"
+  ],
+  "properties": {
+    "schema_version": {"const": "1.0"},
+    "dataset_id": {"const": "katilim-demo-seed"},
+    "dataset_version": {"type": "string", "pattern": "^[0-9]+\\.[0-9]+\\.[0-9]+$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "source_registry_version": {"type": "string", "minLength": 1},
+    "source_coverage": {"$ref": "#/$defs/sourceAsset"},
+    "source_examples": {"$ref": "#/$defs/sourceAsset"},
+    "coverage": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {"$ref": "#/$defs/coverage"}
+    },
+    "campaigns": {
+      "type": "array",
+      "minItems": 1,
+      "maxItems": 20,
+      "items": {"$ref": "#/$defs/campaign"}
+    },
+    "limitations": {
+      "type": "array",
+      "minItems": 1,
+      "items": {"type": "string", "minLength": 1, "maxLength": 500}
+    }
+  },
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"},
+    "sourceAsset": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["path", "sha256"],
+      "properties": {
+        "path": {"type": "string", "pattern": "^datasets/"},
+        "sha256": {"$ref": "#/$defs/sha256"}
+      }
+    },
+    "coverage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bank_id",
+        "bank_name",
+        "observed_at",
+        "status",
+        "source_count",
+        "source_candidate_count",
+        "reason"
+      ],
+      "properties": {
+        "bank_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,99}$"},
+        "bank_name": {"type": "string", "minLength": 1},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "status": {"enum": ["success", "not_found", "unreachable", "blocked", "partial"]},
+        "source_count": {"type": "integer", "minimum": 0},
+        "source_candidate_count": {"type": "integer", "minimum": 0},
+        "reason": {"type": "string", "minLength": 1, "maxLength": 500}
+      }
+    },
+    "rate": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["raw", "value_percent", "kind", "period", "gross_net_basis", "status"],
+      "properties": {
+        "raw": {"type": "string", "minLength": 1},
+        "value_percent": {"type": "string", "pattern": "^[0-9]+(?:\\.[0-9]+)?$"},
+        "kind": {"type": "string"},
+        "period": {"type": "string"},
+        "gross_net_basis": {"type": "string"},
+        "status": {"enum": ["stated", "inferred", "unknown", "ambiguous"]}
+      }
+    },
+    "validity": {
+      "type": ["object", "null"],
+      "additionalProperties": false,
+      "required": ["raw", "starts_on", "ends_on", "status"],
+      "properties": {
+        "raw": {"type": "string", "minLength": 1},
+        "starts_on": {"type": ["string", "null"], "format": "date"},
+        "ends_on": {"type": ["string", "null"], "format": "date"},
+        "status": {"enum": ["stated", "inferred", "unknown", "ambiguous"]}
+      }
+    },
+    "evidence": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "field_pointer",
+        "quote",
+        "evidence_sha256",
+        "source_block_id",
+        "source_start_char",
+        "source_end_char",
+        "status"
+      ],
+      "properties": {
+        "field_pointer": {"type": "string", "pattern": "^/"},
+        "quote": {"type": "string", "minLength": 1, "maxLength": 1000},
+        "evidence_sha256": {"$ref": "#/$defs/sha256"},
+        "source_block_id": {"type": "string", "minLength": 1, "maxLength": 191},
+        "source_start_char": {"type": "integer", "minimum": 0},
+        "source_end_char": {"type": "integer", "minimum": 1},
+        "status": {"enum": ["stated", "inferred"]}
+      }
+    },
+    "campaign": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "seed_id",
+        "source_example_id",
+        "bank_id",
+        "source_url",
+        "observed_at",
+        "source_raw_sha256",
+        "source_clean_sha256",
+        "human_review_status",
+        "title",
+        "product_family",
+        "campaign_type",
+        "rates",
+        "validity",
+        "evidence",
+        "issues"
+      ],
+      "properties": {
+        "seed_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,99}$"},
+        "source_example_id": {"type": "string", "minLength": 1, "maxLength": 191},
+        "bank_id": {"type": "string", "pattern": "^[a-z0-9][a-z0-9-]{0,99}$"},
+        "source_url": {"type": "string", "format": "uri"},
+        "observed_at": {"type": "string", "format": "date-time"},
+        "source_raw_sha256": {"$ref": "#/$defs/sha256"},
+        "source_clean_sha256": {"$ref": "#/$defs/sha256"},
+        "human_review_status": {"const": "pending"},
+        "title": {"type": "string", "minLength": 1, "maxLength": 500},
+        "product_family": {"type": "string"},
+        "campaign_type": {"type": "string"},
+        "rates": {"type": "array", "maxItems": 20, "items": {"$ref": "#/$defs/rate"}},
+        "validity": {"$ref": "#/$defs/validity"},
+        "evidence": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {"$ref": "#/$defs/evidence"}
+        },
+        "issues": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 100,
+          "items": {"type": "string", "minLength": 1, "maxLength": 500}
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,105 @@
+{
+  "$schema": "./monitored-campaign-sources.schema.json",
+  "schema_version": "1.0",
+  "registry_id": "monitored-campaign-sources",
+  "registry_version": "2026-07-19.1",
+  "source_observed_on": "2026-07-19",
+  "bank_registry_version": "2026-07-18.2",
+  "bank_count": 10,
+  "sources": [
+    {
+      "bank_id": "adil-katilim",
+      "status": "unavailable",
+      "observed_on": "2026-07-19",
+      "evidence_url": "https://www.adilkatilim.com.tr/",
+      "unavailable_reason": "The official site exposed no campaign index or campaign-detail links when observed; no URL or path prefix is inferred."
+    },
+    {
+      "bank_id": "albaraka-turk",
+      "status": "verified",
+      "observed_on": "2026-07-19",
+      "evidence_url": "https://www.albaraka.com.tr/tr/kampanyalar",
+      "discovery_mode": "detail_links",
+      "index_url": "https://www.albaraka.com.tr/tr/kampanyalar",
+      "detail_path_prefixes": ["/tr/kampanyalar/detay/"],
+      "max_links": 150
+    },
+    {
+      "bank_id": "dunya-katilim",
+      "status": "verified",
+      "observed_on": "2026-07-19",
+      "evidence_url": "https://dunyakatilim.com.tr/kampanyalar/",
+      "discovery_mode": "detail_links",
+      "index_url": "https://dunyakatilim.com.tr/kampanyalar/",
+      "detail_path_prefixes": ["/kampanyalar/"],
+      "max_links": 150
+    },
+    {
+      "bank_id": "hayat-finans",
+      "status": "verified",
+      "observed_on": "2026-07-19",
+      "evidence_url": "https://hayatfinans.com.tr/kampanyalar",
+      "discovery_mode": "detail_links",
+      "index_url": "https://hayatfinans.com.tr/kampanyalar",
+      "detail_path_prefixes": ["/kampanyalar/"],
+      "max_links": 100
+    },
+    {
+      "bank_id": "kuveyt-turk",
+      "status": "verified",
+      "observed_on": "2026-07-19",
+      "evidence_url": "https://www.kuveytturk.com.tr/kampanyalar/kendim-icin/kart-kampanyalari",
+      "discovery_mode": "detail_links",
+      "index_url": "https://www.kuveytturk.com.tr/kampanyalar/kendim-icin/kart-kampanyalari",
+      "detail_path_prefixes": ["/kampanyalar/kendim-icin/kart-kampanyalari/"],
+      "max_links": 150
+    },
+    {
+      "bank_id": "tom-katilim",
+      "status": "verified",
+      "observed_on": "2026-07-19",
+      "evidence_url": "https://www.tombank.com.tr/kampanyalar.html",
+      "discovery_mode": "unsegmented_collection",
+      "index_url": "https://www.tombank.com.tr/kampanyalar.html",
+      "detail_path_prefixes": [],
+      "max_links": 0
+    },
+    {
+      "bank_id": "emlak-katilim",
+      "status": "verified",
+      "observed_on": "2026-07-19",
+      "evidence_url": "https://www.emlakkatilim.com.tr/tr/bireysel/kampanyalar",
+      "discovery_mode": "detail_links",
+      "index_url": "https://www.emlakkatilim.com.tr/tr/bireysel/kampanyalar",
+      "detail_path_prefixes": ["/tr/bireysel/kampanyalar/kampanya/"],
+      "max_links": 150
+    },
+    {
+      "bank_id": "turkiye-finans",
+      "status": "unavailable",
+      "observed_on": "2026-07-19",
+      "evidence_url": "https://www.turkiyefinans.com.tr/tr-tr/kampanyalar/sayfalar/default.aspx",
+      "unavailable_reason": "The official page links category collections first, while category and detail pages share the same path namespace; one-level prefix-only discovery cannot safely distinguish campaign details."
+    },
+    {
+      "bank_id": "vakif-katilim",
+      "status": "verified",
+      "observed_on": "2026-07-19",
+      "evidence_url": "https://www.vakifkatilim.com.tr/tr/kendim-icin/kampanyalar/mevcut-kampanyalar",
+      "discovery_mode": "detail_links",
+      "index_url": "https://www.vakifkatilim.com.tr/tr/kendim-icin/kampanyalar/mevcut-kampanyalar",
+      "detail_path_prefixes": ["/tr/kendim-icin/kampanyalar/detay/"],
+      "max_links": 150
+    },
+    {
+      "bank_id": "ziraat-katilim",
+      "status": "verified",
+      "observed_on": "2026-07-19",
+      "evidence_url": "https://www.ziraatkatilim.com.tr/kart-kampanyalari",
+      "discovery_mode": "detail_links",
+      "index_url": "https://www.ziraatkatilim.com.tr/kart-kampanyalari",
+      "detail_path_prefixes": ["/kart-kampanyalari/"],
+      "max_links": 200
+    }
+  ]
+}

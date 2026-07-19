@@ -1,0 +1,129 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://katilim-analiz.local/schemas/monitored-campaign-sources.schema.json",
+  "title": "Versioned monitored campaign-source registry",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "registry_id",
+    "registry_version",
+    "source_observed_on",
+    "bank_registry_version",
+    "bank_count",
+    "sources"
+  ],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schema_version": {"const": "1.0"},
+    "registry_id": {"const": "monitored-campaign-sources"},
+    "registry_version": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}\\.[1-9]\\d*$"
+    },
+    "source_observed_on": {"type": "string", "format": "date"},
+    "bank_registry_version": {
+      "type": "string",
+      "pattern": "^\\d{4}-\\d{2}-\\d{2}\\.[1-9]\\d*$"
+    },
+    "bank_count": {"type": "integer", "const": 10},
+    "sources": {
+      "type": "array",
+      "minItems": 10,
+      "maxItems": 10,
+      "items": {
+        "oneOf": [
+          {"$ref": "#/$defs/detailSource"},
+          {"$ref": "#/$defs/unsegmentedSource"},
+          {"$ref": "#/$defs/unavailableSource"}
+        ]
+      }
+    }
+  },
+  "$defs": {
+    "bankId": {
+      "type": "string",
+      "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$"
+    },
+    "observedOn": {"type": "string", "format": "date"},
+    "officialUrl": {"type": "string", "format": "uri", "pattern": "^https://"},
+    "pathPrefix": {
+      "type": "string",
+      "pattern": "^(?!.*(?:^|/)\\.{1,2}/)/(?:[^/?#\\\\\\s]+/)+$",
+      "minLength": 2,
+      "maxLength": 500
+    },
+    "detailSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bank_id",
+        "status",
+        "observed_on",
+        "evidence_url",
+        "discovery_mode",
+        "index_url",
+        "detail_path_prefixes",
+        "max_links"
+      ],
+      "properties": {
+        "bank_id": {"$ref": "#/$defs/bankId"},
+        "status": {"const": "verified"},
+        "observed_on": {"$ref": "#/$defs/observedOn"},
+        "evidence_url": {"$ref": "#/$defs/officialUrl"},
+        "discovery_mode": {"const": "detail_links"},
+        "index_url": {"$ref": "#/$defs/officialUrl"},
+        "detail_path_prefixes": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 10,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/pathPrefix"}
+        },
+        "max_links": {"type": "integer", "minimum": 1, "maximum": 250}
+      }
+    },
+    "unsegmentedSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bank_id",
+        "status",
+        "observed_on",
+        "evidence_url",
+        "discovery_mode",
+        "index_url",
+        "detail_path_prefixes",
+        "max_links"
+      ],
+      "properties": {
+        "bank_id": {"$ref": "#/$defs/bankId"},
+        "status": {"const": "verified"},
+        "observed_on": {"$ref": "#/$defs/observedOn"},
+        "evidence_url": {"$ref": "#/$defs/officialUrl"},
+        "discovery_mode": {"const": "unsegmented_collection"},
+        "index_url": {"$ref": "#/$defs/officialUrl"},
+        "detail_path_prefixes": {"type": "array", "maxItems": 0},
+        "max_links": {"const": 0}
+      }
+    },
+    "unavailableSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bank_id",
+        "status",
+        "observed_on",
+        "evidence_url",
+        "unavailable_reason"
+      ],
+      "properties": {
+        "bank_id": {"$ref": "#/$defs/bankId"},
+        "status": {"const": "unavailable"},
+        "observed_on": {"$ref": "#/$defs/observedOn"},
+        "evidence_url": {"$ref": "#/$defs/officialUrl"},
+        "unavailable_reason": {"type": "string", "minLength": 1, "maxLength": 1000}
+      }
+    }
+  }
+}

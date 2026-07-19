@@ -1,0 +1,11 @@
+{
+  "schema_version": "1.0",
+  "captured_at": "2026-07-18T00:00:00+03:00",
+  "status": "unavailable",
+  "queries": [
+    "TEKNOFEST 2026 Yapay Zeka Dil Ajanlari Scenario 2",
+    "participation bank campaign extraction local LLM architecture"
+  ],
+  "result": "No reusable project memory was returned; the local memory command produced no result and then timed out.",
+  "policy": "Architecture decisions in this repository are therefore based only on cited primary sources, the supplied specification, measured workspace capabilities, and explicit user direction."
+}

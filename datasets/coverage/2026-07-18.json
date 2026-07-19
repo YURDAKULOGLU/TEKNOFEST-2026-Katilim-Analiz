@@ -1,0 +1,378 @@
+{
+  "$schema": "../schemas/coverage.schema.json",
+  "banks": [
+    {
+      "attempts": [
+        {
+          "candidate_kind": "homepage",
+          "coverage_status": "blocked",
+          "error_code": "access_challenge",
+          "fetch_status": "blocked",
+          "final_url": "https://www.adilkatilim.com.tr/",
+          "http_status": 200,
+          "observed_at": "2026-07-18T23:01:04+03:00",
+          "raw_sha256": null,
+          "raw_size_bytes": 0,
+          "reason": "access_challenge: CAPTCHA or interactive authentication challenge detected",
+          "requested_url": "https://www.adilkatilim.com.tr/",
+          "robots_allowed": true
+        }
+      ],
+      "bank_id": "adil-katilim",
+      "bank_name": "ADİL KATILIM BANKASI A.Ş.",
+      "campaign_count": 0,
+      "observed_at": "2026-07-18T23:01:04+03:00",
+      "reason": "access_challenge: CAPTCHA or interactive authentication challenge detected",
+      "source_count": 0,
+      "source_url": "https://www.adilkatilim.com.tr/",
+      "status": "blocked"
+    },
+    {
+      "attempts": [
+        {
+          "candidate_kind": "campaign_detail",
+          "clean_block_count": 65,
+          "clean_document_id": "clean:d3739644c5a5f58e4daad7d6a2d97799d6667129c298b9f6349a86cfda967a5f",
+          "clean_sha256": "369ef20e467e46c371277c0719d41f2dc0cae570023acedf9ed740fea8e81f3b",
+          "coverage_status": "success",
+          "error_code": null,
+          "extraction_issues": [
+            "product_family_ambiguous",
+            "campaign_type_ambiguous",
+            "unresolved:campaign_type",
+            "unresolved:customer_segment",
+            "unresolved:fee",
+            "unresolved:new_customer_only",
+            "unresolved:product_family",
+            "unresolved:rate",
+            "unresolved:reward"
+          ],
+          "extraction_outcome": "candidate",
+          "extraction_segment_count": 1,
+          "fetch_status": "success",
+          "final_url": "https://www.albaraka.com.tr/tr/kampanyalar/detay/dijital-musterilere-ozel-pratik-finansman-kart",
+          "http_status": 200,
+          "observed_at": "2026-07-18T23:01:07+03:00",
+          "raw_sha256": "7b1db0451d0943c66b06d8abc3f7384278a7b946c97f4782b758b604010d35db",
+          "raw_size_bytes": 191784,
+          "reason": "official_candidate_fetched_and_cleaned",
+          "requested_url": "https://www.albaraka.com.tr/tr/kampanyalar/detay/dijital-musterilere-ozel-pratik-finansman-kart",
+          "robots_allowed": true
+        }
+      ],
+      "bank_id": "albaraka-turk",
+      "bank_name": "ALBARAKA TÜRK KATILIM BANKASI A.Ş.",
+      "campaign_count": 1,
+      "observed_at": "2026-07-18T23:01:07+03:00",
+      "reason": "official_candidate_fetched_and_cleaned",
+      "source_count": 1,
+      "source_url": "https://www.albaraka.com.tr/tr/kampanyalar/detay/dijital-musterilere-ozel-pratik-finansman-kart",
+      "status": "success"
+    },
+    {
+      "attempts": [
+        {
+          "candidate_kind": "campaign_detail",
+          "clean_block_count": 17,
+          "clean_document_id": "clean:328e880b0510be296583ed8c593bdc89f0d35897cc4fdcd1a43cb686608d1cc8",
+          "clean_sha256": "5cb1fa796743ca686e90f2750f62557bca3b09e6279504fff6af98f7699c376c",
+          "coverage_status": "success",
+          "error_code": null,
+          "extraction_issues": [
+            "unresolved:customer_segment",
+            "unresolved:fee",
+            "unresolved:financing_amount",
+            "unresolved:new_customer_only",
+            "unresolved:product_family",
+            "unresolved:rate",
+            "unresolved:reward",
+            "unresolved:sales_channel",
+            "unresolved:term"
+          ],
+          "extraction_outcome": "candidate",
+          "extraction_segment_count": 1,
+          "fetch_status": "success",
+          "final_url": "https://dunyakatilim.com.tr/kampanyalar/network",
+          "http_status": 200,
+          "observed_at": "2026-07-18T23:01:10+03:00",
+          "raw_sha256": "bd40b8489716de8640b5c57711717e7f5b56c9e3d00e9c50c64cb2576d7dd28e",
+          "raw_size_bytes": 504746,
+          "reason": "official_candidate_fetched_and_cleaned",
+          "requested_url": "https://dunyakatilim.com.tr/kampanyalar/network",
+          "robots_allowed": true
+        }
+      ],
+      "bank_id": "dunya-katilim",
+      "bank_name": "DÜNYA KATILIM BANKASI A.Ş.",
+      "campaign_count": 1,
+      "observed_at": "2026-07-18T23:01:10+03:00",
+      "reason": "official_candidate_fetched_and_cleaned",
+      "source_count": 1,
+      "source_url": "https://dunyakatilim.com.tr/kampanyalar/network",
+      "status": "success"
+    },
+    {
+      "attempts": [
+        {
+          "candidate_kind": "campaign_detail",
+          "coverage_status": "blocked",
+          "error_code": "access_challenge",
+          "fetch_status": "blocked",
+          "final_url": "https://hayatfinans.com.tr/kampanyalar/hayatfinansla-islem-yaptikca-kazan",
+          "http_status": 200,
+          "observed_at": "2026-07-18T23:01:12+03:00",
+          "raw_sha256": null,
+          "raw_size_bytes": 0,
+          "reason": "access_challenge: CAPTCHA or interactive authentication challenge detected",
+          "requested_url": "https://hayatfinans.com.tr/kampanyalar/hayatfinansla-islem-yaptikca-kazan",
+          "robots_allowed": true
+        }
+      ],
+      "bank_id": "hayat-finans",
+      "bank_name": "HAYAT FİNANS KATILIM BANKASI A.Ş.",
+      "campaign_count": 0,
+      "observed_at": "2026-07-18T23:01:12+03:00",
+      "reason": "access_challenge: CAPTCHA or interactive authentication challenge detected",
+      "source_count": 0,
+      "source_url": "https://hayatfinans.com.tr/kampanyalar/hayatfinansla-islem-yaptikca-kazan",
+      "status": "blocked"
+    },
+    {
+      "attempts": [
+        {
+          "candidate_kind": "campaign_detail",
+          "coverage_status": "blocked",
+          "error_code": "access_challenge",
+          "fetch_status": "blocked",
+          "final_url": "https://www.kuveytturk.com.tr/kampanyalar/kendim-icin/musteri-ol-kampanyalari/yeni-kuveyt-turk-mobil-musterilerine-10000-mile-varan-firsat",
+          "http_status": 200,
+          "observed_at": "2026-07-18T23:01:15+03:00",
+          "raw_sha256": null,
+          "raw_size_bytes": 0,
+          "reason": "access_challenge: CAPTCHA or interactive authentication challenge detected",
+          "requested_url": "https://www.kuveytturk.com.tr/kampanyalar/kendim-icin/musteri-ol-kampanyalari/yeni-kuveyt-turk-mobil-musterilerine-10000-mile-varan-firsat",
+          "robots_allowed": true
+        }
+      ],
+      "bank_id": "kuveyt-turk",
+      "bank_name": "KUVEYT TÜRK KATILIM BANKASI A.Ş.",
+      "campaign_count": 0,
+      "observed_at": "2026-07-18T23:01:15+03:00",
+      "reason": "access_challenge: CAPTCHA or interactive authentication challenge detected",
+      "source_count": 0,
+      "source_url": "https://www.kuveytturk.com.tr/kampanyalar/kendim-icin/musteri-ol-kampanyalari/yeni-kuveyt-turk-mobil-musterilerine-10000-mile-varan-firsat",
+      "status": "blocked"
+    },
+    {
+      "attempts": [
+        {
+          "candidate_kind": "campaign_listing",
+          "clean_block_count": 70,
+          "clean_document_id": "clean:b407934b32726b9afdc4e4b1b909bd9902a24e2996694ede02540f5e667a008f",
+          "clean_sha256": "db5f6272012e1c66ad32bed7576c44e6d06dc15b380e11a49850b75324f2b189",
+          "coverage_status": "success",
+          "error_code": null,
+          "extraction_issues": [
+            "unresolved:campaign_type",
+            "unresolved:customer_segment",
+            "unresolved:fee",
+            "unresolved:financing_amount",
+            "unresolved:new_customer_only",
+            "unresolved:rate",
+            "unresolved:reward",
+            "unresolved:sales_channel",
+            "unresolved:term"
+          ],
+          "extraction_outcome": "candidate",
+          "extraction_segment_count": 3,
+          "fetch_status": "success",
+          "final_url": "https://www.tombank.com.tr/kampanyalar.html",
+          "http_status": 200,
+          "observed_at": "2026-07-18T23:01:17+03:00",
+          "raw_sha256": "bea1ab76fbe401aae3ba1317bfb9708ea294ee44c9fb4a808f20e04074768fa8",
+          "raw_size_bytes": 33501,
+          "reason": "official_candidate_fetched_and_cleaned",
+          "requested_url": "https://www.tombank.com.tr/kampanyalar.html",
+          "robots_allowed": true
+        }
+      ],
+      "bank_id": "tom-katilim",
+      "bank_name": "T.O.M. KATILIM BANKASI A.Ş.",
+      "campaign_count": 3,
+      "observed_at": "2026-07-18T23:01:17+03:00",
+      "reason": "official_candidate_fetched_and_cleaned",
+      "source_count": 1,
+      "source_url": "https://www.tombank.com.tr/kampanyalar.html",
+      "status": "success"
+    },
+    {
+      "attempts": [
+        {
+          "candidate_kind": "campaign_detail",
+          "clean_block_count": 14,
+          "clean_document_id": "clean:2d6097ee89aea2b8241c6250e8bb4c7e6691c88ede79452eb09c79a606d79f58",
+          "clean_sha256": "be500e16bb0bd8b90327623fbe533da02ef3eaa8cf1cbcf4fbdf208ec0af54e8",
+          "coverage_status": "success",
+          "error_code": null,
+          "extraction_issues": [
+            "unresolved:customer_segment",
+            "unresolved:fee",
+            "unresolved:financing_amount",
+            "unresolved:new_customer_only",
+            "unresolved:product_family",
+            "unresolved:rate",
+            "unresolved:sales_channel",
+            "unresolved:term"
+          ],
+          "extraction_outcome": "candidate",
+          "extraction_segment_count": 1,
+          "fetch_status": "success",
+          "final_url": "https://www.emlakkatilim.com.tr/tr/bireysel/kampanyalar/kampanya/mtv-odemenizi-emlak-katilim-mobilden-yapin-500-tlye-varan-nakit-iade-kazanin",
+          "http_status": 200,
+          "observed_at": "2026-07-18T23:01:19+03:00",
+          "raw_sha256": "247d95bdfbc7cebeb4ed72b4f5bebf9242b1c45ae2016e2f199ad38c6569348b",
+          "raw_size_bytes": 166204,
+          "reason": "official_candidate_fetched_and_cleaned",
+          "requested_url": "https://www.emlakkatilim.com.tr/tr/bireysel/kampanyalar/kampanya/mtv-odemenizi-emlak-katilim-mobilden-yapin-500-tlye-varan-nakit-iade-kazanin",
+          "robots_allowed": true
+        }
+      ],
+      "bank_id": "emlak-katilim",
+      "bank_name": "TÜRKİYE EMLAK KATILIM BANKASI A.Ş.",
+      "campaign_count": 1,
+      "observed_at": "2026-07-18T23:01:19+03:00",
+      "reason": "official_candidate_fetched_and_cleaned",
+      "source_count": 1,
+      "source_url": "https://www.emlakkatilim.com.tr/tr/bireysel/kampanyalar/kampanya/mtv-odemenizi-emlak-katilim-mobilden-yapin-500-tlye-varan-nakit-iade-kazanin",
+      "status": "success"
+    },
+    {
+      "attempts": [
+        {
+          "candidate_kind": "campaign_detail",
+          "coverage_status": "blocked",
+          "error_code": "access_challenge",
+          "fetch_status": "blocked",
+          "final_url": "https://www.turkiyefinans.com.tr/tr-tr/kampanyalar/Sayfalar/katilim-hesabi-kampanyasi.aspx",
+          "http_status": 200,
+          "observed_at": "2026-07-18T23:01:22+03:00",
+          "raw_sha256": null,
+          "raw_size_bytes": 0,
+          "reason": "access_challenge: CAPTCHA or interactive authentication challenge detected",
+          "requested_url": "https://www.turkiyefinans.com.tr/tr-tr/kampanyalar/Sayfalar/katilim-hesabi-kampanyasi.aspx",
+          "robots_allowed": true
+        }
+      ],
+      "bank_id": "turkiye-finans",
+      "bank_name": "TÜRKİYE FİNANS KATILIM BANKASI A.Ş.",
+      "campaign_count": 0,
+      "observed_at": "2026-07-18T23:01:22+03:00",
+      "reason": "access_challenge: CAPTCHA or interactive authentication challenge detected",
+      "source_count": 0,
+      "source_url": "https://www.turkiyefinans.com.tr/tr-tr/kampanyalar/Sayfalar/katilim-hesabi-kampanyasi.aspx",
+      "status": "blocked"
+    },
+    {
+      "attempts": [
+        {
+          "candidate_kind": "campaign_detail",
+          "clean_block_count": 30,
+          "clean_document_id": "clean:7bf7f03d6930f65753609255df8a39435eca632d711831fbd318a3bf6b2aded2",
+          "clean_sha256": "d859a166a49f779f70aa35ba58500c2626e20433380aaee5fc138f0dea48c980",
+          "coverage_status": "success",
+          "error_code": null,
+          "extraction_issues": [
+            "unresolved:customer_segment",
+            "unresolved:eligibility_condition",
+            "unresolved:fee",
+            "unresolved:financing_amount",
+            "unresolved:new_customer_only",
+            "unresolved:rate",
+            "unresolved:reward",
+            "unresolved:term"
+          ],
+          "extraction_outcome": "candidate",
+          "extraction_segment_count": 1,
+          "fetch_status": "success",
+          "final_url": "https://www.vakifkatilim.com.tr/tr/kendim-icin/kampanyalar/detay/mtv-odemelerinde-vade-farksiz-3-taksit",
+          "http_status": 200,
+          "observed_at": "2026-07-18T23:01:25+03:00",
+          "raw_sha256": "89f2f4b99c9f99a75b5ff52519e52c73258270df76ab74e198d4266b74ac6adf",
+          "raw_size_bytes": 139960,
+          "reason": "official_candidate_fetched_and_cleaned",
+          "requested_url": "https://www.vakifkatilim.com.tr/tr/kendim-icin/kampanyalar/detay/mtv-odemelerinde-vade-farksiz-3-taksit",
+          "robots_allowed": true
+        }
+      ],
+      "bank_id": "vakif-katilim",
+      "bank_name": "VAKIF KATILIM BANKASI A.Ş.",
+      "campaign_count": 1,
+      "observed_at": "2026-07-18T23:01:25+03:00",
+      "reason": "official_candidate_fetched_and_cleaned",
+      "source_count": 1,
+      "source_url": "https://www.vakifkatilim.com.tr/tr/kendim-icin/kampanyalar/detay/mtv-odemelerinde-vade-farksiz-3-taksit",
+      "status": "success"
+    },
+    {
+      "attempts": [
+        {
+          "candidate_kind": "campaign_detail",
+          "clean_block_count": 27,
+          "clean_document_id": "clean:933f0da6d45157afd96f63c971e5a40c430b2d003b474775be6b58d3bfd87fd0",
+          "clean_sha256": "521f37d6736f6d6bf11033d21dacdfdf29d80bb36e69797a7cadae0fdc31a08d",
+          "coverage_status": "success",
+          "error_code": null,
+          "extraction_issues": [
+            "campaign_type_ambiguous",
+            "unresolved:campaign_type",
+            "unresolved:customer_segment",
+            "unresolved:fee",
+            "unresolved:financing_amount",
+            "unresolved:new_customer_only",
+            "unresolved:rate",
+            "unresolved:reward",
+            "unresolved:sales_channel",
+            "unresolved:term",
+            "unresolved:validity"
+          ],
+          "extraction_outcome": "candidate",
+          "extraction_segment_count": 1,
+          "fetch_status": "success",
+          "final_url": "https://www.ziraatkatilim.com.tr/kart-kampanyalari/puffyde-6ya-varan-taksit",
+          "http_status": 200,
+          "observed_at": "2026-07-18T23:01:27+03:00",
+          "raw_sha256": "efcd33dbd062de9d2083a09fc516bf6c461704a64dec537fdd4f6d1f47e198ed",
+          "raw_size_bytes": 471792,
+          "reason": "official_candidate_fetched_and_cleaned",
+          "requested_url": "https://www.ziraatkatilim.com.tr/kart-kampanyalari/puffyde-6ya-varan-taksit",
+          "robots_allowed": true
+        }
+      ],
+      "bank_id": "ziraat-katilim",
+      "bank_name": "ZİRAAT KATILIM BANKASI A.Ş.",
+      "campaign_count": 1,
+      "observed_at": "2026-07-18T23:01:27+03:00",
+      "reason": "official_candidate_fetched_and_cleaned",
+      "source_count": 1,
+      "source_url": "https://www.ziraatkatilim.com.tr/kart-kampanyalari/puffyde-6ya-varan-taksit",
+      "status": "success"
+    }
+  ],
+  "collector_profile": {
+    "authentication_or_captcha_bypass": false,
+    "collector_version": "bounded-live-collector/1.1",
+    "max_attempts": 2,
+    "max_redirects": 5,
+    "max_response_bytes": 2000000,
+    "min_interval_seconds": 2.0,
+    "redirect_revalidation": true,
+    "request_timeout_seconds": 20.0,
+    "robots": "required_fail_closed",
+    "user_agent": "KatilimAnalizBot/0.1"
+  },
+  "completed_at": "2026-07-18T23:01:29+03:00",
+  "registry_source_url": "https://www.bddk.org.tr/Kurulus/Liste/77",
+  "registry_version": "2026-07-18.2",
+  "schema_version": "1.0",
+  "started_at": "2026-07-18T23:01:04+03:00"
+}
