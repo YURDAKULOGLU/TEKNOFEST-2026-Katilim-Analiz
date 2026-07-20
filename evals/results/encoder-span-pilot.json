@@ -1,0 +1,432 @@
+{
+  "schema_version": "1.0",
+  "probe": "fee-polarity-tr-v0.1.jsonl",
+  "model": "urchade/gliner_multi-v2.1",
+  "labels": [
+    "ücret",
+    "ücretsiz işlem",
+    "kâr payı oranı",
+    "vade",
+    "ödül",
+    "para tutarı"
+  ],
+  "threshold": 0.3,
+  "summary": {
+    "sentences": 18,
+    "with_any_span": 17,
+    "verbatim_violations": 0,
+    "fee_cases": 13,
+    "fee_hits": 12,
+    "fee_hit_rate": 0.9231,
+    "traps": 5,
+    "trap_false_positives": 2,
+    "trap_fp_rate": 0.4,
+    "mean_seconds": 0.4,
+    "median_seconds": 0.385
+  },
+  "sentences": [
+    {
+      "id": "fp-001",
+      "label": "waived",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.353,
+      "spans": [
+        {
+          "text": "TL",
+          "label": "para tutarı",
+          "score": 0.3287,
+          "start": 26,
+          "end": 28
+        },
+        {
+          "text": "hesap işletim ücreti",
+          "label": "ücret",
+          "score": 0.7522,
+          "start": 111,
+          "end": 131
+        }
+      ]
+    },
+    {
+      "id": "fp-002",
+      "label": "waived",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.344,
+      "spans": [
+        {
+          "text": "ödeme tutarı",
+          "label": "para tutarı",
+          "score": 0.3625,
+          "start": 26,
+          "end": 38
+        },
+        {
+          "text": "ücret",
+          "label": "ücret",
+          "score": 0.7447,
+          "start": 64,
+          "end": 69
+        }
+      ]
+    },
+    {
+      "id": "fp-003",
+      "label": "waived",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.156,
+      "spans": [
+        {
+          "text": "Ücretsiz geçiş",
+          "label": "ücretsiz işlem",
+          "score": 0.7476,
+          "start": 0,
+          "end": 14
+        },
+        {
+          "text": "ücret",
+          "label": "ücret",
+          "score": 0.6132,
+          "start": 97,
+          "end": 102
+        }
+      ]
+    },
+    {
+      "id": "fp-004",
+      "label": "waived",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.249,
+      "spans": [
+        {
+          "text": "EFT",
+          "label": "ücretsiz işlem",
+          "score": 0.8269,
+          "start": 93,
+          "end": 96
+        },
+        {
+          "text": "Havale",
+          "label": "ücretsiz işlem",
+          "score": 0.7982,
+          "start": 98,
+          "end": 104
+        },
+        {
+          "text": "FAST",
+          "label": "ücretsiz işlem",
+          "score": 0.762,
+          "start": 108,
+          "end": 112
+        }
+      ]
+    },
+    {
+      "id": "fp-005",
+      "label": "waived",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.47,
+      "spans": [
+        {
+          "text": "Kargo ve sigorta ücretleri",
+          "label": "ücret",
+          "score": 0.6214,
+          "start": 0,
+          "end": 26
+        }
+      ]
+    },
+    {
+      "id": "fp-006",
+      "label": "charged",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.225,
+      "spans": [
+        {
+          "text": "fark ücreti",
+          "label": "ücret",
+          "score": 0.7566,
+          "start": 89,
+          "end": 100
+        }
+      ]
+    },
+    {
+      "id": "fp-007",
+      "label": "charged",
+      "found_any_span": true,
+      "found_fee_span": false,
+      "verbatim_violations": 0,
+      "seconds": 0.687,
+      "spans": [
+        {
+          "text": "1 yılın sonunda",
+          "label": "vade",
+          "score": 0.756,
+          "start": 90,
+          "end": 105
+        },
+        {
+          "text": "her yılın aynı günü",
+          "label": "vade",
+          "score": 0.3966,
+          "start": 106,
+          "end": 125
+        }
+      ]
+    },
+    {
+      "id": "fp-008",
+      "label": "charged",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.416,
+      "spans": [
+        {
+          "text": "ücretler",
+          "label": "ücret",
+          "score": 0.554,
+          "start": 120,
+          "end": 128
+        }
+      ]
+    },
+    {
+      "id": "fp-009",
+      "label": "mixed",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.713,
+      "spans": [
+        {
+          "text": "banka işlem ücreti",
+          "label": "ücret",
+          "score": 0.526,
+          "start": 44,
+          "end": 62
+        },
+        {
+          "text": "kısa SWIFT masrafı",
+          "label": "ücret",
+          "score": 0.7283,
+          "start": 88,
+          "end": 106
+        },
+        {
+          "text": "25 USD",
+          "label": "ücret",
+          "score": 0.6631,
+          "start": 108,
+          "end": 114
+        },
+        {
+          "text": "uzun swift masrafı",
+          "label": "ücret",
+          "score": 0.7968,
+          "start": 117,
+          "end": 135
+        },
+        {
+          "text": "40 USD",
+          "label": "ücret",
+          "score": 0.6512,
+          "start": 137,
+          "end": 143
+        }
+      ]
+    },
+    {
+      "id": "fp-010",
+      "label": "not_a_fee_statement",
+      "found_any_span": true,
+      "found_fee_span": false,
+      "verbatim_violations": 0,
+      "seconds": 0.481,
+      "spans": [
+        {
+          "text": "Kampanyaya",
+          "label": "ödül",
+          "score": 0.3098,
+          "start": 0,
+          "end": 10
+        }
+      ]
+    },
+    {
+      "id": "fp-011",
+      "label": "not_a_fee_statement",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.105,
+      "spans": [
+        {
+          "text": "İndirim",
+          "label": "ücretsiz işlem",
+          "score": 0.3347,
+          "start": 0,
+          "end": 7
+        },
+        {
+          "text": "baz ücret",
+          "label": "ücret",
+          "score": 0.7442,
+          "start": 23,
+          "end": 32
+        }
+      ]
+    },
+    {
+      "id": "fp-012",
+      "label": "not_a_fee_statement",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.613,
+      "spans": [
+        {
+          "text": "ücretsiz para transferi",
+          "label": "ücretsiz işlem",
+          "score": 0.3909,
+          "start": 21,
+          "end": 44
+        }
+      ]
+    },
+    {
+      "id": "fp-013",
+      "label": "waived",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.612,
+      "spans": [
+        {
+          "text": "Kredi kartı borç ödeme işlemlerine",
+          "label": "ücretsiz işlem",
+          "score": 0.3808,
+          "start": 0,
+          "end": 34
+        },
+        {
+          "text": "ücretsiz",
+          "label": "ücret",
+          "score": 0.4431,
+          "start": 66,
+          "end": 74
+        }
+      ]
+    },
+    {
+      "id": "fp-014",
+      "label": "waived",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.203,
+      "spans": [
+        {
+          "text": "ücretsizdir",
+          "label": "ücret",
+          "score": 0.6161,
+          "start": 88,
+          "end": 99
+        }
+      ]
+    },
+    {
+      "id": "fp-015",
+      "label": "waived",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.336,
+      "spans": [
+        {
+          "text": "ödeme tutarı",
+          "label": "para tutarı",
+          "score": 0.3295,
+          "start": 26,
+          "end": 38
+        },
+        {
+          "text": "ücret",
+          "label": "ücret",
+          "score": 0.6213,
+          "start": 64,
+          "end": 69
+        }
+      ]
+    },
+    {
+      "id": "fp-016",
+      "label": "not_a_fee_statement",
+      "found_any_span": false,
+      "found_fee_span": false,
+      "verbatim_violations": 0,
+      "seconds": 0.343,
+      "spans": []
+    },
+    {
+      "id": "fp-017",
+      "label": "not_a_fee_statement",
+      "found_any_span": true,
+      "found_fee_span": false,
+      "verbatim_violations": 0,
+      "seconds": 0.465,
+      "spans": [
+        {
+          "text": "ücretsiz kullanım hakkı",
+          "label": "ödül",
+          "score": 0.4315,
+          "start": 30,
+          "end": 53
+        }
+      ]
+    },
+    {
+      "id": "fp-018",
+      "label": "waived",
+      "found_any_span": true,
+      "found_fee_span": true,
+      "verbatim_violations": 0,
+      "seconds": 0.429,
+      "spans": [
+        {
+          "text": "ücretsiz kayıt",
+          "label": "ücretsiz işlem",
+          "score": 0.6324,
+          "start": 16,
+          "end": 30
+        },
+        {
+          "text": "otomatik yenileme",
+          "label": "ücretsiz işlem",
+          "score": 0.5853,
+          "start": 32,
+          "end": 49
+        },
+        {
+          "text": "%10 oranına",
+          "label": "kâr payı oranı",
+          "score": 0.4844,
+          "start": 51,
+          "end": 62
+        }
+      ]
+    }
+  ]
+}
