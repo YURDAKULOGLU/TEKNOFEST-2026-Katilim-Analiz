@@ -13,6 +13,7 @@ from katilim_analiz.llm import (
     ModelFactProposal,
     model_extraction_output_schema,
 )
+from katilim_analiz.llm.contracts import MAX_QUOTE_CHARS
 
 
 def _span() -> ModelEvidenceSpan:
@@ -80,7 +81,7 @@ def test_live_request_schema_is_compact_quote_only_and_pins_field() -> None:
     assert "schema_version" not in schema["properties"]
     assert "document_id" not in schema["properties"]
     assert schema["properties"]["facts"]["maxItems"] == 1
-    assert fact_schema["properties"]["quote"]["maxLength"] == 120
+    assert fact_schema["properties"]["quote"]["maxLength"] == MAX_QUOTE_CHARS
     assert list(validator.iter_errors({**proposal, "facts": []})) == []
 
     without_quote = {

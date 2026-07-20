@@ -24,6 +24,14 @@ NonEmpty = Annotated[str, StringConstraints(strip_whitespace=True, min_length=1)
 FactText = Annotated[str, StringConstraints(min_length=1, max_length=500)]
 
 
+#: Budget for a quote, measured against the source rather than guessed. Campaign
+#: sentences run to 176 characters at the 95th percentile across the collected
+#: corpus, and 17.7% of them pass 120. A quote that cannot hold its sentence does
+#: not make the model quote less; it makes the model close the sentence off
+#: grammatically to fit, and that rewriting is what the grounding check rejects.
+MAX_QUOTE_CHARS = 240
+
+
 class _StrictModel(BaseModel):
     model_config = ConfigDict(extra="forbid", frozen=True, str_strip_whitespace=True)
 
@@ -260,7 +268,7 @@ def model_extraction_output_schema(
     for field in sorted(requested_fields, key=lambda item: item.value):
         properties: dict[str, object] = {
             "field": {"type": "string", "const": field.value},
-            "quote": {"type": "string", "minLength": 1, "maxLength": 120},
+            "quote": {"type": "string", "minLength": 1, "maxLength": MAX_QUOTE_CHARS},
         }
         variants.append(
             {

@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, Validation
 
 from katilim_analiz.contracts import CleanDocument
 from katilim_analiz.llm.contracts import (
+    MAX_QUOTE_CHARS,
     ModelExtractionResponse,
     ModelFactField,
     ModelFactProposal,
@@ -112,7 +113,7 @@ class _LiveModelFact(_EnvelopeModel):
     field: ModelFactField
     quote: Annotated[
         str,
-        StringConstraints(strip_whitespace=True, min_length=1, max_length=120),
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_QUOTE_CHARS),
     ]
 
 
