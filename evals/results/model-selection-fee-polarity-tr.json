@@ -1,0 +1,129 @@
+{
+  "schema_version": "1.0",
+  "probe": "fee-polarity-tr-v0.1.jsonl",
+  "example_count": 18,
+  "results": [
+    {
+      "model": "qwen3.5:9b",
+      "correct": 18,
+      "answered": 18,
+      "total": 18,
+      "accuracy": 1.0,
+      "seconds_per_example": 0.954,
+      "misses": []
+    },
+    {
+      "model": "gemma4:e4b",
+      "correct": 17,
+      "answered": 18,
+      "total": 18,
+      "accuracy": 0.9444,
+      "seconds_per_example": 1.353,
+      "misses": [
+        {
+          "id": "fp-016",
+          "expected": "not_a_fee_statement",
+          "predicted": "waived",
+          "note": "trap: ucretsiz qualifies a duration, the sentence states an accounting rule"
+        }
+      ]
+    },
+    {
+      "model": "qwen3.5:27b",
+      "correct": 18,
+      "answered": 18,
+      "total": 18,
+      "accuracy": 1.0,
+      "seconds_per_example": 1.569,
+      "misses": []
+    },
+    {
+      "model": "llama3.2:latest",
+      "correct": 5,
+      "answered": 18,
+      "total": 18,
+      "accuracy": 0.2778,
+      "seconds_per_example": 0.346,
+      "misses": [
+        {
+          "id": "fp-001",
+          "expected": "waived",
+          "predicted": "not_a_fee_statement",
+          "note": "negated future, tahsil edilmeyecektir"
+        },
+        {
+          "id": "fp-002",
+          "expected": "waived",
+          "predicted": "not_a_fee_statement",
+          "note": "negated future, yansitilmayacaktir"
+        },
+        {
+          "id": "fp-003",
+          "expected": "waived",
+          "predicted": "not_a_fee_statement",
+          "note": "negated aorist, tahsil edilmez"
+        },
+        {
+          "id": "fp-004",
+          "expected": "waived",
+          "predicted": "not_a_fee_statement",
+          "note": "adjective predicate"
+        },
+        {
+          "id": "fp-005",
+          "expected": "waived",
+          "predicted": "not_a_fee_statement",
+          "note": "bank covers it, positive verb form"
+        },
+        {
+          "id": "fp-006",
+          "expected": "charged",
+          "predicted": "not_a_fee_statement",
+          "note": "positive aorist, tahsil edilir"
+        },
+        {
+          "id": "fp-007",
+          "expected": "charged",
+          "predicted": "not_a_fee_statement",
+          "note": "ucretli, the antonym adjective"
+        },
+        {
+          "id": "fp-008",
+          "expected": "charged",
+          "predicted": "not_a_fee_statement",
+          "note": "trap: negation attaches to the refund, not the fee"
+        },
+        {
+          "id": "fp-009",
+          "expected": "mixed",
+          "predicted": "not_a_fee_statement",
+          "note": "one fee waived and another charged in the same sentence"
+        },
+        {
+          "id": "fp-013",
+          "expected": "waived",
+          "predicted": "not_a_fee_statement",
+          "note": "komisyon odemeden"
+        },
+        {
+          "id": "fp-014",
+          "expected": "waived",
+          "predicted": "not_a_fee_statement",
+          "note": "adjective predicate"
+        },
+        {
+          "id": "fp-015",
+          "expected": "waived",
+          "predicted": "not_a_fee_statement",
+          "note": "negated plus covered-by-third-party"
+        },
+        {
+          "id": "fp-018",
+          "expected": "waived",
+          "predicted": "not_a_fee_statement",
+          "note": "ucretsiz kayit inside a benefit list"
+        }
+      ]
+    }
+  ]
+}
