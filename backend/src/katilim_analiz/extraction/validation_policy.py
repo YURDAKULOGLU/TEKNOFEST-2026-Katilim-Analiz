@@ -20,7 +20,9 @@ Design rules:
 - Blocking issues are ambiguity on a required classification, prompt-injection
   quarantine, rejected (ungrounded) model facts, and any unknown issue code.
   Model bookkeeping annotations that merely explain why an optional field
-  stayed unresolved are not blocking.
+  stayed unresolved are not blocking; that includes the model being skipped
+  or falling back to rules — a required field the model would have filled is
+  still blocked by its own ``unresolved:<field>`` marker (issue #22).
 - Machine validation is separate from human validation: ``human_verified``
   bookkeeping is intentionally not derived from this status.
 """
@@ -99,11 +101,22 @@ _FIELD_AMBIGUITY_ISSUES: Mapping[str, ModelFactField] = {
 # Model bookkeeping that only records why the model contributed nothing for a
 # field. The affected fields stay unresolved and are judged by the matrix; the
 # rule-extracted facts in the record remain verbatim-grounded regardless.
+#
+# ``model_skipped:*`` (model disabled/unavailable/skipped) and
+# ``*:rules_fallback`` (model inference failed, rules kept) are bookkeeping
+# too (issue #22): they can only leave fields unresolved, never invent facts.
+# If the skipped model left a REQUIRED field unresolved, the record is still
+# blocked by its ``unresolved:<field>`` marker — so treating these codes as
+# non-blocking only unblocks records whose required fields were fully
+# rule-resolved.
 _NON_BLOCKING_ISSUE_PREFIXES: tuple[str, ...] = (
     "model_abstained:",
     "model_outcome:",
     "model_field_incomplete:",
+    "model_skipped:",
 )
+
+_NON_BLOCKING_ISSUE_SUFFIXES: tuple[str, ...] = (":rules_fallback",)
 
 
 @dataclass(frozen=True, slots=True)
@@ -166,6 +179,8 @@ def evaluate_validation(
                 unresolved.add(unresolved_field)
             continue
         if issue.startswith(_NON_BLOCKING_ISSUE_PREFIXES):
+            continue
+        if issue.endswith(_NON_BLOCKING_ISSUE_SUFFIXES):
             continue
         ambiguous_field = _FIELD_AMBIGUITY_ISSUES.get(issue)
         if ambiguous_field is not None and ambiguous_field not in (

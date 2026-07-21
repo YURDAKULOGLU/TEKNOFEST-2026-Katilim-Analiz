@@ -101,7 +101,9 @@ _REASONS: dict[str, str] = {
     "multiple_reward_signatures": "Birden fazla ortak ödül imzası var; açık seçim gerekli.",
     "eligibility_evidence_missing": "Uygunluk bağlamı için alan düzeyinde kanıt yok.",
     "peer_eligibility_evidence_missing": "Karşılaştırılan bir uygunluk bağlamının kanıtı yok.",
-    "eligibility_context_compatible": "Uygunluk bağlamları aynı; sayısal sıralama yapılmadı.",
+    "eligibility_context_compatible": (
+        "Kanonik uygunluk eksenleri uyumlu; sayısal sıralama yapılmadı."
+    ),
     "ranked_lower_is_better": "Aynı bazdaki daha düşük değer bu boyutta önce gelir.",
     "ranked_higher_is_better": "Aynı bazdaki daha yüksek değer bu boyutta önce gelir.",
 }
