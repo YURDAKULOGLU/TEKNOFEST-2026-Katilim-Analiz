@@ -420,6 +420,8 @@ async def test_detail_many_search_and_evidence_projection(database, seeded_reads
     assert detail.record.extraction.extractor_version == "read-test/1"
     assert await adapter.get("missing", as_of=seeded_reads.as_of) is None
     assert await adapter.get(seeded_reads.future_id, as_of=seeded_reads.as_of) is None
+    # A superseded version must not be served as current through the detail path.
+    assert await adapter.get(seeded_reads.old_id, as_of=seeded_reads.as_of) is None
 
     many = await adapter.get_many(
         [seeded_reads.second_id, seeded_reads.first_id, seeded_reads.second_id, "missing"],
@@ -534,6 +536,17 @@ async def test_public_latest_hides_rejected_without_resurrection_and_search_is_v
         as_of=as_of,
     )
     assert [item.record.id for item in matches] == [validated_id]
+
+    # The detail path must apply the same visibility contract as the list:
+    # rejected and superseded versions resolve to None, live versions resolve.
+    assert await adapter.get(rejected_latest_id, as_of=as_of) is None
+    assert await adapter.get(rejected_old_id, as_of=as_of) is None
+    review_detail = await adapter.get(review_id, as_of=as_of)
+    assert review_detail is not None
+    assert review_detail.record.id == review_id
+    validated_detail = await adapter.get(validated_id, as_of=as_of)
+    assert validated_detail is not None
+    assert validated_detail.record.status is RecordStatus.VALIDATED
 
 
 @pytest.mark.asyncio

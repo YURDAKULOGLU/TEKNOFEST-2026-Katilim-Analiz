@@ -124,14 +124,15 @@ class PostgresCampaignReadAdapter(CampaignReadPort):
     async def get(self, campaign_id: str, *, as_of: datetime) -> CampaignProjection | None:
         _require_aware(as_of, "as_of")
         _require_id(campaign_id)
+        # Mirror list_latest: only the latest, non-REJECTED version of a
+        # logical campaign is served; a stale or rejected id resolves to None
+        # instead of presenting retired data as current (issue #6).
+        latest = _latest_record_ids(as_of)
         async with self._sessions() as session:
             row = (
                 await session.execute(
-                    _projection_select()
-                    .where(
-                        CampaignRecordRow.id == campaign_id,
-                        CampaignRecordRow.observed_at <= as_of,
-                    )
+                    _projection_select(latest)
+                    .where(CampaignRecordRow.id == campaign_id)
                     .limit(1)
                 )
             ).first()
