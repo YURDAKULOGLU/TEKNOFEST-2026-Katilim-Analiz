@@ -18,6 +18,7 @@ from katilim_analiz.extraction.pipeline import (
     ExtractionOutcome,
     ExtractionPipeline,
     ExtractionResult,
+    extraction_processing_identity,
     pipeline_from_settings,
 )
 from katilim_analiz.extraction.rules import extract_rules
@@ -52,6 +53,7 @@ __all__ = [
     "decide_record_status",
     "evaluate_validation",
     "extract_rules",
+    "extraction_processing_identity",
     "pipeline_from_settings",
     "required_fields",
     "validate_candidate",
