@@ -419,6 +419,11 @@ async def test_static_pages_source_enqueues_each_listed_url_without_discovery() 
     assert retry.enqueued_jobs == 0
     assert retry.deduplicated_jobs == 3
     assert sorted(job.url for job in store.jobs) == sorted(STATIC_PAGE_URLS)
+    # Issue #33: the curated registry label travels with each static-page job
+    # so extraction can use it as a source-metadata hint.
+    assert {job.url: job.static_page_label for job in store.jobs} == dict(
+        zip(STATIC_PAGE_URLS, ("konut", "tasit", "ihtiyac"), strict=True)
+    )
     assert first.has_failures is False
     assert first.review_required is False
 

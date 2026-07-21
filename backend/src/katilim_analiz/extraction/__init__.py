@@ -21,6 +21,11 @@ from katilim_analiz.extraction.pipeline import (
     pipeline_from_settings,
 )
 from katilim_analiz.extraction.rules import extract_rules
+from katilim_analiz.extraction.source_hints import (
+    REGISTRY_HINT_ISSUE_PREFIX,
+    REGISTRY_PAGE_FAMILY_CONFLICT_ISSUE,
+    apply_registry_static_page_hint,
+)
 from katilim_analiz.extraction.validation_policy import (
     FieldRequirement,
     ValidationDecision,
@@ -31,6 +36,8 @@ from katilim_analiz.extraction.validation_policy import (
 
 __all__ = [
     "EXTRACTOR_VERSION",
+    "REGISTRY_HINT_ISSUE_PREFIX",
+    "REGISTRY_PAGE_FAMILY_CONFLICT_ISSUE",
     "CandidateValidationError",
     "EvidenceBindingError",
     "ExtractionOutcome",
@@ -39,6 +46,7 @@ __all__ = [
     "FieldRequirement",
     "TextSpan",
     "ValidationDecision",
+    "apply_registry_static_page_hint",
     "bind_evidence",
     "build_candidate",
     "decide_record_status",

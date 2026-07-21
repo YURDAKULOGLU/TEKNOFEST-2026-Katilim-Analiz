@@ -116,7 +116,10 @@ class PipelineExtractionAdapter:
         source: SourceRequest,
         cleaned: CleanDocument,
     ) -> ExtractionProcessResult:
-        extracted = await self._pipeline.extract(cleaned)
+        extracted = await self._pipeline.extract(
+            cleaned,
+            static_page_label=source.static_page_label,
+        )
         if extracted.outcome is ExtractionOutcome.ABSTAINED or extracted.candidate is None:
             issues = list(extracted.issues) or ["extraction_abstained"]
             return ExtractionProcessResult(

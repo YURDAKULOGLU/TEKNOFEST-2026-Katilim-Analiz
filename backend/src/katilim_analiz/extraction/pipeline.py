@@ -18,6 +18,7 @@ from katilim_analiz.extraction.candidate import CandidateValidationError, build_
 from katilim_analiz.extraction.draft import ExtractionDraft
 from katilim_analiz.extraction.model_merge import merge_model_response
 from katilim_analiz.extraction.rules import extract_rules
+from katilim_analiz.extraction.source_hints import apply_registry_static_page_hint
 from katilim_analiz.extraction.validation_policy import BASE_REQUIRED_FIELDS, required_fields
 from katilim_analiz.llm import (
     PROMPT_VERSION,
@@ -88,13 +89,18 @@ class ExtractionPipeline:
         self._clock = clock or (lambda: datetime.now(UTC))
         self._extractor_version = extractor_version
 
-    async def extract(self, document: CleanDocument) -> ExtractionResult:
+    async def extract(
+        self,
+        document: CleanDocument,
+        *,
+        static_page_label: str | None = None,
+    ) -> ExtractionResult:
         segments = _segment_tom_campaign_listing(document)
         if not segments:
             return _abstained(_SEGMENTATION_UNRESOLVED)
         if len(segments) > 1:
             return _abstained("multiple_campaigns_require_extract_many")
-        return await self._extract_one(segments[0])
+        return await self._extract_one(segments[0], static_page_label=static_page_label)
 
     async def extract_many(self, document: CleanDocument) -> tuple[ExtractionResult, ...]:
         """Extract listing segments independently while preserving parent evidence IDs."""
@@ -107,9 +113,18 @@ class ExtractionPipeline:
             results.append(await self._extract_one(segment))
         return tuple(results)
 
-    async def _extract_one(self, document: CleanDocument) -> ExtractionResult:
+    async def _extract_one(
+        self,
+        document: CleanDocument,
+        *,
+        static_page_label: str | None = None,
+    ) -> ExtractionResult:
         started_at = self._clock()
         draft = extract_rules(document)
+        # Issue #33: the curated registry label may break a product-sheet's
+        # classification ambiguity before the model is asked, so the model's
+        # priority questions target the fields the gate still needs.
+        draft = apply_registry_static_page_hint(draft, document, static_page_label)
         model_attempted = False
         accepted_model_facts = 0
         if self._model_enabled and self._model is not None and draft.unresolved_fields:
@@ -131,6 +146,9 @@ class ExtractionPipeline:
             else:
                 model_attempted = True
                 draft, accepted_model_facts = merge_model_response(draft, response, document)
+            # A financing profit rate the model just resolved can complete the
+            # registry hint's campaign-type inference; the hint is idempotent.
+            draft = apply_registry_static_page_hint(draft, document, static_page_label)
 
         completed_at = self._clock()
         try:

@@ -114,6 +114,12 @@ _NON_BLOCKING_ISSUE_PREFIXES: tuple[str, ...] = (
     "model_outcome:",
     "model_field_incomplete:",
     "model_skipped:",
+    # ``registry_hint:*`` (issue #33) annotates a classification that was
+    # inferred from the curated static-page registry label; it explains a
+    # resolved fact's provenance and never hides a missing one. Its blocking
+    # counterpart, ``registry_page_family_conflict``, carries no prefix and is
+    # therefore treated as an unknown (blocking) issue by design.
+    "registry_hint:",
 )
 
 _NON_BLOCKING_ISSUE_SUFFIXES: tuple[str, ...] = (":rules_fallback",)

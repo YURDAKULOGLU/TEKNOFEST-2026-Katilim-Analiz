@@ -307,10 +307,26 @@ def validate_candidate(candidate: ExtractionCandidate, document: CleanDocument) 
     if candidate.data.campaign_type is not CampaignType.UNKNOWN and not any(
         candidate.data.campaign_type in supported_campaign_types(item.quote) for item in type_refs
     ):
-        raise CandidateValidationError(
-            "campaign_type_evidence_laundering",
-            "campaign type label is not supported by its evidence",
+        # Issue #33: a curated financing product sheet never names a campaign
+        # type in text.  Its ``financing_rate`` classification is inferred from
+        # the registry label plus the sheet's own resolved financing profit
+        # rate, and its evidence is the financing product phrase itself.  The
+        # replay accepts exactly that combination and nothing weaker.
+        registry_inferred_product_sheet = (
+            candidate.data.campaign_type is CampaignType.FINANCING_RATE
+            and any(issue.startswith("registry_hint:campaign_type:") for issue in candidate.issues)
+            and any(rate.kind is RateKind.FINANCING_PROFIT_RATE for rate in candidate.data.rates)
+            and any(
+                item.status is EvidenceStatus.INFERRED
+                and ProductFamily.FINANCING in supported_product_families(item.quote)
+                for item in type_refs
+            )
         )
+        if not registry_inferred_product_sheet:
+            raise CandidateValidationError(
+                "campaign_type_evidence_laundering",
+                "campaign type label is not supported by its evidence",
+            )
     channel = candidate.data.comparison_context.sales_channel
     channel_refs = by_pointer.get("/data/comparison_context/sales_channel", [])
     if channel is not SalesChannel.UNKNOWN and not any(
