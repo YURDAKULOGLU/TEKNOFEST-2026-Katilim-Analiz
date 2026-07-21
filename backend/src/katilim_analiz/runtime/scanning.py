@@ -74,6 +74,9 @@ class DetailScanJob:
     bank_name: str
     campaign_key: str
     url: str
+    #: Issue #33: curated registry label when the target is a static product
+    #: page; carried into the source job as extraction source metadata.
+    static_page_label: str | None = None
 
 
 @dataclass(frozen=True, slots=True)
@@ -210,6 +213,13 @@ class CampaignScanner:
         self._collector = collector
         self._store = store
         self._clock = clock
+        # Issue #33: registry static pages carry an owner-curated label; the
+        # detail job forwards it so extraction can use it as a source hint.
+        self._static_page_labels: dict[str, str] = {
+            page.url: page.label
+            for source in campaign_registry.sources
+            for page in source.static_pages
+        }
 
     async def run(self, scan_run_id: str) -> CampaignScanResult:
         run_id = validate_scan_run_id(scan_run_id)
@@ -457,6 +467,7 @@ class CampaignScanner:
                 bank_name=bank.legal_name,
                 campaign_key=target.campaign_key,
                 url=canonical_url,
+                static_page_label=self._static_page_labels.get(canonical_url),
             )
             created = await self._store.enqueue_detail(
                 job,
@@ -609,6 +620,7 @@ class PostgresCampaignScanStore:
                 job.campaign_key,
                 job.url,
             ),
+            static_page_label=job.static_page_label,
         )
         async with self._database.transaction() as session:
             _, created = await JobRepository(session).enqueue(

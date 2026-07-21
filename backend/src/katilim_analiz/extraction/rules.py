@@ -561,6 +561,31 @@ def _product_mechanism_hit(
     return next(iter(hits.items()))
 
 
+def product_family_block_spans(
+    document: CleanDocument,
+) -> dict[ProductFamily, tuple[TextSpan, ...]]:
+    """Collect each family's first-match span per safe block, for dominance checks.
+
+    Issue #33: ``_pattern_hits`` records only one span per family, which cannot
+    say whether a competing signal is a page-dominating theme or a single
+    cross-product teaser.  The per-block hit count makes that measurable.
+    """
+
+    spans: dict[ProductFamily, list[TextSpan]] = {}
+    for block in document.blocks:
+        if is_obvious_prompt_injection(block.text):
+            continue
+        for family, patterns in _PRODUCT_PATTERNS.items():
+            for pattern in patterns:
+                match = pattern.search(block.text)
+                if match is not None and 0 < len(match.group()) <= 500:
+                    spans.setdefault(family, []).append(
+                        TextSpan(block.id, match.group(), match.start(), match.end())
+                    )
+                    break
+    return {family: tuple(items) for family, items in spans.items()}
+
+
 def supported_product_families(text: str) -> frozenset[ProductFamily]:
     return frozenset(
         value
@@ -940,6 +965,7 @@ __all__ = [
     "extract_rules",
     "is_explicit_eligibility",
     "is_explicit_new_customer_restriction",
+    "product_family_block_spans",
     "rate_semantics_unresolved",
     "segment_key_for_text",
     "supported_campaign_types",

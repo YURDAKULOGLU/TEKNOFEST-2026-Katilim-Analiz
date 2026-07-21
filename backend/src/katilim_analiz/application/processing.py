@@ -96,6 +96,13 @@ class SourceRequest(ApplicationModel):
     job_id: Annotated[str, StringConstraints(min_length=1, max_length=191)] | None = None
     scan_run_id: Annotated[str, StringConstraints(min_length=1, max_length=191)] | None = None
     observation_key: Sha256Text | None = None
+    #: Issue #33: the owner-curated label of a registry static product page
+    #: (``konut``/``tasit``/``ihtiyac``). Source metadata, not page content;
+    #: extraction may use it only to break a classification ambiguity.
+    static_page_label: (
+        Annotated[str, StringConstraints(pattern=r"^[a-z0-9]+(?:-[a-z0-9]+)*$", max_length=64)]
+        | None
+    ) = None
 
     @model_validator(mode="after")
     def supplied_observation_identity_is_consistent(self) -> SourceRequest:
