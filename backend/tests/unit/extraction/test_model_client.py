@@ -184,6 +184,31 @@ async def test_live_body_enforces_quote_fact_and_extra_property_limits(
 
 
 @pytest.mark.asyncio
+async def test_quote_between_legacy_120_and_current_limit_is_accepted() -> None:
+    quote = (
+        "Bireysel müşterilere özel konut finansmanı kâr payı oranı, kampanya süresince "
+        "başvuru kanalından bağımsız olarak aylık %1,89 seviyesinde uygulanmakta olup "
+        "bu oran 120 aya varan vade seçeneklerinin tamamı için geçerlidir."
+    )
+    assert 120 < len(quote) <= MAX_QUOTE_CHARS
+    document = make_document(("paragraph", quote))
+    client, http_client = _client(
+        httpx.MockTransport(
+            lambda request: httpx.Response(
+                200,
+                json=_envelope(_content(facts=[{"field": "rate", "quote": quote}])),
+            )
+        )
+    )
+    try:
+        response = await client.extract(document, frozenset({ModelFactField.RATE}))
+    finally:
+        await http_client.aclose()
+
+    assert [fact.proposed_quote for fact in response.facts] == [quote]
+
+
+@pytest.mark.asyncio
 async def test_nonempty_thinking_is_rejected(campaign_document: CleanDocument) -> None:
     transport = httpx.MockTransport(
         lambda request: httpx.Response(

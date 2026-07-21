@@ -436,13 +436,20 @@ class OllamaStructuredClient:
                 ModelFailureCode.SCHEMA_INVALID,
                 "local model content does not match the extraction schema",
             ) from exc
-        return ModelExtractionResponse(
-            schema_version="model-extraction/1.1",
-            document_id=document_id,
-            facts=[
-                ModelFactProposal(field=fact.field, quote=fact.quote) for fact in live_body.facts
-            ],
-        )
+        try:
+            return ModelExtractionResponse(
+                schema_version="model-extraction/1.1",
+                document_id=document_id,
+                facts=[
+                    ModelFactProposal(field=fact.field, quote=fact.quote)
+                    for fact in live_body.facts
+                ],
+            )
+        except ValidationError as exc:
+            raise ModelInferenceError(
+                ModelFailureCode.SCHEMA_INVALID,
+                "local model facts violate the extraction contract",
+            ) from exc
 
 
 __all__ = [

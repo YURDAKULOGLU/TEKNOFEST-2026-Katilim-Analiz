@@ -240,7 +240,7 @@ class ModelExtractionResponse(_StrictModel):
                     value is not None for value in legacy_or_optional_values
                 ):
                     raise ValueError("model-extraction/1.1 facts must be quote-only")
-                if len(fact.quote) > 120:
+                if len(fact.quote) > MAX_QUOTE_CHARS:
                     raise ValueError("model-extraction/1.1 quote exceeds live limit")
         if self.outcome is ModelExtractionOutcome.EXTRACTED and not self.facts:
             raise ValueError("extracted outcome requires at least one fact")
