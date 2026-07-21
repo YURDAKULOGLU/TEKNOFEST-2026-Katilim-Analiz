@@ -106,6 +106,13 @@ _FIELD_GUIDES_TR: dict[ModelFactField, str] = {
 _TERM_DURATION_RE = re.compile(r"\b\d+(?:[.,]\d+)?\s*(?:aylik|ay|yillik|yil|senelik|sene)\b")
 _WINDOW_CONTEXT_CHARS = 160
 
+#: Per-block character ceiling for the visible source window.  The quote
+#: budget is 240 characters, so 160 characters of lead-in before the first
+#: signal plus a full quote-sized tail is enough neighbourhood for any
+#: acceptable fact; the rest of a long block is prompt-evaluation cost the
+#: CPU model pays without being allowed to use it.
+MAX_BLOCK_CHARS = 400
+
 _FIELD_FAMILIES: tuple[frozenset[ModelFactField], ...] = (
     frozenset(
         {
@@ -178,15 +185,25 @@ def _signal_positions(block: SourceBlock, field: ModelFactField) -> tuple[int, .
     return tuple(sorted(positions))
 
 
-def _priority(
+def _block_relevance(
     block: SourceBlock,
     requested_fields: frozenset[ModelFactField],
-) -> tuple[int, int, int]:
+) -> int:
+    """Score one block by the requested-field signals it can actually evidence."""
+
     relevance = sum(len(_signal_positions(block, field)) for field in requested_fields)
     if ModelFactField.TITLE in requested_fields and block.kind == "heading":
         relevance += 2
     if ModelFactField.SUMMARY in requested_fields and block.kind == "paragraph":
         relevance += 1
+    return relevance
+
+
+def _priority(
+    block: SourceBlock,
+    requested_fields: frozenset[ModelFactField],
+) -> tuple[int, int, int]:
+    relevance = _block_relevance(block, requested_fields)
     return (-relevance, 0 if block.kind == "heading" else 1, block.ordinal)
 
 
@@ -262,7 +279,7 @@ def build_prompt_package(
     requested_fields: frozenset[ModelFactField],
     *,
     max_blocks: int = 16,
-    max_block_chars: int = 1_000,
+    max_block_chars: int = MAX_BLOCK_CHARS,
     max_user_bytes: int = MAX_USER_PROMPT_BYTES,
 ) -> PromptPackage:
     """Serialize a byte-bounded safe subset without asking for offsets.
@@ -271,6 +288,13 @@ def build_prompt_package(
     hostile high-entropy Unicode can tokenize much less efficiently than normal
     Turkish prose.  The exact serialized user message stays below the ceiling,
     including JSON escaping and metadata.
+
+    Only blocks carrying at least one requested-field signal are sent: a block
+    the signal heuristic scores at zero cannot support any requested field at
+    the acceptance boundary either, so shipping it would only slow CPU prompt
+    evaluation.  Long blocks are cut to one contiguous signal-centred window,
+    never stitched from disjoint pieces, so a quote check against the visible
+    text can never accept a quote that does not exist contiguously at source.
     """
 
     if not requested_fields:
@@ -305,6 +329,10 @@ def build_prompt_package(
         if is_obvious_prompt_injection(block.text):
             quarantined_ids.add(block.id)
             continue
+        if _block_relevance(block, requested_fields) == 0:
+            # Sorted by descending relevance, so the first zero-signal block
+            # means every remaining block is zero-signal too.
+            break
         if len(included) >= max_blocks:
             break
 
