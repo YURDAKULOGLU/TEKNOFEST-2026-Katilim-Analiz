@@ -74,6 +74,7 @@ class HttpIngestor:
         rate_limiter: HostRateLimiter | None = None,
         sleeper: Callable[[float], Awaitable[None]] = asyncio.sleep,
         clock: Callable[[], datetime] = lambda: datetime.now(UTC),
+        processing_identity: str | None = None,
     ) -> None:
         self._registry = registry
         self._artifact_store = artifact_store
@@ -86,6 +87,11 @@ class HttpIngestor:
         self._rate_limiter = rate_limiter or InMemoryHostRateLimiter()
         self._sleeper = sleeper
         self._clock = clock
+        # Identity of the downstream processing pipeline (extractor + prompt
+        # version).  A 304 short-circuit skips cleaning and extraction, so it
+        # is only sound while the pipeline that saw the cached bytes is the
+        # pipeline that would run today.
+        self._processing_identity = processing_identity
 
     async def __aenter__(self) -> HttpIngestor:
         return self
@@ -324,8 +330,16 @@ class HttpIngestor:
             # produced them.  Re-discover a redirect chain unconditionally,
             # then attach validators only if it still reaches the cached final
             # URL.  Carrying B's ETag from A→B onto a changed A→C chain could
-            # otherwise make C's 304 resurrect B's bytes.
-            if cache_entry is not None and cache_entry.final_url == current_url:
+            # otherwise make C's 304 resurrect B's bytes.  Validators are also
+            # bound to the processing identity that consumed the cached bytes:
+            # after an extractor or prompt upgrade a 304 would silently skip
+            # reprocessing unchanged content, so a stale-identity entry must
+            # degrade to a full unconditional fetch.
+            if (
+                cache_entry is not None
+                and cache_entry.final_url == current_url
+                and cache_entry.processing_identity == self._processing_identity
+            ):
                 if cache_entry.etag:
                     headers["If-None-Match"] = cache_entry.etag
                 if cache_entry.last_modified:
@@ -417,7 +431,11 @@ class HttpIngestor:
                         http_status=response.status_code,
                     )
                 if response.status_code == 304:
-                    if cache_entry is None or cache_entry.final_url != current_url:
+                    if (
+                        cache_entry is None
+                        or cache_entry.final_url != current_url
+                        or cache_entry.processing_identity != self._processing_identity
+                    ):
                         return self._failure_result(
                             bank_id=bank.id,
                             requested_url=requested_url,
@@ -549,6 +567,7 @@ class HttpIngestor:
                     raw_size_bytes=len(raw_content),
                     private_raw_path=private_raw_path,
                     stored_at=self._now(),
+                    processing_identity=self._processing_identity,
                 )
                 await self._response_cache.put(cache_entry)
                 artifact = create_fetch_artifact(

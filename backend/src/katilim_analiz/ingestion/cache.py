@@ -19,6 +19,11 @@ class ResponseCacheEntry:
     raw_size_bytes: int
     private_raw_path: str | None
     stored_at: datetime
+    #: Identity of the downstream processing (extractor + prompt version) that
+    #: already consumed these bytes.  A conditional request may only suppress a
+    #: refetch for the exact same processing identity: unchanged content under
+    #: an upgraded extractor must be fetched and reprocessed in full.
+    processing_identity: str | None = None
 
 
 class ResponseCache(Protocol):

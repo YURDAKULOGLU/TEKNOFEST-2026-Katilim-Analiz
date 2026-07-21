@@ -69,6 +69,7 @@ def _ingestor(
     robots_cache: InMemoryRobotsCache | None = None,
     rate_limiter: RecordingRateLimiter | None = None,
     sleeper: RecordingSleeper | None = None,
+    processing_identity: str | None = None,
 ) -> HttpIngestor:
     return HttpIngestor(
         registry=load_registry(REGISTRY_PATH),
@@ -81,6 +82,7 @@ def _ingestor(
         rate_limiter=rate_limiter or RecordingRateLimiter(),
         sleeper=sleeper or RecordingSleeper(),
         clock=lambda: NOW,
+        processing_identity=processing_identity,
     )
 
 
@@ -318,6 +320,60 @@ async def test_conditional_cache_turns_304_into_a_hash_linked_artifact() -> None
     assert second.artifact.raw_size_bytes == len(raw)
     assert second.raw_content is None
     assert target_attempts == 2
+
+
+@pytest.mark.asyncio
+async def test_extractor_upgrade_invalidates_conditional_validators() -> None:
+    """Unchanged content under an upgraded extractor must refetch in full.
+
+    A 304 short-circuit skips cleaning and extraction, so validators cached by
+    an older pipeline build must not suppress the refetch that the upgraded
+    build needs in order to reprocess the same bytes.
+    """
+
+    cache = InMemoryResponseCache()
+    robots_cache = InMemoryRobotsCache()
+    raw = b"<p>unchanged product page</p>"
+    conditional_headers: list[str | None] = []
+
+    def handler(request: httpx.Request) -> httpx.Response:
+        if request.url.path == "/robots.txt":
+            return httpx.Response(404)
+        validator = request.headers.get("If-None-Match")
+        conditional_headers.append(validator)
+        if validator == '"v1"':
+            return httpx.Response(304)
+        return httpx.Response(
+            200,
+            content=raw,
+            headers={"Content-Type": "text/html", "ETag": '"v1"'},
+        )
+
+    url = "https://www.kuveytturk.com.tr/campaign"
+    old_build = _ingestor(
+        handler,
+        cache=cache,
+        robots_cache=robots_cache,
+        processing_identity="hybrid-extractor/1.1+campaign-extraction-tr/1.1",
+    )
+    new_build = _ingestor(
+        handler,
+        cache=cache,
+        robots_cache=robots_cache,
+        processing_identity="hybrid-extractor/1.2+campaign-extraction-tr/1.2",
+    )
+
+    first = await old_build.fetch("kuveyt-turk", url)
+    upgraded = await new_build.fetch("kuveyt-turk", url)
+    repeated = await new_build.fetch("kuveyt-turk", url)
+
+    assert first.artifact.status is FetchStatus.SUCCESS
+    # The upgraded build must not ride the old build's validator into a 304.
+    assert upgraded.artifact.status is FetchStatus.SUCCESS
+    assert upgraded.raw_content == raw
+    # The same build may then use its own refreshed validator normally.
+    assert repeated.artifact.status is FetchStatus.NOT_MODIFIED
+    assert conditional_headers == [None, None, '"v1"']
 
 
 @pytest.mark.asyncio

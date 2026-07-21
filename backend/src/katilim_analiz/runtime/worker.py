@@ -19,7 +19,7 @@ from katilim_analiz.application.processing import (
     SourceRequest,
 )
 from katilim_analiz.config import ModelProfile, Settings, get_settings
-from katilim_analiz.extraction import pipeline_from_settings
+from katilim_analiz.extraction import extraction_processing_identity, pipeline_from_settings
 from katilim_analiz.ingestion import (
     HostPolicy,
     HttpIngestor,
@@ -279,6 +279,10 @@ async def build_worker_runtime(
             artifact_store=PrivateFileArtifactStore(settings.private_raw_dir),
             response_cache=InMemoryResponseCache(),
             policy_provider=StaticHostPolicyProvider(default=policy),
+            # Bind conditional-fetch validators to the exact extraction build:
+            # an extractor or prompt upgrade must reprocess unchanged content
+            # instead of letting an HTTP 304 skip extraction entirely.
+            processing_identity=extraction_processing_identity(),
         )
         model_client = (
             None

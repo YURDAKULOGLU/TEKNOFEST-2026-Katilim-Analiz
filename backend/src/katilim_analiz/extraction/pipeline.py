@@ -34,6 +34,20 @@ from katilim_analiz.llm import (
 )
 
 EXTRACTOR_VERSION = "hybrid-extractor/1.2"
+
+
+def extraction_processing_identity() -> str:
+    """Name the exact pipeline build whose output a cached fetch may stand in for.
+
+    Conditional-fetch short-circuits (HTTP 304) skip cleaning and extraction
+    entirely, so they are only sound while both the deterministic extractor and
+    the model prompt contract are unchanged.  Bumping either version changes
+    this identity and forces unchanged content through a full reprocess.
+    """
+
+    return f"{EXTRACTOR_VERSION}+{PROMPT_VERSION}"
+
+
 _TOM_LISTING_PATH = "/kampanyalar.html"
 _SEGMENTATION_UNRESOLVED = "campaign_listing_segmentation_unresolved"
 _TOM_CAMPAIGN_TITLE_LOCATOR = re.compile(
@@ -303,5 +317,6 @@ __all__ = [
     "ExtractionPipeline",
     "ExtractionResult",
     "ModelExtractor",
+    "extraction_processing_identity",
     "pipeline_from_settings",
 ]
