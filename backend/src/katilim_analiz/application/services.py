@@ -234,12 +234,20 @@ class CampaignService:
             ),
             key=lambda item: item.feed_sequence,
         )
-        next_cursor = None if after is None else self._notification_cursor_codec.encode(after)
-        if ordered:
+        next_cursor = None
+        if page.has_more and ordered:
             last = ordered[-1]
             next_cursor = self._notification_cursor_codec.encode(
                 NotificationCursor(feed_sequence=last.feed_sequence)
             )
+        elif not ordered and cursor is not None and after is not None:
+            canonical = self._notification_cursor_codec.encode(after)
+            if canonical != cursor:
+                # A legacy v1 cursor decodes to the replay anchor; re-issue the
+                # canonical v2 cursor so the client migrates off the v1 format.
+                # A canonical cursor on an exhausted feed returns None instead
+                # of echoing itself, so `while next_cursor` clients terminate.
+                next_cursor = canonical
         return NotificationListResponse(
             items=[item.event for item in ordered],
             next_cursor=next_cursor,

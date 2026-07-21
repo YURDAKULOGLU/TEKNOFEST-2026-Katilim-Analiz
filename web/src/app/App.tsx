@@ -1,4 +1,9 @@
-import { useInfiniteQuery, useQuery, useQueryClient } from "@tanstack/react-query";
+import {
+  keepPreviousData,
+  useInfiniteQuery,
+  useQuery,
+  useQueryClient,
+} from "@tanstack/react-query";
 import { useEffect, useMemo, useRef, useState } from "react";
 
 import type { AnalysisApi } from "../api/client";
@@ -46,16 +51,19 @@ export function App({ client }: AppProps) {
   const [selectedKeys, setSelectedKeys] = useState<Set<string>>(() => new Set());
   const [detailKey, setDetailKey] = useState<string | null>(null);
   const [notifications, setNotifications] = useState<CampaignChangeEvent[]>([]);
-  const [campaignSnapshotRevision, setCampaignSnapshotRevision] = useState(0);
   const detailTriggerRef = useRef<HTMLButtonElement | null>(null);
   const notificationCursorRef = useRef<string | undefined>(undefined);
   const processedNotificationIdsRef = useRef<Set<string>>(new Set());
 
   const campaignQuery = useInfiniteQuery({
-    queryKey: ["campaigns", filters, campaignSnapshotRevision],
+    queryKey: ["campaigns", filters],
     queryFn: ({ pageParam }) =>
       client.listCampaigns(filters, pageParam.cursor, pageParam.asOf),
     initialPageParam: {} as CampaignPageParam,
+    // Keep the already-loaded list on screen while a refetch or filter change
+    // is in flight; without this the table drops to a loading state and the
+    // user's pagination visibly resets (issue #7).
+    placeholderData: keepPreviousData,
     getNextPageParam: (lastPage, allPages) =>
       lastPage.next_cursor
         ? {
@@ -109,7 +117,9 @@ export function App({ client }: AppProps) {
         )
         .slice(0, 100);
     });
-    setCampaignSnapshotRevision((current) => current + 1);
+    // Refetch the loaded campaign pages in place instead of rotating the query
+    // key; a key change would discard the pagination the user already opened.
+    void queryClient.invalidateQueries({ queryKey: ["campaigns"], refetchType: "active" });
     void queryClient.invalidateQueries({
       queryKey: ["campaign-detail"],
       refetchType: "active",

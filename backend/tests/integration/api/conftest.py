@@ -204,6 +204,7 @@ class FakeReads:
             ordered = [item for item in ordered if item.feed_sequence > after.feed_sequence]
         return NotificationReadSlice(
             items=ordered[:limit],
+            has_more=len(ordered) > limit,
         )
 
 

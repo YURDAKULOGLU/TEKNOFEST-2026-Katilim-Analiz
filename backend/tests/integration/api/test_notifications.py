@@ -52,6 +52,8 @@ async def test_notification_feed_is_strict_bounded_and_duplicate_safe(
     }
     assert first_payload["items"][0]["record_status"] == "validated"
 
+    assert first_payload["next_cursor"] is not None
+
     second = await client.get(
         "/api/v1/notifications",
         params={"limit": 1, "cursor": first_payload["next_cursor"]},
@@ -62,16 +64,20 @@ async def test_notification_feed_is_strict_bounded_and_duplicate_safe(
         "00000000-0000-0000-0000-000000000002"
     ]
     assert second_payload["items"][0]["record_status"] == "needs_review"
+    # The feed is exhausted after this page, so pagination must terminate
+    # instead of echoing a cursor that yields the same empty page forever.
+    assert second_payload["next_cursor"] is None
 
     exhausted = await client.get(
         "/api/v1/notifications",
-        params={"limit": 1, "cursor": second_payload["next_cursor"]},
+        params={"limit": 100, "cursor": first_payload["next_cursor"]},
     )
     assert exhausted.status_code == 200
-    assert exhausted.json() == {
-        "items": [],
-        "next_cursor": second_payload["next_cursor"],
-    }
+    exhausted_payload = exhausted.json()
+    assert [item["id"] for item in exhausted_payload["items"]] == [
+        "00000000-0000-0000-0000-000000000002"
+    ]
+    assert exhausted_payload["next_cursor"] is None
 
 
 @pytest.mark.asyncio

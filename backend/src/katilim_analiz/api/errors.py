@@ -103,6 +103,17 @@ def install_exception_handlers(app: FastAPI) -> None:
 
     @app.exception_handler(StarletteHTTPException)
     async def http_error(request: Request, exc: StarletteHTTPException) -> JSONResponse:
+        if exc.status_code == 400 and exc.detail == "There was an error parsing the body":
+            # FastAPI raises this bare 400 when the request body cannot be
+            # decoded (for example a cp1254/Windows-1254 encoded payload).
+            # Name the actual requirement instead of an empty detail.
+            return problem_response(
+                request,
+                status=400,
+                title="İstek gövdesi çözümlenemedi",
+                code="invalid_request_body",
+                detail="İstek gövdesi okunamadı; JSON gövde UTF-8 kodlanmış olmalıdır.",
+            )
         code = "route_not_found" if exc.status_code == 404 else "http_error"
         title = "Yol bulunamadı" if exc.status_code == 404 else "HTTP isteği tamamlanamadı"
         return problem_response(

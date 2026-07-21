@@ -21,12 +21,22 @@ class DuplicateNotificationReads:
 
     async def list_notifications(self, *, after, limit):  # type: ignore[no-untyped-def]
         item = NotificationReadItem(feed_sequence=7, event=self.event)
-        return NotificationReadSlice(items=[item, item][:limit])
+        return NotificationReadSlice(items=[item, item][:limit], has_more=True)
 
 
 class EmptyNotificationReads:
     async def list_notifications(self, *, after, limit):  # type: ignore[no-untyped-def]
-        return NotificationReadSlice(items=[])
+        return NotificationReadSlice(items=[], has_more=False)
+
+
+class SinglePageNotificationReads:
+    def __init__(self, event: CampaignChangeEvent) -> None:
+        self.event = event
+
+    async def list_notifications(self, *, after, limit):  # type: ignore[no-untyped-def]
+        item = NotificationReadItem(feed_sequence=7, event=self.event)
+        items = [item] if after is None or item.feed_sequence > after.feed_sequence else []
+        return NotificationReadSlice(items=items, has_more=False)
 
 
 @pytest.mark.asyncio
@@ -49,7 +59,28 @@ async def test_repeated_cursor_cannot_reemit_the_same_event() -> None:
 
     assert [item.id for item in first.items] == [event.id]
     assert repeated.items == []
-    assert repeated.next_cursor == first.next_cursor
+    assert repeated.next_cursor is None
+
+
+@pytest.mark.asyncio
+async def test_exhausted_feed_terminates_pagination_with_null_cursor() -> None:
+    event = CampaignChangeEvent(
+        id=UUID("00000000-0000-0000-0000-000000000002"),
+        campaign_key="bank-a:campaign-b",
+        record_id="record:b:v1",
+        record_version=1,
+        change_kind="created",
+        record_status=RecordStatus.VALIDATED,
+        previous_record_id=None,
+        observed_at=NOW,
+        created_at=NOW,
+    )
+    service = CampaignService(SinglePageNotificationReads(event))  # type: ignore[arg-type]
+
+    only_page = await service.list_notifications(cursor=None, limit=20)
+
+    assert [item.id for item in only_page.items] == [event.id]
+    assert only_page.next_cursor is None
 
 
 @pytest.mark.asyncio

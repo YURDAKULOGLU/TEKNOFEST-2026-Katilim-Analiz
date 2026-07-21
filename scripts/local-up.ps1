@@ -230,11 +230,17 @@ try {
 
     $coverage = Invoke-RestMethod -Uri "http://127.0.0.1:8080/api/v1/coverage" -TimeoutSec 15
     $campaigns = Invoke-RestMethod -Uri "http://127.0.0.1:8080/api/v1/campaigns?limit=100" -TimeoutSec 15
-    if ($coverage.Count -ne 10 -or @($campaigns.items).Count -ne 4) {
-        throw "Demo smoke expected 10 coverage entries and 4 pending campaigns; found $($coverage.Count) and $(@($campaigns.items).Count)."
+    # Lower-bound check: a cluster with accumulated real data must not fail a
+    # successful redeploy (issue #26). A fresh install still yields exactly the
+    # 10 seeded coverage entries and 4 pending campaigns.
+    if ($coverage.Count -lt 10 -or @($campaigns.items).Count -lt 4) {
+        throw "Demo smoke expected at least 10 coverage entries and 4 campaigns; found $($coverage.Count) and $(@($campaigns.items).Count)."
     }
-    if (@($campaigns.items | Where-Object { $_.status -ne "needs_review" }).Count -ne 0) {
-        throw "Demo smoke found a campaign that was incorrectly promoted beyond needs_review."
+    $unexpectedStatuses = @(
+        $campaigns.items | Where-Object { $_.status -notin @("needs_review", "validated") }
+    )
+    if ($unexpectedStatuses.Count -ne 0) {
+        throw "Demo smoke found a campaign with an unexpected status: $(($unexpectedStatuses | ForEach-Object { $_.status }) -join ', ')."
     }
 
     Invoke-Kubectl -n $Namespace exec deployment/ollama "--" ollama ps

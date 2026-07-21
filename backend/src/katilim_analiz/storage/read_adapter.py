@@ -124,15 +124,14 @@ class PostgresCampaignReadAdapter(CampaignReadPort):
     async def get(self, campaign_id: str, *, as_of: datetime) -> CampaignProjection | None:
         _require_aware(as_of, "as_of")
         _require_id(campaign_id)
+        # Mirror list_latest: only the latest, non-REJECTED version of a
+        # logical campaign is served; a stale or rejected id resolves to None
+        # instead of presenting retired data as current (issue #6).
+        latest = _latest_record_ids(as_of)
         async with self._sessions() as session:
             row = (
                 await session.execute(
-                    _projection_select()
-                    .where(
-                        CampaignRecordRow.id == campaign_id,
-                        CampaignRecordRow.observed_at <= as_of,
-                    )
-                    .limit(1)
+                    _projection_select(latest).where(CampaignRecordRow.id == campaign_id).limit(1)
                 )
             ).first()
             if row is None:
@@ -268,7 +267,7 @@ class PostgresCampaignReadAdapter(CampaignReadPort):
         )
         if after is not None:
             statement = statement.where(OutboxEvent.feed_sequence > after.feed_sequence)
-        statement = statement.order_by(asc(OutboxEvent.feed_sequence)).limit(limit)
+        statement = statement.order_by(asc(OutboxEvent.feed_sequence)).limit(limit + 1)
         async with self._sessions() as session:
             rows = list((await session.execute(statement)).scalars().all())
 
@@ -284,8 +283,9 @@ class PostgresCampaignReadAdapter(CampaignReadPort):
                         created_at=row.created_at,
                     ),
                 )
-                for row in rows
+                for row in rows[:limit]
             ],
+            has_more=len(rows) > limit,
         )
 
     async def _cursor_exists(
@@ -378,6 +378,7 @@ class PostgresCampaignReadAdapter(CampaignReadPort):
         families: Counter[str] = Counter()
         currencies: Counter[str] = Counter()
         segments: Counter[str] = Counter()
+        segment_labels: defaultdict[str, Counter[str]] = defaultdict(Counter)
         channels: Counter[str] = Counter()
         for bank_id, bank_name, family, currency, data in (await session.execute(statement)).all():
             banks[(bank_id, bank_name)] += 1
@@ -390,7 +391,12 @@ class PostgresCampaignReadAdapter(CampaignReadPort):
                 raise ReadModelIntegrityError(
                     "facet source cannot be projected through canonical contracts"
                 ) from exc
-            segments.update(set(parsed.customer_segments))
+            # Facet on a casefolded key so "Bireysel" and "bireysel" count as
+            # one segment; the stored evidence text itself stays verbatim.
+            for segment in {value.casefold() for value in parsed.customer_segments}:
+                segments[segment] += 1
+            for value in set(parsed.customer_segments):
+                segment_labels[value.casefold()][value] += 1
             channels[parsed.comparison_context.sales_channel.value] += 1
         return CampaignFacets(
             banks=_facet_options(
@@ -401,7 +407,8 @@ class PostgresCampaignReadAdapter(CampaignReadPort):
             ),
             currencies=_facet_options((value, value, count) for value, count in currencies.items()),
             customer_segments=_facet_options(
-                (value, value, count) for value, count in segments.items()
+                (value, _dominant_label(segment_labels[value]), count)
+                for value, count in segments.items()
             ),
             sales_channels=_facet_options(
                 (value, value, count) for value, count in channels.items()
@@ -529,8 +536,17 @@ def _filter_predicates(filters: CampaignListFilters, as_of: datetime) -> list[An
     if filters.currency is not None:
         predicates.append(CampaignRecordRow.product_currency == filters.currency)
     if filters.customer_segment is not None:
+        # Case-insensitive membership so a normalized facet value like
+        # "bireysel" also matches records whose verbatim text is "Bireysel".
+        segment_values = func.jsonb_array_elements_text(
+            CampaignRecordRow.data["customer_segments"]
+        ).table_valued("value")
         predicates.append(
-            CampaignRecordRow.data["customer_segments"].contains([filters.customer_segment])
+            select(literal(True))
+            .select_from(segment_values)
+            .where(func.lower(segment_values.c.value) == func.lower(filters.customer_segment))
+            .correlate(CampaignRecordRow)
+            .exists()
         )
     if filters.sales_channel is not None:
         predicates.append(
@@ -566,6 +582,12 @@ def _filter_predicates(filters: CampaignListFilters, as_of: datetime) -> list[An
             ]
         )
     return predicates
+
+
+def _dominant_label(variants: Counter[str]) -> str:
+    """Most frequent verbatim casing; ties break to the lexicographic minimum."""
+
+    return max(sorted(variants.items()), key=lambda item: item[1])[0]
 
 
 def _facet_options(values: Iterable[tuple[str, str, int]]) -> list[FacetOption]:

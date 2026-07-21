@@ -42,6 +42,10 @@ spec:
                 secretKeyRef:
                   name: katilim-analiz-runtime
                   key: database-url
+            # Persist model responses on the private-data PVC (mounted below)
+            # so the cache layer survives worker restarts.
+            - name: MODEL_RESPONSE_CACHE_DIR
+              value: /app/data/private/model-cache
           resources:
             requests:
               cpu: 250m

@@ -162,6 +162,7 @@ class NotificationReadItem(ApplicationModel):
 
 class NotificationReadSlice(ApplicationModel):
     items: Annotated[list[NotificationReadItem], Field(max_length=100)]
+    has_more: bool
 
 
 class NotificationListResponse(ApplicationModel):
