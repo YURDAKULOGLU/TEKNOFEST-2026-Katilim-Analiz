@@ -1,0 +1,231 @@
+"""Family-aware machine-validation gate (issue #3)."""
+
+from __future__ import annotations
+
+import pytest
+
+from katilim_analiz.contracts import CampaignType, ProductFamily, RecordStatus
+from katilim_analiz.extraction.validation_policy import (
+    BASE_REQUIRED_FIELDS,
+    CAMPAIGN_TYPE_REQUIRED_FIELDS,
+    FAMILY_REQUIRED_FIELDS,
+    decide_record_status,
+    evaluate_validation,
+    required_fields,
+)
+from katilim_analiz.llm.contracts import ModelFactField
+
+# Optional context that real campaign pages routinely leave unstated. Under the
+# old 13-field conjunction each of these alone forced needs_review forever.
+_OPTIONAL_UNRESOLVED = [
+    "unresolved:validity",
+    "unresolved:customer_segment",
+    "unresolved:eligibility_condition",
+    "unresolved:sales_channel",
+    "unresolved:new_customer_only",
+]
+
+
+def test_matrix_covers_every_family_and_campaign_type() -> None:
+    assert set(FAMILY_REQUIRED_FIELDS) == set(ProductFamily)
+    assert set(CAMPAIGN_TYPE_REQUIRED_FIELDS) == set(CampaignType)
+
+
+def test_required_fields_combine_base_family_and_type() -> None:
+    requirement = required_fields(ProductFamily.FINANCING, CampaignType.FINANCING_RATE)
+
+    assert requirement is not None
+    assert requirement.all_of == BASE_REQUIRED_FIELDS | {
+        ModelFactField.RATE,
+        ModelFactField.TERM,
+    }
+    assert requirement.any_of == frozenset()
+    assert required_fields(ProductFamily.UNKNOWN, CampaignType.CASHBACK) is None
+    assert required_fields(ProductFamily.CARD, CampaignType.UNKNOWN) is None
+
+
+@pytest.mark.parametrize(
+    ("bank", "family", "campaign_type", "issues"),
+    [
+        # Kuveyt Turk: housing financing campaign - rate + term resolved;
+        # amount, fee, reward, and validity are not stated on the page.
+        (
+            "kuveyt-turk",
+            ProductFamily.FINANCING,
+            CampaignType.FINANCING_RATE,
+            [
+                "unresolved:financing_amount",
+                "unresolved:fee",
+                "unresolved:reward",
+                *_OPTIONAL_UNRESOLVED,
+            ],
+        ),
+        # Albaraka: fee-waiver financing campaign - fee status resolved;
+        # a reward is absent by the product's nature.
+        (
+            "albaraka",
+            ProductFamily.FINANCING,
+            CampaignType.FEE_WAIVER,
+            [
+                "unresolved:financing_amount",
+                "unresolved:reward",
+                *_OPTIONAL_UNRESOLVED,
+            ],
+        ),
+        # Turkiye Finans: card cashback campaign - reward resolved; rate,
+        # term, and financing amount are absent by a card campaign's nature.
+        (
+            "turkiye-finans",
+            ProductFamily.CARD,
+            CampaignType.CASHBACK,
+            [
+                "unresolved:rate",
+                "unresolved:term",
+                "unresolved:financing_amount",
+                "unresolved:fee",
+                *_OPTIONAL_UNRESOLVED,
+            ],
+        ),
+    ],
+)
+def test_sartname_scenario_records_validate_under_family_gate(
+    bank: str,
+    family: ProductFamily,
+    campaign_type: CampaignType,
+    issues: list[str],
+) -> None:
+    decision = evaluate_validation(family, campaign_type, issues)
+
+    assert decision.status is RecordStatus.VALIDATED, (bank, decision)
+    assert decision.missing_required_fields == frozenset()
+    assert decision.blocking_issues == ()
+
+
+def test_record_with_no_issues_validates() -> None:
+    assert (
+        decide_record_status(ProductFamily.FINANCING, CampaignType.FINANCING_RATE, [])
+        is RecordStatus.VALIDATED
+    )
+
+
+@pytest.mark.parametrize(
+    ("family", "campaign_type", "issues"),
+    [
+        # Empty page: nothing but the heading resolved.
+        (
+            ProductFamily.UNKNOWN,
+            CampaignType.UNKNOWN,
+            [
+                "unresolved:product_family",
+                "unresolved:campaign_type",
+                "unresolved:rate",
+                "unresolved:financing_amount",
+                "unresolved:term",
+                "unresolved:fee",
+                "unresolved:reward",
+                *_OPTIONAL_UNRESOLVED,
+            ],
+        ),
+        # Financing campaign without its rate.
+        (
+            ProductFamily.FINANCING,
+            CampaignType.FINANCING_RATE,
+            ["unresolved:rate", *_OPTIONAL_UNRESOLVED],
+        ),
+        # Financing campaign without its term.
+        (
+            ProductFamily.FINANCING,
+            CampaignType.FINANCING_RATE,
+            ["unresolved:term"],
+        ),
+        # Fee campaign without a fee status.
+        (ProductFamily.CARD, CampaignType.FEE_WAIVER, ["unresolved:fee"]),
+        # Reward campaign without a reward.
+        (ProductFamily.CARD, CampaignType.CASHBACK, ["unresolved:reward"]),
+        # Welcome campaign with neither a reward nor a fee waiver.
+        (
+            ProductFamily.CARD,
+            CampaignType.WELCOME,
+            ["unresolved:reward", "unresolved:fee"],
+        ),
+        # Participation account campaign without a profit-share rate.
+        (
+            ProductFamily.PARTICIPATION_ACCOUNT,
+            CampaignType.PROFIT_SHARE,
+            ["unresolved:rate"],
+        ),
+        # Unclassifiable products are never machine-validated.
+        (ProductFamily.OTHER, CampaignType.DISCOUNT, []),
+        (ProductFamily.CARD, CampaignType.OTHER, []),
+    ],
+)
+def test_missing_family_critical_fields_do_not_validate(
+    family: ProductFamily,
+    campaign_type: CampaignType,
+    issues: list[str],
+) -> None:
+    assert decide_record_status(family, campaign_type, issues) is RecordStatus.NEEDS_REVIEW
+
+
+def test_welcome_campaign_validates_with_either_reward_or_fee() -> None:
+    with_fee_only = decide_record_status(
+        ProductFamily.CARD,
+        CampaignType.WELCOME,
+        ["unresolved:reward"],
+    )
+    with_reward_only = decide_record_status(
+        ProductFamily.CARD,
+        CampaignType.WELCOME,
+        ["unresolved:fee"],
+    )
+
+    assert with_fee_only is RecordStatus.VALIDATED
+    assert with_reward_only is RecordStatus.VALIDATED
+
+
+@pytest.mark.parametrize(
+    "blocking_issue",
+    [
+        "quarantined_prompt_injection_block:block-7",
+        "model_fact_rejected:rate:raw_evidence_mismatch",
+        "campaign_type_ambiguous",
+        "product_family_ambiguous",
+        "issues_truncated",
+        "some_future_issue_code",
+        "unresolved:not_a_known_field",
+    ],
+)
+def test_blocking_issues_prevent_validation_even_with_all_fields(blocking_issue: str) -> None:
+    decision = evaluate_validation(
+        ProductFamily.FINANCING,
+        CampaignType.FINANCING_RATE,
+        [blocking_issue],
+    )
+
+    assert decision.status is RecordStatus.NEEDS_REVIEW
+    assert decision.blocking_issues == (blocking_issue,)
+
+
+def test_model_bookkeeping_annotations_do_not_block() -> None:
+    status = decide_record_status(
+        ProductFamily.FINANCING,
+        CampaignType.FINANCING_RATE,
+        [
+            "model_abstained:kaynakta yer almıyor",
+            "model_outcome:not_stated",
+            "model_field_incomplete:rate",
+            "unresolved:reward",
+        ],
+    )
+
+    assert status is RecordStatus.VALIDATED
+
+
+def test_ambiguity_on_an_optional_field_does_not_block() -> None:
+    status = decide_record_status(
+        ProductFamily.CARD,
+        CampaignType.POINTS,
+        ["sales_channel_ambiguous", "unresolved:sales_channel"],
+    )
+
+    assert status is RecordStatus.VALIDATED
