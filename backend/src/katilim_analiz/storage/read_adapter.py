@@ -131,9 +131,7 @@ class PostgresCampaignReadAdapter(CampaignReadPort):
         async with self._sessions() as session:
             row = (
                 await session.execute(
-                    _projection_select(latest)
-                    .where(CampaignRecordRow.id == campaign_id)
-                    .limit(1)
+                    _projection_select(latest).where(CampaignRecordRow.id == campaign_id).limit(1)
                 )
             ).first()
             if row is None:
