@@ -550,6 +550,74 @@ async def test_public_latest_hides_rejected_without_resurrection_and_search_is_v
 
 
 @pytest.mark.asyncio
+async def test_segment_facets_and_filter_are_case_insensitive(database) -> None:  # type: ignore[no-untyped-def]
+    prefix = uuid4().hex[:8]
+    bank_id = f"segment-{prefix}"
+    host = f"{prefix}.segment.example.test"
+    base = datetime(2026, 7, 18, 12, 0, tzinfo=UTC)
+    upper_id = f"record:{prefix}:upper"
+    lower_id = f"record:{prefix}:lower"
+    async with database.transaction() as session:
+        await _source(
+            session,
+            bank_id=bank_id,
+            legal_name=f"Segment Katılım {prefix}",
+            host=host,
+            registry_version=f"segment-{prefix}",
+            order=1,
+        )
+        common = {
+            "session": session,
+            "prefix": prefix,
+            "bank_id": bank_id,
+            "host": host,
+            "family": ProductFamily.FINANCING,
+            "currency": "TRY",
+            "channel": SalesChannel.MOBILE,
+        }
+        await _campaign(
+            **common,
+            logical_key=f"{prefix}:upper",
+            record_id=upper_id,
+            version=1,
+            observed_at=base,
+            title="Büyük Harf Kâr Payı",
+            segment="Bireysel",
+        )
+        await _campaign(
+            **common,
+            logical_key=f"{prefix}:lower",
+            record_id=lower_id,
+            version=1,
+            observed_at=base + timedelta(minutes=1),
+            title="Küçük Harf Kâr Payı",
+            segment="bireysel",
+        )
+
+    as_of = base + timedelta(minutes=2)
+    adapter = PostgresCampaignReadAdapter(database.session_factory)
+    listed = await adapter.list_latest(
+        filters=CampaignListFilters(bank_id=bank_id),
+        after=None,
+        limit=10,
+        as_of=as_of,
+    )
+    assert [(option.value, option.count) for option in listed.facets.customer_segments] == [
+        ("bireysel", 2)
+    ]
+    assert listed.facets.customer_segments[0].label.casefold() == "bireysel"
+
+    for query in ("bireysel", "Bireysel"):
+        filtered = await adapter.list_latest(
+            filters=CampaignListFilters(bank_id=bank_id, customer_segment=query),
+            after=None,
+            limit=10,
+            as_of=as_of,
+        )
+        assert {item.record.id for item in filtered.items} == {upper_id, lower_id}
+
+
+@pytest.mark.asyncio
 async def test_latest_coverage_and_query_count_are_stable(database, seeded_reads) -> None:  # type: ignore[no-untyped-def]
     adapter = PostgresCampaignReadAdapter(database.session_factory)
     coverage = await adapter.latest_coverage(as_of=seeded_reads.as_of)
