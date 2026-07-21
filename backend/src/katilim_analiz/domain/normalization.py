@@ -437,9 +437,25 @@ def _parse_rate_number(token: str) -> Decimal:
     return value
 
 
+#: Issue #28: a percentage of the asset's value is a financing share (LTV),
+#: not a price.  "Azami/maksimum finansman orani" and "degerinin %X'i" state
+#: that share explicitly; both phrasings came from live financing pages.
+_LTV_CONTEXT_RE = re.compile(
+    r"\b(?:azami|maksimum|maks)\s+finansman\s+oran"
+    r"|\bdeger(?:i|si)?nin\s+(?:en\s+fazla\s+|azami\s+)?(?:%|yuzde\b)"
+)
+#: A stated money amount next to "finansman orani" is the signature of a
+#: value-bracket (tutar araligi | % | vade) row, where the percentage is the
+#: financing share, not a profit rate.  The pairing is ambiguous, so no kind
+#: is asserted (issue #28: a missed rate is safe, an inverted label is not).
+_AMOUNT_NEAR_RATE_RE = re.compile(r"(?:\d[\d.,]*\s*(?:tl|try)\b|₺\s*\d)")
+
+
 def _infer_rate_kind(text: str) -> RateKind:
     if re.search(r"\byillik\s+(?:toplam\s+)?maliyet\s+oran", text):
         return RateKind.ANNUAL_COST_RATE
+    if _LTV_CONTEXT_RE.search(text):
+        return RateKind.LTV_RATIO
     if re.search(r"\b(?:kar\s+(?:payi\s+)?dagitim|kar\s+paylasim)\s+oran", text):
         return RateKind.PROFIT_SHARE_DISTRIBUTION_RATE
     if re.search(r"\b(?:gecmis|tarihsel|gerceklesen)\s+(?:yillik\s+)?getiri", text):
@@ -449,6 +465,8 @@ def _infer_rate_kind(text: str) -> RateKind:
     if re.search(r"\b(?:nakit\s+)?iade\s+orani\b|\bodul\s+orani\b", text):
         return RateKind.REWARD_RATE
     if re.search(r"\b(?:finansman(?:\s+kar\s+payi)?|kullandirim\s+kar\s+payi)\s+orani\b", text):
+        if re.search(r"\bkar\b", text) is None and _AMOUNT_NEAR_RATE_RE.search(text) is not None:
+            return RateKind.UNKNOWN
         return RateKind.FINANCING_PROFIT_RATE
     return RateKind.UNKNOWN
 

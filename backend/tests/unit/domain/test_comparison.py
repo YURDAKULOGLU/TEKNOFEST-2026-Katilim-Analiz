@@ -594,3 +594,42 @@ def test_comparison_requires_unique_campaigns_and_a_dimension() -> None:
         compare_campaigns([record, record], [ComparisonDimension.RATE], as_of=AS_OF)
     with pytest.raises(ValueError, match="dimension"):
         compare_campaigns([record, _record("b")], [], as_of=AS_OF)
+
+
+def test_ltv_share_and_profit_rate_are_never_compared_on_the_rate_axis() -> None:
+    """Issue #28: a %70 financing share must not meet a %1,69 profit rate."""
+
+    report = _compare(
+        [
+            _record(
+                "a",
+                rates=(_rate("70", kind=RateKind.LTV_RATIO, period=RatePeriod.UNSPECIFIED),),
+            ),
+            _record("b", rates=(_rate("1.69"),)),
+        ],
+        ComparisonDimension.RATE,
+    )
+
+    assert not any(item.comparable for item in report.items)
+    assert {item.reason_code for item in report.items} == {"rate_kind_mismatch"}
+
+
+def test_ltv_shares_of_the_same_kind_rank_higher_first() -> None:
+    report = _compare(
+        [
+            _record(
+                "a",
+                rates=(_rate("70", kind=RateKind.LTV_RATIO, period=RatePeriod.UNSPECIFIED),),
+            ),
+            _record(
+                "b",
+                rates=(_rate("80", kind=RateKind.LTV_RATIO, period=RatePeriod.UNSPECIFIED),),
+            ),
+        ],
+        ComparisonDimension.RATE,
+    )
+
+    items = _by_campaign(report)
+    assert items["b"].rank == 1  # type: ignore[attr-defined]
+    assert items["a"].rank == 2  # type: ignore[attr-defined]
+    assert items["b"].reason_code == "ranked_higher_is_better"  # type: ignore[attr-defined]

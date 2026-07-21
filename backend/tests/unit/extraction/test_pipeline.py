@@ -475,9 +475,11 @@ def test_rate_quote_requires_complete_deterministic_kind_and_period() -> None:
 
 
 def test_complete_model_rate_does_not_hide_an_incomplete_rule_rate() -> None:
+    # Issue #28: an unknown-kind percentage is no longer recorded at all, so
+    # the incomplete rule rate here is a known-kind rate without its period.
     document = make_document(
         ("heading", "Kampanya"),
-        ("paragraph", "Kampanya oranı %1,50 olarak açıklanmıştır."),
+        ("paragraph", "Finansman kâr payı oranı %1,50 olarak açıklanmıştır."),
         ("paragraph", "Finansman kâr payı oranı aylık %1,99 olarak uygulanır."),
     )
     draft = extract_rules(document)

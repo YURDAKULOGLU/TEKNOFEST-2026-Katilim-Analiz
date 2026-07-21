@@ -28,6 +28,7 @@ from katilim_analiz.extraction.fees import FEE_MARKER, read_fee
 from katilim_analiz.extraction.rules import (
     is_explicit_eligibility,
     is_explicit_new_customer_restriction,
+    rate_semantics_unresolved,
     segment_key_for_text,
     supported_campaign_types,
     supported_product_families,
@@ -431,9 +432,8 @@ def merge_model_response(
     if response.outcome is not None and response.outcome is not ModelExtractionOutcome.EXTRACTED:
         issue = f"model_outcome:{response.outcome.value}"
         merged = _with_issue(merged, issue)
-    if ModelFactField.RATE in resolved and any(
-        rate.value.kind is RateKind.UNKNOWN or rate.value.period is RatePeriod.UNSPECIFIED
-        for rate in merged.rates
+    if ModelFactField.RATE in resolved and rate_semantics_unresolved(
+        rate.value for rate in merged.rates
     ):
         resolved.remove(ModelFactField.RATE)
         merged = _with_issue(merged, "model_field_incomplete:rate")

@@ -33,6 +33,8 @@ from katilim_analiz.contracts import (
     CoverageEntry,
     EvidenceStatus,
     QueryIntent,
+    RateKind,
+    RatePeriod,
     RecordStatus,
 )
 from katilim_analiz.domain.comparison import compare_campaigns
@@ -66,9 +68,23 @@ def _decimal_text(value: Decimal) -> str:
 
 def _primary_value(projection: CampaignProjection) -> PrimaryValue | None:
     data = projection.record.data
-    if data.rates:
-        rate = data.rates[0]
-        return PrimaryValue(label="Oran", value=f"%{_decimal_text(rate.value_percent)}")
+    # Issue #28: only a monthly profit rate may headline as "Oran".  An annual
+    # cost rate, an LTV share, or an unclassified percentage in rates[0] would
+    # present a cost or a ceiling as the price; those kinds fall through to the
+    # existing amount/reward/term choices instead.
+    monthly_profit_rate = next(
+        (
+            rate
+            for rate in data.rates
+            if rate.kind is RateKind.FINANCING_PROFIT_RATE and rate.period is RatePeriod.MONTHLY
+        ),
+        None,
+    )
+    if monthly_profit_rate is not None:
+        return PrimaryValue(
+            label="Oran",
+            value=f"%{_decimal_text(monthly_profit_rate.value_percent)}",
+        )
     if data.financing_amounts:
         money = data.financing_amounts[0]
         return PrimaryValue(

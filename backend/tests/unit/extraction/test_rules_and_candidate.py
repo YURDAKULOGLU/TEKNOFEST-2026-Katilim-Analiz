@@ -290,7 +290,9 @@ def test_financing_table_header_supplies_conservative_generic_rate_semantics() -
     assert draft.rates[0].value.status.value == "inferred"
 
 
-def test_generic_profit_rate_without_financing_context_remains_unknown() -> None:
+def test_generic_profit_rate_without_financing_context_is_not_recorded() -> None:
+    """Issue #28: a percentage whose kind cannot be settled never becomes a rate."""
+
     document = make_document(
         ("heading", "Oran Bilgilendirmesi"),
         ("paragraph", "Aylık kâr payı oranı %1,49 olarak açıklanmıştır."),
@@ -298,9 +300,8 @@ def test_generic_profit_rate_without_financing_context_remains_unknown() -> None
 
     draft = extract_rules(document)
 
-    assert len(draft.rates) == 1
-    assert draft.rates[0].value.kind is RateKind.UNKNOWN
-    assert draft.rates[0].value.period is RatePeriod.MONTHLY
+    assert draft.rates == ()
+    assert ModelFactField.RATE in draft.unresolved_fields
 
 
 def test_explicit_karz_i_hasen_product_mechanism_has_exact_source_span() -> None:
