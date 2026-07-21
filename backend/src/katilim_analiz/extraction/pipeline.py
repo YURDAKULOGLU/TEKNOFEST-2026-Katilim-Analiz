@@ -15,14 +15,20 @@ import httpx
 from katilim_analiz.config import ModelProfile, Settings
 from katilim_analiz.contracts import CleanDocument, ExtractionCandidate, SourceBlock
 from katilim_analiz.extraction.candidate import CandidateValidationError, build_candidate
+from katilim_analiz.extraction.draft import ExtractionDraft
 from katilim_analiz.extraction.model_merge import merge_model_response
 from katilim_analiz.extraction.rules import extract_rules
+from katilim_analiz.extraction.validation_policy import BASE_REQUIRED_FIELDS, required_fields
 from katilim_analiz.llm import (
     PROMPT_VERSION,
+    FileModelResponseCache,
+    InMemoryModelResponseCache,
+    LayeredModelResponseCache,
     ModelExtractionResponse,
     ModelFactField,
     ModelInferenceError,
     ModelInferenceSkipped,
+    ModelResponseCache,
     OllamaStructuredClient,
 )
 
@@ -45,6 +51,8 @@ class ModelExtractor(Protocol):
         self,
         document: CleanDocument,
         requested_fields: frozenset[ModelFactField],
+        *,
+        priority_fields: frozenset[ModelFactField] = frozenset(),
     ) -> ModelExtractionResponse: ...
 
 
@@ -106,7 +114,11 @@ class ExtractionPipeline:
         accepted_model_facts = 0
         if self._model_enabled and self._model is not None and draft.unresolved_fields:
             try:
-                response = await self._model.extract(document, draft.unresolved_fields)
+                response = await self._model.extract(
+                    document,
+                    draft.unresolved_fields,
+                    priority_fields=_gate_priority_fields(draft),
+                )
             except ModelInferenceSkipped as exc:
                 issue = f"model_skipped:{exc.code}"
                 if issue not in draft.issues:
@@ -157,6 +169,27 @@ class ExtractionPipeline:
             model_attempted=model_attempted,
             accepted_model_facts=accepted_model_facts,
         )
+
+
+def _gate_priority_fields(draft: ExtractionDraft) -> frozenset[ModelFactField]:
+    """Ask the validation gate's required fields before optional ones.
+
+    While the record's classification is still open, the base required fields
+    (title, product family, campaign type) are the priority, because nothing
+    else can make the gate decidable.  Once both classifications are bound,
+    the (family, campaign type) requirement matrix names the exact fields the
+    record still needs to become ``validated``.  This only orders the model's
+    questions; optional fields keep their turn in later calls.
+    """
+
+    if draft.product_family is None or draft.campaign_type is None:
+        required = BASE_REQUIRED_FIELDS
+    else:
+        requirement = required_fields(draft.product_family.value, draft.campaign_type.value)
+        if requirement is None:
+            return frozenset()
+        required = requirement.all_of | requirement.any_of
+    return frozenset(required & draft.unresolved_fields)
 
 
 def _abstained(issue: str) -> ExtractionResult:
@@ -225,6 +258,9 @@ def pipeline_from_settings(
     model_enabled = settings.model_profile is not ModelProfile.RULES_ONLY
     if not model_enabled:
         return ExtractionPipeline(model_enabled=False, clock=clock)
+    cache_layers: list[ModelResponseCache] = [InMemoryModelResponseCache()]
+    if settings.model_response_cache_dir is not None:
+        cache_layers.append(FileModelResponseCache(settings.model_response_cache_dir))
     model = OllamaStructuredClient(
         base_url=str(settings.ollama_base_url),
         model=settings.ollama_model,
@@ -234,6 +270,7 @@ def pipeline_from_settings(
         keep_alive=settings.model_keep_alive,
         concurrency=settings.model_concurrency,
         http_client=http_client,
+        response_cache=LayeredModelResponseCache(cache_layers),
     )
     return ExtractionPipeline(
         model=model,

@@ -72,6 +72,11 @@ class Settings(BaseSettings):
     model_max_context: int = Field(default=4096, ge=512, le=32_768)
     model_concurrency: int = Field(default=1, ge=1, le=4)
     model_keep_alive: str = "-1"
+    #: Optional private directory that persists validated model answers across
+    #: worker and scan runs. The in-process LRU cache is always active; this
+    #: only adds durability so a restarted run does not re-ask answered
+    #: questions. Replayed answers still pass the full grounding validation.
+    model_response_cache_dir: Path | None = None
 
     ingest_network_enabled: bool = False
     ingest_user_agent: str = (

@@ -129,6 +129,44 @@ def test_selected_field_guide_is_trusted_system_content_not_untrusted_user_json(
     assert "field_guides" not in user_payload
 
 
+def test_zero_signal_blocks_are_not_shipped_to_the_model() -> None:
+    """A block that cannot evidence any requested field is pure CPU prompt cost."""
+
+    document = make_document(
+        ("paragraph", "Aylık kâr payı oranı %1,89 olarak uygulanır."),
+        ("paragraph", "Kampanya 31 Aralık 2026 tarihine kadar geçerlidir."),
+        ("paragraph", "Bankamız 1985 yılından beri hizmet vermektedir."),
+    )
+
+    package = build_prompt_package(
+        document,
+        frozenset({ModelFactField.RATE, ModelFactField.FINANCING_AMOUNT}),
+    )
+    payload = json.loads(package.user_content)
+
+    assert [block["block_id"] for block in payload["blocks"]] == [document.blocks[0].id]
+    assert package.included_block_ids == {document.blocks[0].id}
+
+
+def test_context_diet_shrinks_the_serialized_question_measurably() -> None:
+    filler = "Genel bilgilendirme metni burada yer alır. " * 20
+    document = make_document(
+        ("paragraph", f"{filler}Aylık kâr payı oranı %1,89 olarak uygulanır."),
+        ("paragraph", "Şube ağımız ve tarihçemiz hakkında uzun kurumsal anlatım. " * 10),
+    )
+    fields = frozenset({ModelFactField.RATE})
+
+    dieted = build_prompt_package(document, fields)
+    fat = build_prompt_package(document, fields, max_block_chars=1_000)
+    dieted_bytes = len(dieted.user_content.encode("utf-8"))
+    fat_bytes = len(fat.user_content.encode("utf-8"))
+
+    assert dieted_bytes < fat_bytes
+    payload = json.loads(dieted.user_content)
+    assert len(payload["blocks"]) == 1
+    assert "%1,89" in payload["blocks"][0]["text"], "the candidate sentence must survive"
+
+
 def test_signal_centered_window_keeps_candidate_after_first_thousand_characters() -> None:
     late_candidate = "12 ay vade"
     document = make_document(

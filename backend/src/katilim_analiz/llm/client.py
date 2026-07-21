@@ -14,6 +14,11 @@ import httpx
 from pydantic import BaseModel, ConfigDict, Field, StringConstraints, ValidationError
 
 from katilim_analiz.contracts import CleanDocument
+from katilim_analiz.llm.cache import (
+    CachedModelAnswer,
+    ModelResponseCache,
+    model_response_cache_key,
+)
 from katilim_analiz.llm.contracts import (
     MAX_QUOTE_CHARS,
     ModelExtractionResponse,
@@ -23,12 +28,16 @@ from katilim_analiz.llm.contracts import (
 )
 from katilim_analiz.llm.prompt import (
     PROMPT_VERSION,
+    PromptPackage,
     build_prompt_package,
     build_system_prompt,
     select_model_fields,
 )
 
 _MAX_RESPONSE_BYTES = 1_000_000
+# Slowest measured generation profile (qwen3.5:4b, in-cluster CPU). Used to keep
+# the output-token budget inside what the wall deadline can actually generate.
+_MEASURED_TOKENS_PER_SECOND = 2.0
 
 
 class ModelFailureCode(StrEnum):
@@ -118,7 +127,10 @@ class _LiveModelFact(_EnvelopeModel):
 
 
 class _LiveModelBody(_EnvelopeModel):
-    facts: Annotated[list[_LiveModelFact], Field(max_length=1)]
+    # One batched request may answer every requested field at once; the
+    # request schema pins ``maxItems`` to the requested-field count and the
+    # 1.1 contract rejects a second fact for the same field.
+    facts: Annotated[list[_LiveModelFact], Field(max_length=len(ModelFactField))]
 
 
 class CircuitState(StrEnum):
@@ -229,6 +241,7 @@ class OllamaStructuredClient:
         concurrency: int = 1,
         http_client: httpx.AsyncClient | None = None,
         circuit_breaker: CircuitBreaker | None = None,
+        response_cache: ModelResponseCache | None = None,
     ) -> None:
         if timeout_seconds <= 0 or max_context < 512 or concurrency <= 0:
             raise ValueError("invalid local model client limits")
@@ -245,6 +258,7 @@ class OllamaStructuredClient:
         self._semaphore = asyncio.Semaphore(concurrency)
         self._client = http_client
         self._circuit = circuit_breaker or CircuitBreaker()
+        self._response_cache = response_cache
 
     @property
     def model_id(self) -> str:
@@ -258,13 +272,28 @@ class OllamaStructuredClient:
         self,
         document: CleanDocument,
         requested_fields: frozenset[ModelFactField],
+        *,
+        priority_fields: frozenset[ModelFactField] = frozenset(),
     ) -> ModelExtractionResponse:
-        selected_fields = select_model_fields(document, requested_fields)
+        selected_fields = select_model_fields(
+            document,
+            requested_fields,
+            priority_fields=priority_fields,
+        )
         if not selected_fields:
             raise ModelInferenceSkipped("no_relevant_source_signal")
         package = build_prompt_package(document, selected_fields)
         if not package.included_block_ids:
             raise ModelInferenceSkipped("no_safe_source_blocks")
+        cache_key = model_response_cache_key(
+            model_digest=self._model_digest,
+            prompt_version=PROMPT_VERSION,
+            requested_fields=selected_fields,
+            user_content=package.user_content,
+        )
+        replayed = self._replay_cached_response(cache_key, document.id, selected_fields, package)
+        if replayed is not None:
+            return replayed
         request_body: dict[str, object] = {
             "model": self._model,
             "messages": [
@@ -278,9 +307,18 @@ class OllamaStructuredClient:
                 "temperature": 0,
                 "num_ctx": self._max_context,
                 # CPU generation is about 2 tokens/s in the measured profile.
-                # Bound the response so valid completion can fit the 120s wall
-                # deadline; a larger/incomplete answer fails closed to rules.
-                "num_predict": 192,
+                # The response bound must stay below what the wall deadline can
+                # generate: a budget the deadline cannot fit would surface as a
+                # TIMEOUT (dependency failure, breaker threshold 2) instead of
+                # done_reason=length -> OUTPUT_TRUNCATED (content failure,
+                # patient threshold), taking the model out of service for slow
+                # content. Batched requests grow the budget per field but never
+                # past the deadline's generation capacity; an answer that no
+                # longer fits truncates and fails closed to rules.
+                "num_predict": min(
+                    192 * len(selected_fields),
+                    int(self._timeout * _MEASURED_TOKENS_PER_SECOND * 0.8),
+                ),
             },
             # Ollama's HTTP API accepts negative infinity as a JSON number, while
             # positive Go-style durations remain strings (for example, "30m").
@@ -304,31 +342,7 @@ class OllamaStructuredClient:
                         envelope,
                         document.id,
                     )
-                    for fact in result.facts:
-                        if fact.field not in selected_fields:
-                            raise ModelInferenceError(
-                                ModelFailureCode.FIELD_NOT_REQUESTED,
-                                f"model returned unrequested field: {fact.field.value}",
-                            )
-                        block_id = fact.proposed_block_id
-                        if block_id is not None and block_id not in package.included_block_ids:
-                            raise ModelInferenceError(
-                                ModelFailureCode.BLOCK_NOT_SENT,
-                                "model cited a block that was not in its bounded request",
-                            )
-                        visible_blocks = (
-                            (sent_id, sent_text)
-                            for sent_id, sent_text in package.included_text_by_block
-                            if block_id is None or sent_id == block_id
-                        )
-                        if not any(
-                            fact.proposed_quote in sent_text
-                            for _sent_id, sent_text in visible_blocks
-                        ):
-                            raise ModelInferenceError(
-                                ModelFailureCode.BLOCK_NOT_SENT,
-                                "model quote was not present in the bounded request",
-                            )
+                    self._validate_facts(result, selected_fields, package)
                     # Field checks are synchronous.  Enforce the same absolute
                     # deadline once that final validation work returns.
                     if loop.time() >= deadline:
@@ -345,7 +359,77 @@ class OllamaStructuredClient:
                 self._circuit.failure(dependency=is_dependency_failure(exc.code))
             raise
         self._circuit.success()
+        if self._response_cache is not None:
+            self._response_cache.put(
+                cache_key,
+                CachedModelAnswer(
+                    facts=tuple((fact.field, fact.proposed_quote) for fact in result.facts)
+                ),
+            )
         return result
+
+    def _replay_cached_response(
+        self,
+        cache_key: str,
+        document_id: str,
+        selected_fields: frozenset[ModelFactField],
+        package: PromptPackage,
+    ) -> ModelExtractionResponse | None:
+        """Rebuild a cached validated answer and re-run the live validation path.
+
+        Any defect in the stored entry — contract violation, unrequested field,
+        quote not visible in the current bounded request — degrades to a cache
+        miss so the live model is consulted instead.  The verbatim grounding
+        check against the current document still happens downstream at the
+        acceptance boundary, exactly as for a live response.
+        """
+
+        if self._response_cache is None:
+            return None
+        cached = self._response_cache.get(cache_key)
+        if cached is None:
+            return None
+        try:
+            response = ModelExtractionResponse(
+                schema_version="model-extraction/1.1",
+                document_id=document_id,
+                facts=[
+                    ModelFactProposal(field=field, quote=quote) for field, quote in cached.facts
+                ],
+            )
+            self._validate_facts(response, selected_fields, package)
+        except (ValidationError, ModelInferenceError):
+            return None
+        return response
+
+    @staticmethod
+    def _validate_facts(
+        result: ModelExtractionResponse,
+        selected_fields: frozenset[ModelFactField],
+        package: PromptPackage,
+    ) -> None:
+        for fact in result.facts:
+            if fact.field not in selected_fields:
+                raise ModelInferenceError(
+                    ModelFailureCode.FIELD_NOT_REQUESTED,
+                    f"model returned unrequested field: {fact.field.value}",
+                )
+            block_id = fact.proposed_block_id
+            if block_id is not None and block_id not in package.included_block_ids:
+                raise ModelInferenceError(
+                    ModelFailureCode.BLOCK_NOT_SENT,
+                    "model cited a block that was not in its bounded request",
+                )
+            visible_blocks = (
+                (sent_id, sent_text)
+                for sent_id, sent_text in package.included_text_by_block
+                if block_id is None or sent_id == block_id
+            )
+            if not any(fact.proposed_quote in sent_text for _sent_id, sent_text in visible_blocks):
+                raise ModelInferenceError(
+                    ModelFailureCode.BLOCK_NOT_SENT,
+                    "model quote was not present in the bounded request",
+                )
 
     async def _request(self, body: dict[str, object]) -> bytes:
         owns_client = self._client is None

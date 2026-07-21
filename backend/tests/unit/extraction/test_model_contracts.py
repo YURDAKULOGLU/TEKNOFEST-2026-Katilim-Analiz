@@ -9,6 +9,7 @@ from pydantic import ValidationError
 from katilim_analiz.contracts import CampaignType, ProductFamily
 from katilim_analiz.llm import (
     ModelEvidenceSpan,
+    ModelExtractionResponse,
     ModelFactField,
     ModelFactProposal,
     model_extraction_output_schema,
@@ -96,6 +97,74 @@ def test_live_request_schema_is_compact_quote_only_and_pins_field() -> None:
     assert list(validator.iter_errors(unrequested_field))
     for forbidden_property in ("schema_version", "document_id", "outcome"):
         assert list(validator.iter_errors({**proposal, forbidden_property: "forbidden"}))
+
+
+def test_batched_request_schema_allows_one_fact_per_requested_field() -> None:
+    requested = frozenset(
+        {
+            ModelFactField.RATE,
+            ModelFactField.TERM,
+            ModelFactField.FEE,
+        }
+    )
+    schema = model_extraction_output_schema(requested)
+    Draft202012Validator.check_schema(schema)
+    validator = Draft202012Validator(schema)
+
+    assert schema["properties"]["facts"]["maxItems"] == len(requested)
+    variants = schema["properties"]["facts"]["items"]["oneOf"]
+    assert [variant["properties"]["field"]["const"] for variant in variants] == [
+        "fee",
+        "rate",
+        "term",
+    ]
+
+    batched: dict[str, Any] = {
+        "facts": [
+            {"field": "rate", "quote": "aylık %1,89 kâr payı oranı"},
+            {"field": "term", "quote": "120 aya kadar"},
+        ],
+    }
+    assert list(validator.iter_errors(batched)) == []
+
+    too_many = {
+        "facts": [
+            *batched["facts"],
+            {"field": "fee", "quote": "a"},
+            {"field": "rate", "quote": "b"},
+        ]
+    }
+    unrequested = {"facts": [{"field": "title", "quote": "Kampanya"}]}
+    assert list(validator.iter_errors(too_many))
+    assert list(validator.iter_errors(unrequested))
+
+
+def test_response_contract_rejects_second_fact_for_the_same_field() -> None:
+    with pytest.raises(ValidationError, match="one fact per field"):
+        ModelExtractionResponse(
+            schema_version="model-extraction/1.1",
+            document_id="clean-test-document",
+            facts=[
+                ModelFactProposal(field=ModelFactField.RATE, quote="aylık %1,89"),
+                ModelFactProposal(field=ModelFactField.RATE, quote="yıllık %20"),
+            ],
+        )
+
+
+def test_response_contract_accepts_one_quote_only_fact_per_requested_field() -> None:
+    response = ModelExtractionResponse(
+        schema_version="model-extraction/1.1",
+        document_id="clean-test-document",
+        facts=[
+            ModelFactProposal(field=ModelFactField.RATE, quote="aylık %1,89"),
+            ModelFactProposal(field=ModelFactField.TERM, quote="120 aya kadar"),
+        ],
+    )
+
+    assert [fact.field for fact in response.facts] == [
+        ModelFactField.RATE,
+        ModelFactField.TERM,
+    ]
 
 
 def test_quote_only_proposal_does_not_require_offsets_raw_text_or_hints() -> None:

@@ -1,5 +1,13 @@
 """Local, schema-constrained model boundary without tool authority."""
 
+from katilim_analiz.llm.cache import (
+    CachedModelAnswer,
+    FileModelResponseCache,
+    InMemoryModelResponseCache,
+    LayeredModelResponseCache,
+    ModelResponseCache,
+    model_response_cache_key,
+)
 from katilim_analiz.llm.client import (
     CircuitBreaker,
     CircuitState,
@@ -19,8 +27,12 @@ from katilim_analiz.llm.prompt import PROMPT_VERSION
 
 __all__ = [
     "PROMPT_VERSION",
+    "CachedModelAnswer",
     "CircuitBreaker",
     "CircuitState",
+    "FileModelResponseCache",
+    "InMemoryModelResponseCache",
+    "LayeredModelResponseCache",
     "ModelEvidenceSpan",
     "ModelExtractionResponse",
     "ModelFactField",
@@ -28,6 +40,8 @@ __all__ = [
     "ModelFailureCode",
     "ModelInferenceError",
     "ModelInferenceSkipped",
+    "ModelResponseCache",
     "OllamaStructuredClient",
     "model_extraction_output_schema",
+    "model_response_cache_key",
 ]

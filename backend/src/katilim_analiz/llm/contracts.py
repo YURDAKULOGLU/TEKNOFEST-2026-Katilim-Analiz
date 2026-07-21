@@ -217,8 +217,9 @@ class ModelExtractionResponse(_StrictModel):
         if self.schema_version == "model-extraction/1.1":
             if self.outcome is not None or self.abstentions:
                 raise ValueError("model-extraction/1.1 does not allow outcome or abstentions")
-            if len(self.facts) > 1:
-                raise ValueError("model-extraction/1.1 allows at most one fact")
+            fields = [fact.field for fact in self.facts]
+            if len(fields) != len(set(fields)):
+                raise ValueError("model-extraction/1.1 allows at most one fact per field")
             for fact in self.facts:
                 legacy_or_optional_values = (
                     fact.block_id,
@@ -285,7 +286,14 @@ def model_extraction_output_schema(
         "type": "object",
         "additionalProperties": False,
         "properties": {
-            "facts": {"type": "array", "maxItems": 1, "items": fact_items},
+            "facts": {
+                "type": "array",
+                # One bounded call may now answer every requested field, but
+                # still at most one fact per field; each fact remains one
+                # field label plus one exact quote.
+                "maxItems": len(requested_fields),
+                "items": fact_items,
+            },
         },
         "required": ["facts"],
     }
