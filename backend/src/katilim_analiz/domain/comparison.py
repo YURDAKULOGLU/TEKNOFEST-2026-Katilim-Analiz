@@ -166,10 +166,13 @@ class ComparisonReport:
 class _SelectedValue:
     record: CampaignRecord
     index: int
-    value: Decimal | int
-    unit: str
+    value: Decimal | int | None
+    unit: str | None
     display: str
     evidence_ids: tuple[str, ...]
+    #: Issue #12: a stated fee waiver carries no figure yet outranks every
+    #: priced fee on the lower-is-better axis. Only the fee dimension sets it.
+    waived: bool = False
 
 
 def _message(reason_code: str) -> str:
@@ -344,21 +347,36 @@ def _evidence_ids(record: CampaignRecord, pointer_prefix: str) -> tuple[str, ...
     )
 
 
+def _rank_key(item: _SelectedValue) -> tuple[int, Decimal | int]:
+    """Order a selected value; a stated waiver precedes every priced value.
+
+    Issue #12: a waived fee has no figure, yet costs less than any charged
+    amount, so it sorts ahead of all numbers on the lower-is-better axis and
+    waived fees tie with each other. The integer lead keeps the missing figure
+    from ever meeting a number in the comparison.
+    """
+
+    if item.waived:
+        return (0, 0)
+    assert item.value is not None
+    return (1, item.value)
+
+
 def _rank(
     selected: Sequence[_SelectedValue],
     dimension: ComparisonDimension,
     *,
     higher_is_better: bool,
 ) -> tuple[ComparisonOutcome, ...]:
-    distinct = sorted({item.value for item in selected}, reverse=higher_is_better)
-    ranks = {value: index + 1 for index, value in enumerate(distinct)}
+    distinct = sorted({_rank_key(item) for item in selected}, reverse=higher_is_better)
+    ranks = {key: index + 1 for index, key in enumerate(distinct)}
     reason_code = "ranked_higher_is_better" if higher_is_better else "ranked_lower_is_better"
     return tuple(
         ComparisonOutcome(
             campaign_id=item.record.id,
             dimension=dimension,
             comparable=True,
-            rank=ranks[item.value],
+            rank=ranks[_rank_key(item)],
             canonical_value=item.value,
             unit=item.unit,
             display_value=_short(item.display),
@@ -555,6 +573,10 @@ def _fee_issue(fee: FeeValue) -> str | None:
         return "fee_kind_unknown"
     if fee.basis is FeeBasis.UNSPECIFIED:
         return "fee_basis_unknown"
+    if fee.waived:
+        # Issue #12: a stated waiver is complete without a figure; the source
+        # says the fee is not charged, which is itself the comparable fact.
+        return None
     if (fee.money is None) == (fee.rate is None):
         return "fee_not_numeric"
     if fee.rate is not None and (
@@ -566,9 +588,18 @@ def _fee_issue(fee: FeeValue) -> str | None:
     return None
 
 
+def _fee_pair(fee: FeeValue) -> tuple[FeeKind, FeeBasis]:
+    return fee.kind, fee.basis
+
+
 def _fee_signature(fee: FeeValue) -> tuple[object, ...]:
-    if fee.money is not None:
-        value_signature: tuple[object, ...] = ("money", fee.money.currency)
+    if fee.waived:
+        # A waiver prices nothing, so it carries no value mode or currency of
+        # its own; `_common_fee_signatures` treats it as compatible with any
+        # priced signature that shares its kind and basis.
+        value_signature: tuple[object, ...] = ("waived",)
+    elif fee.money is not None:
+        value_signature = ("money", fee.money.currency)
     else:
         assert fee.rate is not None
         value_signature = (
@@ -577,21 +608,65 @@ def _fee_signature(fee: FeeValue) -> tuple[object, ...]:
             fee.rate.gross_net_basis,
             canonicalize_turkish_text(fee.rate.basis_label or ""),
         )
-    return fee.kind, fee.basis, *value_signature
+    return *_fee_pair(fee), *value_signature
+
+
+def _common_fee_signatures(fee_sets: Sequence[Sequence[FeeValue]]) -> set[tuple[object, ...]]:
+    """Collect the signatures every record can serve, waiver-compatibly.
+
+    Issue #12: a priced signature is common when each record either states a
+    fee with exactly that signature or waives a fee of the same kind and
+    basis — the waiver is currency- and value-mode-agnostic because it
+    charges nothing in any currency. The all-waived signature is common only
+    when no record prices that kind/basis pair, so a waiver never absorbs a
+    stated price into a signature that hides it.
+    """
+
+    priced = [{_fee_signature(fee) for fee in fees if not fee.waived} for fees in fee_sets]
+    waived = [{_fee_pair(fee) for fee in fees if fee.waived} for fees in fee_sets]
+
+    common: set[tuple[object, ...]] = set()
+    priced_union = set.union(*priced)
+    for signature in priced_union:
+        pair = signature[:2]
+        if all(
+            signature in record_priced or pair in record_waived
+            for record_priced, record_waived in zip(priced, waived, strict=True)
+        ):
+            common.add(signature)
+    for pair in set.intersection(*waived):
+        if not any(priced_signature[:2] == pair for priced_signature in priced_union):
+            common.add((*pair, "waived"))
+    return common
+
+
+def _fee_matches_signature(fee: FeeValue, signature: tuple[object, ...]) -> bool:
+    if fee.waived:
+        return _fee_pair(fee) == signature[:2]
+    return _fee_signature(fee) == signature
 
 
 def _fee_mismatch_reason(fee_sets: Sequence[Sequence[FeeValue]]) -> str:
     if not set.intersection(*[{fee.kind for fee in fees} for fees in fee_sets]):
         return "fee_kind_mismatch"
-    if not set.intersection(*[{(fee.kind, fee.basis) for fee in fees} for fees in fee_sets]):
+    if not set.intersection(*[{_fee_pair(fee) for fee in fees} for fees in fee_sets]):
         return "fee_basis_mismatch"
     modes = [
-        {(fee.kind, fee.basis, "money" if fee.money is not None else "rate") for fee in fees}
+        {
+            (*_fee_pair(fee), mode)
+            for fee in fees
+            # A waiver charges nothing in either mode, so it meets both.
+            for mode in (("money", "rate") if fee.waived else _fee_value_modes(fee))
+        }
         for fees in fee_sets
     ]
     if not set.intersection(*modes):
         return "fee_value_type_mismatch"
     return "fee_currency_mismatch"
+
+
+def _fee_value_modes(fee: FeeValue) -> tuple[str, ...]:
+    return ("money",) if fee.money is not None else ("rate",)
 
 
 def _compare_fees(records: Sequence[CampaignRecord]) -> tuple[ComparisonOutcome, ...]:
@@ -611,7 +686,7 @@ def _compare_fees(records: Sequence[CampaignRecord]) -> tuple[ComparisonOutcome,
                 return _reject_all(records, ComparisonDimension.FEE, issue)
 
     fee_sets = [record.data.fees for record in records]
-    common = set.intersection(*[{_fee_signature(fee) for fee in fees} for fees in fee_sets])
+    common = _common_fee_signatures(fee_sets)
     if not common:
         return _reject_all(records, ComparisonDimension.FEE, _fee_mismatch_reason(fee_sets))
     if len(common) != 1:
@@ -624,7 +699,7 @@ def _compare_fees(records: Sequence[CampaignRecord]) -> tuple[ComparisonOutcome,
         matches = [
             (index, fee)
             for index, fee in enumerate(record.data.fees)
-            if _fee_signature(fee) == signature
+            if _fee_matches_signature(fee, signature)
         ]
         if len(matches) != 1:
             return _reject_all(records, ComparisonDimension.FEE, "multiple_fee_signatures")
@@ -632,14 +707,23 @@ def _compare_fees(records: Sequence[CampaignRecord]) -> tuple[ComparisonOutcome,
         evidence_ids = _evidence_ids(record, f"/data/fees/{index}")
         if not evidence_ids:
             missing_evidence.add(record.id)
-        if fee.money is not None:
-            value: Decimal | int = fee.money.amount
+        if fee.waived:
+            # Issue #12: the stated waiver ranks ahead of every priced fee via
+            # `_rank_key`; it publishes no figure of its own (ADR-002: absence
+            # of a number is never coerced to zero — the waiver is a stated
+            # fact, not a default).
+            value: Decimal | int | None = None
+            unit: str | None = None
+        elif fee.money is not None:
+            value = fee.money.amount
             unit = fee.money.currency
         else:
             assert fee.rate is not None
             value = fee.rate.value_percent
             unit = "percent"
-        selected.append(_SelectedValue(record, index, value, unit, fee.raw, evidence_ids))
+        selected.append(
+            _SelectedValue(record, index, value, unit, fee.raw, evidence_ids, waived=fee.waived)
+        )
     if missing_evidence:
         return _reject_own_and_peers(
             records,

@@ -485,6 +485,89 @@ def test_missing_fee_is_not_zero_but_explicit_zero_is_ranked() -> None:
     assert ranked["positive"].rank == 2  # type: ignore[attr-defined]
 
 
+def _waived_fee(
+    raw: str = "Dosya masrafı alınmaz.",
+    *,
+    kind: FeeKind = FeeKind.ALLOCATION,
+    basis: FeeBasis = FeeBasis.ONE_TIME,
+    waiver_limit: MoneyValue | None = None,
+) -> FeeValue:
+    return FeeValue(
+        raw=raw,
+        kind=kind,
+        basis=basis,
+        description=raw,
+        waived=True,
+        waiver_limit=waiver_limit,
+    )
+
+
+def test_waived_fee_ranks_ahead_of_every_priced_fee() -> None:
+    """Issue #12: 'masraf yok' must beat any stated price, not drop out."""
+
+    report = _compare(
+        [_record("waived", fees=(_waived_fee(),)), _record("priced", fees=(_fee("500"),))],
+        ComparisonDimension.FEE,
+    )
+    items = _by_campaign(report)
+
+    assert all(item.comparable for item in report.items)
+    assert items["waived"].rank == 1  # type: ignore[attr-defined]
+    assert items["priced"].rank == 2  # type: ignore[attr-defined]
+    assert items["waived"].reason_code == "ranked_lower_is_better"  # type: ignore[attr-defined]
+    assert items["waived"].evidence_ids == ("waived-fee-0",)  # type: ignore[attr-defined]
+
+
+def test_waived_fees_tie_for_first() -> None:
+    report = _compare(
+        [
+            _record("a", fees=(_waived_fee(),)),
+            _record(
+                "b",
+                fees=(
+                    _waived_fee(
+                        "50.000 TL'ye kadar dosya masrafı alınmaz.",
+                        waiver_limit=_money("50000"),
+                    ),
+                ),
+            ),
+        ],
+        ComparisonDimension.FEE,
+    )
+    items = _by_campaign(report)
+
+    assert items["a"].rank == 1  # type: ignore[attr-defined]
+    assert items["b"].rank == 1  # type: ignore[attr-defined]
+    # The capped waiver keeps its ceiling visible in the displayed sentence.
+    assert "50.000 TL" in items["b"].display_value  # type: ignore[attr-defined]
+
+
+def test_missing_fee_stays_missing_even_against_a_waiver() -> None:
+    """ADR-002: an unstated fee is unknown, never an implicit waiver."""
+
+    report = _compare(
+        [_record("silent"), _record("waived", fees=(_waived_fee(),))],
+        ComparisonDimension.FEE,
+    )
+    items = _by_campaign(report)
+
+    assert items["silent"].reason_code == "fee_missing"  # type: ignore[attr-defined]
+    assert items["waived"].reason_code == "peer_fee_missing"  # type: ignore[attr-defined]
+    assert all(not item.comparable for item in report.items)
+
+
+def test_waiver_of_a_different_fee_kind_is_not_comparable() -> None:
+    report = _compare(
+        [
+            _record("waived", fees=(_waived_fee(kind=FeeKind.ANNUAL, basis=FeeBasis.PER_YEAR),)),
+            _record("priced", fees=(_fee("500"),)),
+        ],
+        ComparisonDimension.FEE,
+    )
+
+    assert {item.reason_code for item in report.items} == {"fee_kind_mismatch"}
+
+
 @pytest.mark.parametrize(
     ("left", "right", "reason_code"),
     [
