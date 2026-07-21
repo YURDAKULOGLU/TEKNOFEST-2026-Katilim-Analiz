@@ -15,6 +15,7 @@ from pydantic import BaseModel, ConfigDict, Field, StringConstraints, Validation
 
 from katilim_analiz.contracts import CleanDocument
 from katilim_analiz.llm.contracts import (
+    MAX_QUOTE_CHARS,
     ModelExtractionResponse,
     ModelFactField,
     ModelFactProposal,
@@ -112,7 +113,7 @@ class _LiveModelFact(_EnvelopeModel):
     field: ModelFactField
     quote: Annotated[
         str,
-        StringConstraints(strip_whitespace=True, min_length=1, max_length=120),
+        StringConstraints(strip_whitespace=True, min_length=1, max_length=MAX_QUOTE_CHARS),
     ]
 
 
@@ -435,13 +436,20 @@ class OllamaStructuredClient:
                 ModelFailureCode.SCHEMA_INVALID,
                 "local model content does not match the extraction schema",
             ) from exc
-        return ModelExtractionResponse(
-            schema_version="model-extraction/1.1",
-            document_id=document_id,
-            facts=[
-                ModelFactProposal(field=fact.field, quote=fact.quote) for fact in live_body.facts
-            ],
-        )
+        try:
+            return ModelExtractionResponse(
+                schema_version="model-extraction/1.1",
+                document_id=document_id,
+                facts=[
+                    ModelFactProposal(field=fact.field, quote=fact.quote)
+                    for fact in live_body.facts
+                ],
+            )
+        except ValidationError as exc:
+            raise ModelInferenceError(
+                ModelFailureCode.SCHEMA_INVALID,
+                "local model facts violate the extraction contract",
+            ) from exc
 
 
 __all__ = [

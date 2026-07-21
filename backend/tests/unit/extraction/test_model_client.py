@@ -18,6 +18,7 @@ from katilim_analiz.llm import (
     ModelInferenceSkipped,
     OllamaStructuredClient,
 )
+from katilim_analiz.llm.contracts import MAX_QUOTE_CHARS
 
 
 def _envelope(
@@ -106,7 +107,7 @@ async def test_request_reaches_ollama_with_schema_think_disabled_and_no_tools(
     assert captured["format"]["properties"]["facts"]["maxItems"] == 1
     assert (
         captured["format"]["properties"]["facts"]["items"]["properties"]["quote"]["maxLength"]
-        == 120
+        == MAX_QUOTE_CHARS
     )
     assert captured["options"]["num_predict"] == 192
     assert "abstentions" not in captured["format"]["properties"]
@@ -156,7 +157,7 @@ async def test_malformed_duplicate_or_extra_json_fails_closed(
 @pytest.mark.parametrize(
     "facts",
     [
-        [{"field": "rate", "quote": "x" * 121}],
+        [{"field": "rate", "quote": "x" * (MAX_QUOTE_CHARS + 1)}],
         [
             {"field": "rate", "quote": "aylık oran %1,99"},
             {"field": "rate", "quote": "yıllık oran %20"},
@@ -180,6 +181,31 @@ async def test_live_body_enforces_quote_fact_and_extra_property_limits(
         await http_client.aclose()
 
     assert error.value.code is ModelFailureCode.SCHEMA_INVALID
+
+
+@pytest.mark.asyncio
+async def test_quote_between_legacy_120_and_current_limit_is_accepted() -> None:
+    quote = (
+        "Bireysel müşterilere özel konut finansmanı kâr payı oranı, kampanya süresince "
+        "başvuru kanalından bağımsız olarak aylık %1,89 seviyesinde uygulanmakta olup "
+        "bu oran 120 aya varan vade seçeneklerinin tamamı için geçerlidir."
+    )
+    assert 120 < len(quote) <= MAX_QUOTE_CHARS
+    document = make_document(("paragraph", quote))
+    client, http_client = _client(
+        httpx.MockTransport(
+            lambda request: httpx.Response(
+                200,
+                json=_envelope(_content(facts=[{"field": "rate", "quote": quote}])),
+            )
+        )
+    )
+    try:
+        response = await client.extract(document, frozenset({ModelFactField.RATE}))
+    finally:
+        await http_client.aclose()
+
+    assert [fact.proposed_quote for fact in response.facts] == [quote]
 
 
 @pytest.mark.asyncio

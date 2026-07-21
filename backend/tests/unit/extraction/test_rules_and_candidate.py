@@ -16,6 +16,7 @@ from katilim_analiz.contracts import (
 )
 from katilim_analiz.extraction import CandidateValidationError, build_candidate, validate_candidate
 from katilim_analiz.extraction.rules import extract_rules
+from katilim_analiz.llm.contracts import ModelFactField
 
 _NOW = datetime(2026, 7, 18, 12, 1, tzinfo=UTC)
 
@@ -373,3 +374,238 @@ def test_candidate_validation_rejects_fact_without_evidence(
         validate_candidate(tampered, campaign_document)
 
     assert error.value.code == "unsupported_fact"
+
+
+def test_stated_waiver_is_not_read_as_the_fee_it_rules_out() -> None:
+    """The bounding figure in a waiver must never be published as a charge."""
+
+    document = make_document(
+        ("heading", "Yeni Ev Sahiplerine Özel Konut Finansmanı"),
+        (
+            "paragraph",
+            "Kampanya kapsamında 50.000 TL'ye kadar dosya masrafı alınmamaktadır.",
+        ),
+    )
+
+    draft = extract_rules(document)
+
+    assert len(draft.fees) == 1
+    fee = draft.fees[0].value
+    assert fee.waived is True
+    assert fee.money is None, "the waived amount is a ceiling, not a charge"
+    assert fee.waiver_limit is not None
+    assert fee.waiver_limit.amount == Decimal("50000")
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Dosya masrafı alınmıyor.",
+        "Masrafsız finansman fırsatı.",
+        "Ekspertiz ücreti banka tarafından karşılanmaktadır.",
+        "Tahsis ücreti bulunmamaktadır.",
+    ],
+)
+def test_turkish_waiver_wordings_are_recognised(sentence: str) -> None:
+    document = make_document(("heading", "Konut Finansmanı"), ("paragraph", sentence))
+
+    draft = extract_rules(document)
+
+    assert len(draft.fees) == 1
+    assert draft.fees[0].value.waived is True
+    assert draft.fees[0].value.waiver_limit is None
+
+
+def test_charged_fees_are_still_extracted_as_amounts() -> None:
+    document = make_document(
+        ("heading", "Konut Finansmanı"),
+        ("paragraph", "Tahsis ücreti 1.500 TL'dir."),
+    )
+
+    draft = extract_rules(document)
+
+    assert len(draft.fees) == 1
+    fee = draft.fees[0].value
+    assert fee.waived is False
+    assert fee.money is not None
+    assert fee.money.amount == Decimal("1500")
+
+
+def test_inflected_month_term_reaches_the_normalizer() -> None:
+    """Turkish suffixes the marker used to hide: "120 aya kadar"."""
+
+    document = make_document(
+        ("heading", "Konut Finansmanı"),
+        ("paragraph", "120 aya kadar konut finansmanı fırsatı sunulmaktadır."),
+    )
+
+    draft = extract_rules(document)
+
+    assert len(draft.terms) == 1
+    assert draft.terms[0].value.maximum_months == 120
+
+
+def test_unrelated_word_sharing_the_month_stem_is_not_a_term() -> None:
+    document = make_document(
+        ("heading", "Kampanya"),
+        ("paragraph", "Kampanya 3 ayrı ürün kategorisinde geçerlidir."),
+    )
+
+    draft = extract_rules(document)
+
+    assert draft.terms == ()
+
+
+def test_gift_voucher_value_is_extracted_as_a_reward() -> None:
+    document = make_document(
+        ("heading", "Konut Finansmanı"),
+        ("paragraph", "Kampanya kapsamında 5.000 TL değerinde alışveriş çeki verilmektedir."),
+    )
+
+    draft = extract_rules(document)
+
+    assert len(draft.rewards) == 1
+    reward = draft.rewards[0].value
+    assert reward.money is not None
+    assert reward.money.amount == Decimal("5000")
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "100.000 TL'lik çekilişe katılma şansı yakalayın.",
+        "50.000 TL kura ile talihlilere verilecektir.",
+    ],
+)
+def test_prize_draw_is_not_recorded_as_a_granted_reward(sentence: str) -> None:
+    """A chance at a prize is not an amount the campaign grants."""
+
+    document = make_document(("heading", "Kampanya"), ("paragraph", sentence))
+
+    draft = extract_rules(document)
+
+    assert draft.rewards == ()
+
+
+#: The three campaign texts the competition specification works through, with the
+#: comparison table it expects from them.  They are kept verbatim so that a rule
+#: change that quietly drops one of the four comparison dimensions fails here
+#: rather than in front of a jury.
+_SPEC_SCENARIO = {
+    "A": (
+        (
+            "paragraph",
+            "Yeni ev sahibi olmak isteyen müşterilerimize özel %1,89 kâr payı oranı "
+            "ile 120 aya kadar konut finansmanı fırsatı sunulmaktadır.",
+        ),
+        ("paragraph", "Kampanya kapsamında 50.000 TL'ye kadar dosya masrafı alınmamaktadır."),
+        ("paragraph", "Kampanya 31 Aralık 2026 tarihine kadar geçerlidir."),
+    ),
+    "B": (
+        (
+            "paragraph",
+            "Konut finansmanında avantajlı ödeme seçenekleri. %1,95 kâr payı oranı "
+            "ile 120 ay vadeye kadar finansman imkanı sunulmaktadır.",
+        ),
+        ("paragraph", "Kampanya kapsamında ekspertiz ücreti banka tarafından karşılanmaktadır."),
+    ),
+    "C": (
+        (
+            "paragraph",
+            "Yeni konut alımlarına özel %1,87 kâr payı oranı ile 96 ay vadeli "
+            "konut finansmanı fırsatı.",
+        ),
+        ("paragraph", "Kampanya kapsamında 5.000 TL değerinde alışveriş çeki verilmektedir."),
+    ),
+}
+
+
+@pytest.mark.parametrize(
+    ("bank", "rate", "months"),
+    [("A", "1.89", 120), ("B", "1.95", 120), ("C", "1.87", 96)],
+)
+def test_specification_scenario_yields_its_published_rate_and_term(
+    bank: str, rate: str, months: int
+) -> None:
+    document = make_document(("heading", "Konut Finansmanı"), *_SPEC_SCENARIO[bank])
+
+    draft = extract_rules(document)
+
+    assert draft.product_family is not None
+    assert draft.product_family.value is ProductFamily.FINANCING
+    assert draft.rates[0].value.value_percent == Decimal(rate)
+    assert draft.terms[0].value.maximum_months == months
+
+
+def test_specification_scenario_separates_waived_absent_and_rewarded_costs() -> None:
+    """The table distinguishes a stated waiver from silence; so must the rules."""
+
+    drafts = {
+        bank: extract_rules(make_document(("heading", "Konut Finansmanı"), *blocks))
+        for bank, blocks in _SPEC_SCENARIO.items()
+    }
+
+    assert drafts["A"].fees[0].value.waived is True
+    assert drafts["A"].fees[0].value.waiver_limit is not None
+    assert drafts["A"].fees[0].value.waiver_limit.amount == Decimal("50000")
+    assert drafts["B"].fees[0].value.waived is True
+    assert drafts["C"].fees == (), "C states no fee at all, which stays unknown"
+    assert drafts["C"].rewards[0].value.money is not None
+    assert drafts["C"].rewards[0].value.money.amount == Decimal("5000")
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Kampanya kapsamında 50.000 TL'ye kadar dosya masrafı alınmamaktadır.",
+        "50.000 TL'ye kadar masrafsız finansman fırsatı.",
+        "Tahsis ücreti 50.000 TL'ye kadar alınmayacaktır.",
+    ],
+)
+def test_waiver_ceiling_survives_every_waiver_wording(sentence: str) -> None:
+    """The ceiling must not depend on which waiver word the campaign chose."""
+
+    document = make_document(("heading", "Konut Finansmanı"), ("paragraph", sentence))
+
+    draft = extract_rules(document)
+
+    fee = draft.fees[0].value
+    assert fee.waived is True
+    assert fee.money is None
+    assert fee.waiver_limit is not None
+    assert fee.waiver_limit.amount == Decimal("50000")
+
+
+@pytest.mark.parametrize(
+    "sentence",
+    [
+        "Dosya masrafı alınmaktadır.",
+        "Tahsis ücreti 1.500 TL olarak alınmaktadır.",
+        "Yıllık kart aidatı tahsil edilmektedir.",
+    ],
+)
+def test_charged_fee_is_never_recorded_as_waived(sentence: str) -> None:
+    """Turkish negates with an infix, so the charged and waived forms differ by
+    two letters in the middle of the verb. Reading one as the other publishes
+    the opposite of the source."""
+
+    document = make_document(("heading", "Konut Finansmanı"), ("paragraph", sentence))
+
+    draft = extract_rules(document)
+
+    assert all(not fee.value.waived for fee in draft.fees)
+
+
+def test_unsettled_polarity_abstains_instead_of_guessing() -> None:
+    """A miss leaves the field for the model; a guess would publish a figure the
+    source may be ruling out."""
+
+    document = make_document(
+        ("heading", "Konut Finansmanı"),
+        ("paragraph", "Dosya masrafı 1.500 TL olarak yansıtılmayabilir."),
+    )
+
+    draft = extract_rules(document)
+
+    assert draft.fees == ()
+    assert ModelFactField.FEE in draft.unresolved_fields

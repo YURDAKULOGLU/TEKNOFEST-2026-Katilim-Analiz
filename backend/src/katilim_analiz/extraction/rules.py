@@ -12,8 +12,6 @@ from katilim_analiz.contracts import (
     CampaignType,
     CleanDocument,
     EvidenceStatus,
-    FeeBasis,
-    FeeKind,
     FeeValue,
     MoneyValue,
     ProductFamily,
@@ -35,6 +33,7 @@ from katilim_analiz.domain import (
 )
 from katilim_analiz.extraction.draft import BoundFact, CustomerSegmentFact, ExtractionDraft
 from katilim_analiz.extraction.evidence import TextSpan, verify_document_blocks
+from katilim_analiz.extraction.fees import read_fee
 from katilim_analiz.llm.contracts import ModelFactField
 from katilim_analiz.llm.safety import is_obvious_prompt_injection
 
@@ -55,7 +54,25 @@ _DATE_MARKER = re.compile(
     r"eylül|eylul|ekim|kasım|kasim|aralık|aralik)\b|bu\s+ay\s+sonuna",
     re.I,
 )
-_TERM_MARKER = re.compile(r"\b(?:vade|vadeli|\d+\s*(?:ay|aylık|yıl|yıllık|sene))\b", re.I)
+# Turkish inflects the unit itself, as in "120 aya kadar", so a bare word
+# boundary after the unit would hide the term from a normalizer that can already
+# read it.  Suffixes are enumerated rather than left open so that an unrelated
+# word sharing the stem, such as the "ayri" in "3 ayri urun", stays excluded.
+_TERM_UNIT_SUFFIX = r"(?:[ae]|[dt][ae]|[dt][ae]n|[ıi]|[ıi]n|l[ıi][kğ][ıi]?|lar|ler)?"
+_TERM_MARKER = re.compile(
+    rf"\b(?:vade|vadeli|\d+\s*(?:ay|yıl|yil|sene){_TERM_UNIT_SUFFIX})\b",
+    re.I,
+)
+#: Vouchers and gift cards carry a stated lira value and are named as a phrase,
+#: because the bare stem also begins unrelated words such as the raffle below.
+_VOUCHER_MARKER = re.compile(
+    r"\b(?:alışveriş|alisveris|hediye)\s+(?:çeki|ceki|kartı|karti)\b"
+    r"|\bhediye\s+(?:çek|cek)\w*",
+    re.I,
+)
+#: A draw is a chance at a prize, not a reward the campaign grants, so its
+#: prize figure must never be recorded as an amount the customer receives.
+_RAFFLE_MARKER = re.compile(r"\b(?:çekiliş|cekilis|kura)\w*", re.I)
 _ELIGIBILITY_MARKER = re.compile(
     r"\b(?:yararlanabilir|yararlanmak|koşul|kosul|şart|sart|gerekmektedir|"
     r"zorunlu|yalnızca|yalnizca|sadece|üye\s+işyeri|uye\s+isyeri)\b",
@@ -424,38 +441,7 @@ def _dedupe_bound[T](facts: Iterable[BoundFact[T]]) -> tuple[BoundFact[T], ...]:
 
 
 def _fee_from_span(span: TextSpan) -> FeeValue | None:
-    text = span.quote
-    lowered = text.casefold()
-    if not re.search(r"\b(?:ücret|ucret|masraf|tahsis|aidat)\b", lowered):
-        return None
-    kind = FeeKind.OTHER
-    basis = FeeBasis.ONE_TIME
-    if "tahsis" in lowered:
-        kind = FeeKind.ALLOCATION
-    elif "aidat" in lowered or "yıllık" in lowered or "yillik" in lowered:
-        kind = FeeKind.ANNUAL
-        basis = FeeBasis.PER_YEAR
-    elif "aylık" in lowered or "aylik" in lowered:
-        kind = FeeKind.MONTHLY
-        basis = FeeBasis.PER_MONTH
-    elif "işlem" in lowered or "islem" in lowered:
-        kind = FeeKind.TRANSACTION
-        basis = FeeBasis.PER_TRANSACTION
-
-    money = normalize_money(text)
-    if money.value is not None:
-        return FeeValue(raw=text, money=money.value, kind=kind, basis=basis)
-    rate = normalize_rate(text)
-    if rate.value is not None:
-        return FeeValue(
-            raw=text,
-            rate=rate.value,
-            kind=kind,
-            basis=FeeBasis.PERCENT_OF_AMOUNT,
-        )
-    if re.search(r"\b(?:ücretsiz|ucretsiz|masrafsız|masrafsiz|alınmayacak|alinmayacak)\b", lowered):
-        return FeeValue(raw=text, kind=kind, basis=basis, description=text)
-    return None
+    return read_fee(span.quote)
 
 
 def _reward_from_span(span: TextSpan) -> RewardValue | None:
@@ -474,6 +460,15 @@ def _reward_from_span(span: TextSpan) -> RewardValue | None:
             points=points,
         )
     if re.search(r"\b(?:nakit\s+iade|para\s+iadesi)\b", lowered):
+        money = normalize_money(text)
+        if money.value is not None:
+            return RewardValue(
+                raw=text,
+                kind=RewardKind.MONEY,
+                basis=RewardBasis.CAMPAIGN_TOTAL,
+                money=money.value,
+            )
+    if _VOUCHER_MARKER.search(lowered) is not None and _RAFFLE_MARKER.search(lowered) is None:
         money = normalize_money(text)
         if money.value is not None:
             return RewardValue(
