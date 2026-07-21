@@ -115,3 +115,21 @@ async def test_http_body_limit_rejects_oversized_json_before_schema_parsing(
     assert response.json()["correlation_id"] == correlation_id
     assert response.headers["x-correlation-id"] == correlation_id
     assert "x" * 100 not in response.text
+
+
+@pytest.mark.asyncio
+async def test_chat_non_utf8_body_names_the_utf8_requirement(
+    client: httpx.AsyncClient,
+) -> None:
+    body = '{"question": "kâr payı oranı nedir?"}'.encode("cp1254")
+
+    response = await client.post(
+        "/api/v1/chat",
+        content=body,
+        headers={"content-type": "application/json"},
+    )
+
+    assert response.status_code == 400
+    payload = response.json()
+    assert payload["code"] == "invalid_request_body"
+    assert "UTF-8" in payload["detail"]
