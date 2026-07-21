@@ -22,6 +22,7 @@ from katilim_analiz.runtime.registry import (
     CampaignSourceStatus,
     MonitoredCampaignSource,
     MonitoredCampaignSourceRegistry,
+    MonitoredStaticPage,
     load_monitored_campaign_registry,
     load_runtime_registry,
 )
@@ -37,7 +38,7 @@ from katilim_analiz.storage.repositories import monitored_campaign_key
 
 NOW = datetime(2026, 7, 19, 12, 0, tzinfo=UTC)
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
-CAMPAIGN_REGISTRY = PROJECT_ROOT / "data/registry/monitored-campaign-sources-2026-07-19.json"
+CAMPAIGN_REGISTRY = PROJECT_ROOT / "data/registry/monitored-campaign-sources-2026-07-21.json"
 CAMPAIGN_SCHEMA = PROJECT_ROOT / "data/registry/monitored-campaign-sources.schema.json"
 CRONJOB = PROJECT_ROOT / "deploy/k8s/operations/campaign-scan-cronjob.yaml"
 
@@ -85,12 +86,46 @@ def _campaign_registry(
     )
 
 
-def _fetch(html: bytes, *, status: FetchStatus = FetchStatus.SUCCESS) -> FetchResult:
+STATIC_PAGE_URLS = (
+    "https://bank.example/finansmanlar/konut",
+    "https://bank.example/finansmanlar/tasit",
+    "https://bank.example/finansmanlar/ihtiyac",
+)
+
+
+def _static_campaign_registry() -> MonitoredCampaignSourceRegistry:
+    source = MonitoredCampaignSource(
+        bank_id="bank-a",
+        status=CampaignSourceStatus.VERIFIED,
+        observed_on=date(2026, 7, 21),
+        evidence_url=STATIC_PAGE_URLS[0],
+        discovery_mode=DiscoveryMode.STATIC_PAGES,
+        static_pages=tuple(
+            MonitoredStaticPage(url=url, label=label)
+            for url, label in zip(STATIC_PAGE_URLS, ("konut", "tasit", "ihtiyac"), strict=True)
+        ),
+    )
+    return MonitoredCampaignSourceRegistry(
+        schema_version="1.0",
+        registry_id="monitored-campaign-sources",
+        registry_version="2026-07-21.1",
+        source_observed_on=date(2026, 7, 21),
+        bank_registry_version="2026-07-18.2",
+        sources=(source,),
+    )
+
+
+def _fetch(
+    html: bytes,
+    *,
+    status: FetchStatus = FetchStatus.SUCCESS,
+    url: str = "https://bank.example/kampanyalar/",
+) -> FetchResult:
     digest = hashlib.sha256(html).hexdigest()
     artifact = create_fetch_artifact(
         bank_id="bank-a",
-        requested_url="https://bank.example/kampanyalar/",
-        final_url="https://bank.example/kampanyalar/",
+        requested_url=url,
+        final_url=url,
         status=status,
         http_status=200 if status is FetchStatus.SUCCESS else 503,
         fetched_at=NOW,
@@ -116,6 +151,16 @@ class FakeCollector:
     async def fetch(self, bank_id: str, url: str) -> FetchResult:
         self.calls.append((bank_id, url))
         return self.result
+
+
+class UrlKeyedCollector:
+    def __init__(self, results: dict[str, FetchResult]) -> None:
+        self.results = results
+        self.calls: list[tuple[str, str]] = []
+
+    async def fetch(self, bank_id: str, url: str) -> FetchResult:
+        self.calls.append((bank_id, url))
+        return self.results[url]
 
 
 class FakeScanStore:
@@ -193,9 +238,11 @@ def test_registry_schema_bank_set_status_rules_and_official_hosts(tmp_path: Path
 
     bank_registry = load_runtime_registry()
     registry = load_monitored_campaign_registry(bank_registry=bank_registry)
-    assert tuple(source.bank_id for source in registry.sources) == tuple(
-        bank.id for bank in bank_registry.banks
-    )
+    grouped_ids: list[str] = []
+    for source in registry.sources:
+        if not grouped_ids or grouped_ids[-1] != source.bank_id:
+            grouped_ids.append(source.bank_id)
+    assert tuple(grouped_ids) == tuple(bank.id for bank in bank_registry.banks)
     assert {source.bank_id for source in registry.verified_sources} == {
         "albaraka-turk",
         "dunya-katilim",
@@ -203,13 +250,26 @@ def test_registry_schema_bank_set_status_rules_and_official_hosts(tmp_path: Path
         "kuveyt-turk",
         "tom-katilim",
         "emlak-katilim",
+        "turkiye-finans",
         "vakif-katilim",
         "ziraat-katilim",
     }
-    assert {source.bank_id for source in registry.unavailable_sources} == {
-        "adil-katilim",
-        "turkiye-finans",
+    assert {source.bank_id for source in registry.unavailable_sources} == {"adil-katilim"}
+    static_sources = {
+        source.bank_id: source
+        for source in registry.verified_sources
+        if source.discovery_mode is DiscoveryMode.STATIC_PAGES
     }
+    assert set(static_sources) == {
+        "albaraka-turk",
+        "kuveyt-turk",
+        "turkiye-finans",
+        "vakif-katilim",
+        "ziraat-katilim",
+        "emlak-katilim",
+    }
+    for source in static_sources.values():
+        assert [page.label for page in source.static_pages] == ["konut", "tasit", "ihtiyac"]
 
     guessed = copy.deepcopy(payload)
     guessed["sources"][0]["index_url"] = "https://www.adilkatilim.com.tr/kampanyalar"
@@ -230,7 +290,21 @@ def test_registry_schema_bank_set_status_rules_and_official_hosts(tmp_path: Path
     wrong_set["sources"][1] = copy.deepcopy(wrong_set["sources"][0])
     path = tmp_path / "wrong-set.json"
     path.write_text(json.dumps(wrong_set), encoding="utf-8")
+    with pytest.raises(RegistryValidationError, match="unavailable bank"):
+        load_monitored_campaign_registry(path, bank_registry=bank_registry)
+
+    ungrouped = copy.deepcopy(payload)
+    ungrouped["sources"].append(ungrouped["sources"].pop(2))
+    path = tmp_path / "ungrouped.json"
+    path.write_text(json.dumps(ungrouped), encoding="utf-8")
     with pytest.raises(RegistryValidationError, match="IDs and order"):
+        load_monitored_campaign_registry(path, bank_registry=bank_registry)
+
+    doubled_static = copy.deepcopy(payload)
+    doubled_static["sources"].insert(3, copy.deepcopy(doubled_static["sources"][2]))
+    path = tmp_path / "doubled-static.json"
+    path.write_text(json.dumps(doubled_static), encoding="utf-8")
+    with pytest.raises(RegistryValidationError, match="more than one static-page"):
         load_monitored_campaign_registry(path, bank_registry=bank_registry)
 
 
@@ -318,6 +392,60 @@ async def test_captcha_walled_source_is_reported_without_failing_the_run() -> No
 
     assert result.has_blocked_sources is True
     assert result.has_failures is False
+
+
+@pytest.mark.asyncio
+async def test_static_pages_source_enqueues_each_listed_url_without_discovery() -> None:
+    collector = UrlKeyedCollector(
+        {url: _fetch(f"<h1>{url}</h1>".encode(), url=url) for url in STATIC_PAGE_URLS}
+    )
+    store = FakeScanStore()
+    scanner = CampaignScanner(
+        bank_registry=_bank_registry(),
+        campaign_registry=_static_campaign_registry(),
+        collector=collector,
+        store=store,
+    )
+
+    first = await scanner.run("scan-static-001")
+    retry = await scanner.run("scan-static-001")
+
+    assert [url for _, url in collector.calls[:3]] == list(STATIC_PAGE_URLS)
+    source = first.sources[0]
+    assert source.status.value == "success"
+    assert source.discovered_targets == 3
+    assert first.enqueued_jobs == 3
+    assert retry.enqueued_jobs == 0
+    assert retry.deduplicated_jobs == 3
+    assert sorted(job.url for job in store.jobs) == sorted(STATIC_PAGE_URLS)
+    assert first.has_failures is False
+    assert first.review_required is False
+
+
+@pytest.mark.asyncio
+async def test_blocked_static_page_marks_source_blocked_without_failing_the_run() -> None:
+    """One refused product page must report BLOCKED, keep the rest, and not fail the scan."""
+
+    blocked_url = STATIC_PAGE_URLS[1]
+    results = {url: _fetch(f"<h1>{url}</h1>".encode(), url=url) for url in STATIC_PAGE_URLS}
+    results[blocked_url] = _fetch(b"challenge", status=FetchStatus.BLOCKED, url=blocked_url)
+    store = FakeScanStore()
+    scanner = CampaignScanner(
+        bank_registry=_bank_registry(),
+        campaign_registry=_static_campaign_registry(),
+        collector=UrlKeyedCollector(results),
+        store=store,
+    )
+
+    result = await scanner.run("scan-static-blocked")
+
+    assert result.has_blocked_sources is True
+    assert result.has_failures is False
+    source = result.sources[0]
+    assert source.discovered_targets == 2
+    assert source.error_code is not None
+    assert result.enqueued_jobs == 2
+    assert blocked_url not in {job.url for job in store.jobs}
 
 
 @pytest.mark.asyncio

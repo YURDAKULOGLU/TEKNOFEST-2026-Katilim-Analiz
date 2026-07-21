@@ -22,6 +22,7 @@ class DiscoveryMode(StrEnum):
 
     DETAIL_LINKS = "detail_links"
     UNSEGMENTED_COLLECTION = "unsegmented_collection"
+    STATIC_PAGES = "static_pages"
 
 
 @dataclass(frozen=True, slots=True)
@@ -136,6 +137,8 @@ def discover_campaign_index(
     fetched by the existing ingestion policy.
     """
 
+    if mode is DiscoveryMode.STATIC_PAGES:
+        raise ValueError("static-page sources enqueue their curated URLs without index discovery")
     if not isinstance(html, bytes | str):
         raise TypeError("index HTML must be bytes or text")
     if previous_index_sha256 is not None and not _SHA256.fullmatch(previous_index_sha256):

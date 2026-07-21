@@ -30,11 +30,12 @@
     "sources": {
       "type": "array",
       "minItems": 10,
-      "maxItems": 10,
+      "maxItems": 40,
       "items": {
         "oneOf": [
           {"$ref": "#/$defs/detailSource"},
           {"$ref": "#/$defs/unsegmentedSource"},
+          {"$ref": "#/$defs/staticPagesSource"},
           {"$ref": "#/$defs/unavailableSource"}
         ]
       }
@@ -105,6 +106,46 @@
         "index_url": {"$ref": "#/$defs/officialUrl"},
         "detail_path_prefixes": {"type": "array", "maxItems": 0},
         "max_links": {"const": 0}
+      }
+    },
+    "staticPage": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["url", "label"],
+      "properties": {
+        "url": {"$ref": "#/$defs/officialUrl"},
+        "label": {
+          "type": "string",
+          "pattern": "^[a-z0-9]+(?:-[a-z0-9]+)*$",
+          "minLength": 1,
+          "maxLength": 64
+        }
+      }
+    },
+    "staticPagesSource": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "bank_id",
+        "status",
+        "observed_on",
+        "evidence_url",
+        "discovery_mode",
+        "static_pages"
+      ],
+      "properties": {
+        "bank_id": {"$ref": "#/$defs/bankId"},
+        "status": {"const": "verified"},
+        "observed_on": {"$ref": "#/$defs/observedOn"},
+        "evidence_url": {"$ref": "#/$defs/officialUrl"},
+        "discovery_mode": {"const": "static_pages"},
+        "static_pages": {
+          "type": "array",
+          "minItems": 1,
+          "maxItems": 20,
+          "uniqueItems": true,
+          "items": {"$ref": "#/$defs/staticPage"}
+        }
       }
     },
     "unavailableSource": {
