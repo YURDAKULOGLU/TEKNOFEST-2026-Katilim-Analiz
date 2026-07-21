@@ -163,12 +163,19 @@ def _record(
     rewards: tuple[RewardValue, ...] = (),
     validity: ValidityWindow | None = ACTIVE_WINDOW,
     context: ComparisonContext | None = None,
-    conditions: tuple[str, ...] = (),
+    conditions: tuple[str, ...] | None = None,
     status: RecordStatus = RecordStatus.VALIDATED,
     evidence: tuple[EvidenceRef, ...] | None = None,
 ) -> CampaignRecord:
     if context is None:
         context = _context(secured=False if family is ProductFamily.FINANCING else None)
+    if conditions is None:
+        # Production records always carry bank-specific free-text conditions;
+        # two banks never publish verbatim-identical sentences (issue #13).
+        conditions = (
+            f"Kampanyadan yalnızca bank-{campaign_id} müşterileri yararlanabilir.",
+            f"bank-{campaign_id} mobil uygulamasından başvuru yapılması gerekmektedir.",
+        )
     data = CampaignData(
         bank_id=f"bank-{campaign_id}",
         title=f"Kampanya {campaign_id}",
@@ -311,11 +318,6 @@ def test_distribution_and_historical_rates_are_higher_better_when_basis_is_known
             _record("b", rates=(_rate("1.1"),), context=_context(mechanism="housing")),
             "product_mechanism_context_mismatch",
         ),
-        (
-            _record("a", rates=(_rate("1.2"),), conditions=("Gelir belgesi",)),
-            _record("b", rates=(_rate("1.1"),), conditions=("Otomatik ödeme",)),
-            "eligibility_context_mismatch",
-        ),
     ],
 )
 def test_incompatible_family_rate_or_eligibility_context_is_rejected(
@@ -363,6 +365,31 @@ def test_unknown_rate_semantics_are_not_ranked(rate: RateValue, reason_code: str
     )
 
     assert {item.reason_code for item in report.items} == {reason_code}
+
+
+def test_bank_specific_condition_wording_does_not_block_comparison() -> None:
+    """Issue #13: raw-sentence equality is not an eligibility measure."""
+
+    report = _compare(
+        [
+            _record(
+                "a",
+                rates=(_rate("1.49"),),
+                conditions=("Kampanya yalnızca maaş müşterileri için geçerlidir.",),
+            ),
+            _record(
+                "b",
+                rates=(_rate("2.10"),),
+                conditions=("Başvuruların Mobil Şube üzerinden yapılması gerekmektedir.",),
+            ),
+        ],
+        ComparisonDimension.RATE,
+    )
+    items = _by_campaign(report)
+
+    assert all(item.comparable for item in report.items)  # type: ignore[attr-defined]
+    assert items["a"].rank == 1  # type: ignore[attr-defined]
+    assert items["b"].rank == 2  # type: ignore[attr-defined]
 
 
 def test_currency_context_must_be_known_and_equal() -> None:

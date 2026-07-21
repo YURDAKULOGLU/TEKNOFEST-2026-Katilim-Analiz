@@ -25,6 +25,7 @@ from katilim_analiz.contracts import CampaignRecord, CleanDocument, FetchStatus,
 from katilim_analiz.extraction import (
     ExtractionOutcome,
     ExtractionPipeline,
+    decide_record_status,
     validate_candidate,
 )
 from katilim_analiz.ingestion import CleaningError, HttpIngestor, clean_html
@@ -134,7 +135,15 @@ class PipelineExtractionAdapter:
         candidate = extracted.candidate.model_copy(update={"metadata": metadata})
         validate_candidate(candidate, cleaned)
         issues = list(candidate.issues)
-        status = RecordStatus.NEEDS_REVIEW if issues else RecordStatus.VALIDATED
+        # Issue #3: machine validation is product-family aware. A record is
+        # validated when every field required for its family and campaign type
+        # resolved and no blocking issue remains; genuinely optional fields
+        # (validity, ceiling, segment, ...) never gate validation.
+        status = decide_record_status(
+            candidate.data.product_family,
+            candidate.data.campaign_type,
+            issues,
+        )
         record_sha256 = canonical_sha256(
             {
                 "campaign_key": source.campaign_key,

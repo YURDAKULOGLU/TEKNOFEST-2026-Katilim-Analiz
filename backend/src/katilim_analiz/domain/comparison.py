@@ -49,7 +49,6 @@ _REASONS: dict[str, str] = {
     "product_mechanism_context_mismatch": "Ürün mekanizmaları farklı.",
     "security_context_unknown": "Teminat bağlamı bilinmiyor.",
     "security_context_mismatch": "Teminat bağlamları farklı.",
-    "eligibility_context_mismatch": "Ek uygunluk koşulları farklı.",
     "as_of_required": "Geçerlilik kontrolü için karşılaştırma tarihi gerekli.",
     "not_observed_as_of": "Kayıt seçilen tarihte henüz gözlemlenmemişti.",
     "validity_unknown": "Kampanya geçerliliği bilinmiyor.",
@@ -240,14 +239,12 @@ def _first_global_incompatibility(
         if len(secured_flags) != 1:
             return "security_context_mismatch"
 
-    eligibility = {
-        tuple(
-            sorted(canonicalize_turkish_text(item) for item in record.data.eligibility_conditions)
-        )
-        for record in records
-    }
-    if len(eligibility) != 1:
-        return "eligibility_context_mismatch"
+    # Issue #13: free-text eligibility sentences are bank-specific prose; two
+    # banks never publish verbatim-identical wording, so raw-sentence equality
+    # is not an eligibility measure. The eligibility context is compared only
+    # through the canonical comparison_context axes above (segments, channel,
+    # new-customer flag, mechanism, security); the sentences themselves remain
+    # evidence for display and citation.
 
     if as_of is None:
         return "as_of_required"
