@@ -19,10 +19,14 @@ from katilim_analiz.extraction.model_merge import merge_model_response
 from katilim_analiz.extraction.rules import extract_rules
 from katilim_analiz.llm import (
     PROMPT_VERSION,
+    FileModelResponseCache,
+    InMemoryModelResponseCache,
+    LayeredModelResponseCache,
     ModelExtractionResponse,
     ModelFactField,
     ModelInferenceError,
     ModelInferenceSkipped,
+    ModelResponseCache,
     OllamaStructuredClient,
 )
 
@@ -225,6 +229,9 @@ def pipeline_from_settings(
     model_enabled = settings.model_profile is not ModelProfile.RULES_ONLY
     if not model_enabled:
         return ExtractionPipeline(model_enabled=False, clock=clock)
+    cache_layers: list[ModelResponseCache] = [InMemoryModelResponseCache()]
+    if settings.model_response_cache_dir is not None:
+        cache_layers.append(FileModelResponseCache(settings.model_response_cache_dir))
     model = OllamaStructuredClient(
         base_url=str(settings.ollama_base_url),
         model=settings.ollama_model,
@@ -234,6 +241,7 @@ def pipeline_from_settings(
         keep_alive=settings.model_keep_alive,
         concurrency=settings.model_concurrency,
         http_client=http_client,
+        response_cache=LayeredModelResponseCache(cache_layers),
     )
     return ExtractionPipeline(
         model=model,
