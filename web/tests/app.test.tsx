@@ -78,7 +78,7 @@ describe("V1 dashboard", () => {
     });
   });
 
-  it("pins every page to its first snapshot and starts fresh after a notification", async () => {
+  it("pins every page to its first snapshot and refreshes loaded pages in place after a notification", async () => {
     vi.useFakeTimers();
     try {
       const oldAsOf = "2026-07-18T12:15:00+03:00";
@@ -151,16 +151,15 @@ describe("V1 dashboard", () => {
       await act(async () => {
         await vi.advanceTimersByTimeAsync(15_000);
       });
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(1);
+      });
 
+      // The notification refreshes every already-loaded page in place instead
+      // of rotating the query key and resetting the list to page one.
       expect(listCampaigns.mock.calls[2]).toEqual([{}, undefined, undefined]);
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(1);
-      });
-      fireEvent.click(screen.getByRole("button", { name: "Daha fazla kampanya yükle" }));
-      await act(async () => {
-        await vi.advanceTimersByTimeAsync(1);
-      });
       expect(listCampaigns.mock.calls[3]).toEqual([{}, "new-page-2", newAsOf]);
+      expect(listCampaigns).toHaveBeenCalledTimes(4);
     } finally {
       vi.useRealTimers();
     }
