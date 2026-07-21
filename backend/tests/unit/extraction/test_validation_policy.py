@@ -260,6 +260,64 @@ def test_model_offline_never_rescues_a_missing_required_field() -> None:
     assert decision.reasons == ("required_field_unresolved",)
 
 
+def test_rejected_model_fact_on_optional_field_does_not_block() -> None:
+    """A discarded proposal on an optional field is bookkeeping, not quarantine."""
+
+    decision = evaluate_validation(
+        ProductFamily.FINANCING,
+        CampaignType.FINANCING_RATE,
+        [
+            # Rate and term are rule-resolved; the model's fee suggestion
+            # failed grounding and was discarded. Fee is optional here.
+            "model_fact_rejected:fee:fee_value_not_supported",
+            "unresolved:fee",
+            "unresolved:reward",
+            *_OPTIONAL_UNRESOLVED,
+        ],
+    )
+
+    assert decision.status is RecordStatus.VALIDATED
+    assert decision.blocking_issues == ()
+
+
+def test_rejected_model_fact_on_required_field_still_blocks() -> None:
+    decision = evaluate_validation(
+        ProductFamily.FINANCING,
+        CampaignType.FINANCING_RATE,
+        ["model_fact_rejected:rate:raw_evidence_mismatch"],
+    )
+
+    assert decision.status is RecordStatus.NEEDS_REVIEW
+    assert decision.blocking_issues == ("model_fact_rejected:rate:raw_evidence_mismatch",)
+
+
+def test_rejected_model_fact_with_unknown_field_blocks_conservatively() -> None:
+    issue = "model_fact_rejected:not_a_field:whatever"
+
+    decision = evaluate_validation(
+        ProductFamily.FINANCING,
+        CampaignType.FINANCING_RATE,
+        [issue],
+    )
+
+    assert decision.status is RecordStatus.NEEDS_REVIEW
+    assert decision.blocking_issues == (issue,)
+
+
+def test_prompt_injection_quarantine_blocks_despite_optional_rejection() -> None:
+    decision = evaluate_validation(
+        ProductFamily.FINANCING,
+        CampaignType.FINANCING_RATE,
+        [
+            "quarantined_prompt_injection_block:block-7",
+            "model_fact_rejected:fee:fee_value_not_supported",
+        ],
+    )
+
+    assert decision.status is RecordStatus.NEEDS_REVIEW
+    assert decision.blocking_issues == ("quarantined_prompt_injection_block:block-7",)
+
+
 def test_ambiguity_on_an_optional_field_does_not_block() -> None:
     status = decide_record_status(
         ProductFamily.CARD,

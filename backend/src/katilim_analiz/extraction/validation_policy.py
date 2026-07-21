@@ -18,7 +18,10 @@ Design rules:
 - Verbatim grounding is untouched: this policy only reads the issue list that
   the deterministic evidence validators produced; it never relaxes them.
 - Blocking issues are ambiguity on a required classification, prompt-injection
-  quarantine, rejected (ungrounded) model facts, and any unknown issue code.
+  quarantine, rejected (ungrounded) model facts on a REQUIRED field, and any
+  unknown issue code. A rejected model fact on an optional field is
+  bookkeeping: the discarded proposal never reaches the record, so it must
+  not quarantine the remaining rule-grounded facts.
   Model bookkeeping annotations that merely explain why an optional field
   stayed unresolved are not blocking; that includes the model being skipped
   or falling back to rules — a required field the model would have filled is
@@ -124,6 +127,14 @@ _NON_BLOCKING_ISSUE_PREFIXES: tuple[str, ...] = (
 
 _NON_BLOCKING_ISSUE_SUFFIXES: tuple[str, ...] = (":rules_fallback",)
 
+# ``model_fact_rejected:<field>:<code>`` (emitted by model_merge) records that
+# a single model proposal failed verbatim grounding and was discarded. The
+# rejected fact is never published; the record's remaining facts stay
+# rule-grounded. Like the ambiguity issues above it is field-scoped: it blocks
+# only when the rejected field is REQUIRED for this record's classification —
+# a rejection on an optional field is bookkeeping, not a quarantine.
+_MODEL_FACT_REJECTED_PREFIX = "model_fact_rejected:"
+
 
 @dataclass(frozen=True, slots=True)
 class ValidationDecision:
@@ -159,6 +170,16 @@ def _unresolved_field(issue: str) -> ModelFactField | None:
         return None
 
 
+def _rejected_field(issue: str) -> ModelFactField | None:
+    """Parse the field out of ``model_fact_rejected:<field>:<code>``."""
+
+    name, _, _code = issue.removeprefix(_MODEL_FACT_REJECTED_PREFIX).partition(":")
+    try:
+        return ModelFactField(name)
+    except ValueError:
+        return None
+
+
 def evaluate_validation(
     product_family: ProductFamily,
     campaign_type: CampaignType,
@@ -187,6 +208,17 @@ def evaluate_validation(
         if issue.startswith(_NON_BLOCKING_ISSUE_PREFIXES):
             continue
         if issue.endswith(_NON_BLOCKING_ISSUE_SUFFIXES):
+            continue
+        if issue.startswith(_MODEL_FACT_REJECTED_PREFIX):
+            rejected_field = _rejected_field(issue)
+            if rejected_field is not None and rejected_field not in (
+                requirement.all_of | requirement.any_of
+            ):
+                # The discarded proposal touched an optional field; nothing
+                # ungrounded reaches the record, so it must not quarantine it.
+                continue
+            # A required-field rejection (or an unparsable code) still blocks.
+            blocking.append(issue)
             continue
         ambiguous_field = _FIELD_AMBIGUITY_ISSUES.get(issue)
         if ambiguous_field is not None and ambiguous_field not in (
