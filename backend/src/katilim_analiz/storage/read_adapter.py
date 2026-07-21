@@ -268,7 +268,7 @@ class PostgresCampaignReadAdapter(CampaignReadPort):
         )
         if after is not None:
             statement = statement.where(OutboxEvent.feed_sequence > after.feed_sequence)
-        statement = statement.order_by(asc(OutboxEvent.feed_sequence)).limit(limit)
+        statement = statement.order_by(asc(OutboxEvent.feed_sequence)).limit(limit + 1)
         async with self._sessions() as session:
             rows = list((await session.execute(statement)).scalars().all())
 
@@ -284,8 +284,9 @@ class PostgresCampaignReadAdapter(CampaignReadPort):
                         created_at=row.created_at,
                     ),
                 )
-                for row in rows
+                for row in rows[:limit]
             ],
+            has_more=len(rows) > limit,
         )
 
     async def _cursor_exists(
