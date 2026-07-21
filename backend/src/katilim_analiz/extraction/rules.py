@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import re
 from collections.abc import Iterable, Mapping
-from dataclasses import replace
+from dataclasses import dataclass, replace
 from decimal import Decimal, InvalidOperation
 from enum import StrEnum
 
@@ -223,6 +223,22 @@ _FEE_PERCENT_CONTEXT = re.compile(
     re.I,
 )
 _FINANCING_RATE_CONTEXT = re.compile(r"\b(?:finansman|kullandırım|kullandirim)\b", re.I)
+#: Issue #30: a financing installment table names its profit column only in the
+#: header ("Kar Orani" / "Kar Payi Orani" variants) while the rows are bare
+#: value cells ("30.000,00 TL | 12 Ay | 1,69%").  The cleaner joins each row's
+#: cells with " | ", so the header states which column carries the profit rate
+#: and the rows can be read positionally.  A column whose own label says
+#: "yillik" or "maliyet" is a cost, never the profit column.
+_PROFIT_RATE_COLUMN_LABEL = re.compile(
+    r"\b(?:aylık\s+|aylik\s+)?k[âa]r\s+(?:pay[ıi]\s+)?oran[ıi]?\b",
+    re.I,
+)
+_ANNUAL_OR_COST_COLUMN_LABEL = re.compile(r"\b(?:yıllık|yillik|senelik)\b|maliyet", re.I)
+_TERM_COLUMN_LABEL = re.compile(r"\b(?:vade|ay)\b", re.I)
+#: Any header cell that names a percentage of its own; used to decide whether a
+#: ragged row's single percent can still be attributed to the profit column.
+_RATE_LIKE_COLUMN_LABEL = re.compile(r"oran|%|maliyet|getiri", re.I)
+_TABLE_CELL_SEPARATOR = "|"
 _NON_FINANCING_PROFIT_CONTEXT = re.compile(
     r"\b(?:katılma\s+hesabı|katilim\s+hesabi|dağıtım|dagitim|paylaşım|paylasim|"
     r"geçmiş\s+getiri|gecmis\s+getiri)\b",
@@ -355,19 +371,137 @@ def _channel_priority(text: str) -> int:
     return 2 if _EXCLUSIVE_CHANNEL_CONTEXT.search(text) is not None else 1
 
 
+@dataclass(frozen=True)
+class _RateContextHint:
+    """A rate meaning established by surrounding context, usually a table header.
+
+    When ``column_count`` is set the hint came from a header whose cells could
+    be read positionally; the hint then applies only to the matching column of
+    each row, never to the row as a whole.
+    """
+
+    kind: RateKind
+    period: RatePeriod | None
+    profit_column: int | None = None
+    column_count: int | None = None
+    sole_rate_column: bool = False
+
+
+def _table_cells(text: str) -> tuple[tuple[int, int, str], ...]:
+    """Split one serialized table row into (start, end, stripped_cell) triples."""
+
+    cells: list[tuple[int, int, str]] = []
+    cursor = 0
+    for part in text.split(_TABLE_CELL_SEPARATOR):
+        start = cursor + (len(part) - len(part.lstrip()))
+        stripped = part.strip()
+        cells.append((start, start + len(stripped), stripped))
+        cursor += len(part) + 1
+    return tuple(cells)
+
+
+def _profit_rate_table_hint(
+    text: str,
+    *,
+    financing_document: bool,
+) -> _RateContextHint | None:
+    """Read a financing profit-rate hint out of a table header row, if safe.
+
+    Issue #30: the hint fires only when exactly one header cell is a profit
+    label, another cell carries the Vade/Ay term signature, and the table sits
+    in a financing context.  A "Vade | Kar Payi Orani" table also exists on
+    participation-account pages, where the percentage is a deposit distribution
+    share — the financing requirement keeps that table from becoming a price.
+    The period is asserted monthly: per-term installment tables quote the
+    monthly kar orani, and every annual figure observed live carries its own
+    label ("Yillik Maliyet Orani"), which excludes that column here.
+    """
+
+    if _NON_FINANCING_PROFIT_CONTEXT.search(text) is not None:
+        return None
+    cells = _table_cells(text)
+    if len(cells) < 2:
+        return None
+    profit_columns = tuple(
+        index
+        for index, (_start, _end, cell) in enumerate(cells)
+        if _PROFIT_RATE_COLUMN_LABEL.search(cell) is not None
+        and _ANNUAL_OR_COST_COLUMN_LABEL.search(cell) is None
+    )
+    if len(profit_columns) != 1:
+        return None
+    profit_column = profit_columns[0]
+    other_cells = tuple(
+        cell for index, (_start, _end, cell) in enumerate(cells) if index != profit_column
+    )
+    if not any(_TERM_COLUMN_LABEL.search(cell) is not None for cell in other_cells):
+        return None
+    if not financing_document and _FINANCING_RATE_CONTEXT.search(text) is None:
+        return None
+    return _RateContextHint(
+        kind=RateKind.FINANCING_PROFIT_RATE,
+        period=RatePeriod.MONTHLY,
+        profit_column=profit_column,
+        column_count=len(cells),
+        sole_rate_column=all(_RATE_LIKE_COLUMN_LABEL.search(cell) is None for cell in other_cells),
+    )
+
+
+def _profit_column_cell(sentence: TextSpan, hint: _RateContextHint) -> TextSpan | None:
+    """Attribute the hinted profit column of a row to its exact cell span.
+
+    A row that does not match the header's column count is attributed only when
+    the header named a single rate-like column and the row carries a single
+    percent-bearing cell; otherwise no attribution is made and the hint is
+    withheld (issue #30: a missed rate is safe, a misattributed one is not).
+    """
+
+    cells = _table_cells(sentence.quote)
+    selected: tuple[int, int, str] | None = None
+    if hint.column_count is not None and len(cells) == hint.column_count:
+        assert hint.profit_column is not None
+        selected = cells[hint.profit_column]
+    elif hint.sole_rate_column:
+        percent_cells = tuple(cell for cell in cells if _RATE_MARKER.search(cell[2]) is not None)
+        if len(percent_cells) == 1:
+            selected = percent_cells[0]
+    if selected is None:
+        return None
+    start, end, quote = selected
+    if not quote or _RATE_MARKER.search(quote) is None:
+        return None
+    return TextSpan(
+        sentence.block_id,
+        quote,
+        sentence.start_char + start,
+        sentence.start_char + end,
+    )
+
+
 def _rate_context_hints(
     blocks: Iterable[tuple[str, str, str]],
     family_hits: Mapping[ProductFamily, TextSpan],
-) -> dict[str, tuple[RateKind, RatePeriod | None]]:
-    hints: dict[str, tuple[RateKind, RatePeriod | None]] = {}
+) -> dict[str, _RateContextHint]:
+    hints: dict[str, _RateContextHint] = {}
     document_is_unambiguously_financing = set(family_hits) == {ProductFamily.FINANCING}
-    current_table_hint: tuple[RateKind, RatePeriod | None] | None = None
+    financing_document = (
+        ProductFamily.FINANCING in family_hits
+        and ProductFamily.PARTICIPATION_ACCOUNT not in family_hits
+    )
+    current_table_hint: _RateContextHint | None = None
 
     for block_id, kind, text in blocks:
-        label = _GENERIC_PROFIT_RATE_LABEL.search(text)
         if kind != "table":
             current_table_hint = None
 
+        if kind == "table":
+            table_hint = _profit_rate_table_hint(text, financing_document=financing_document)
+            if table_hint is not None:
+                current_table_hint = table_hint
+                hints[block_id] = table_hint
+                continue
+
+        label = _GENERIC_PROFIT_RATE_LABEL.search(text)
         if label is not None:
             is_financing = (
                 document_is_unambiguously_financing
@@ -375,9 +509,9 @@ def _rate_context_hints(
             )
             has_conflict = _NON_FINANCING_PROFIT_CONTEXT.search(text) is not None
             hint = (
-                (
-                    RateKind.FINANCING_PROFIT_RATE,
-                    (
+                _RateContextHint(
+                    kind=RateKind.FINANCING_PROFIT_RATE,
+                    period=(
                         RatePeriod.MONTHLY
                         if re.search(r"\b(?:aylık|aylik)\b", label.group(), re.I)
                         else None
@@ -397,7 +531,7 @@ def _rate_context_hints(
             and _LTV_TABLE_LABEL.search(text) is not None
             and _AMOUNT_BRACKET_CONTEXT.search(text) is not None
         ):
-            current_table_hint = (RateKind.LTV_RATIO, None)
+            current_table_hint = _RateContextHint(kind=RateKind.LTV_RATIO, period=None)
             hints[block_id] = current_table_hint
             continue
 
@@ -595,18 +729,27 @@ def extract_rules(document: CleanDocument) -> ExtractionDraft:
         text = span.quote
         lowered = text.casefold()
         if _RATE_MARKER.search(text) is not None and _FEE_PERCENT_CONTEXT.search(text) is None:
-            normalized_rate = normalize_rate(text)
             context_hint = rate_context_hints.get(span.block_id)
+            rate_span = span
+            if context_hint is not None and context_hint.column_count is not None:
+                # Issue #30: a column-shaped hint applies only to the header's
+                # profit column; when the cell cannot be attributed the hint is
+                # withheld and the row is read without it.
+                cell_span = _profit_column_cell(span, context_hint)
+                if cell_span is None:
+                    context_hint = None
+                else:
+                    rate_span = cell_span
+            normalized_rate = normalize_rate(rate_span.quote)
             if (
                 context_hint is not None
                 and normalized_rate.value is not None
                 and normalized_rate.value.kind is RateKind.UNKNOWN
             ):
-                kind_hint, period_hint = context_hint
                 normalized_rate = normalize_rate(
-                    text,
-                    kind_hint=kind_hint,
-                    period_hint=period_hint,
+                    rate_span.quote,
+                    kind_hint=context_hint.kind,
+                    period_hint=context_hint.period,
                 )
             # Issue #28: a percentage whose kind stays unknown is not recorded.
             # The field stays unresolved for the narrow model question instead;
@@ -618,7 +761,7 @@ def extract_rules(document: CleanDocument) -> ExtractionDraft:
                 rates.append(
                     BoundFact(
                         normalized_rate.value,
-                        span,
+                        rate_span,
                         inferred=normalized_rate.value.status is EvidenceStatus.INFERRED,
                     )
                 )

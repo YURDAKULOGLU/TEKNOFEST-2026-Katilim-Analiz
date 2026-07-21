@@ -42,6 +42,15 @@ LTV_TABLE_HEADER = "Tutar Aralığı | Finansman Oranı | Vade (Ay)"
 LTV_TABLE_ROW = "0-400,000 TL | %70 | 48"
 MONTHLY_PROFIT_SENTENCE = "Aylık kâr payı oranı %1,69"
 
+# Issue #30: live table rows, verbatim.  The header names the profit column;
+# the rows themselves carry no context words at all.
+EMLAK_PROFIT_TABLE_HEADER = "Finansman Tutarı | Vade | Kâr Oranı"
+EMLAK_PROFIT_TABLE_ROW = "30.000,00 ₺ | 12 Ay | 1,69%"
+VAKIF_PROFIT_TABLE_HEADER = (
+    "Finansman Tutarı | Vade | Kâr Oranı | Tahsis Ücreti | Yıllık Maliyet Oranı"
+)
+VAKIF_PROFIT_TABLE_ROW = "100.000 TL | 12 Ay | %3.50 | 500 ₺ | %72,5541"
+
 
 def test_annual_cost_rate_is_classified_annual_and_never_monthly() -> None:
     """Albaraka konut: 'Yillik Maliyet Orani % 81,59' is a cost, not the rate."""
@@ -109,6 +118,91 @@ def test_monthly_profit_rate_is_classified_monthly_profit() -> None:
     assert rate.value_percent == Decimal("1.69")
     assert rate.kind is RateKind.FINANCING_PROFIT_RATE
     assert rate.period is RatePeriod.MONTHLY
+
+
+def test_profit_rate_table_header_hint_recovers_bare_row_percentage() -> None:
+    """Issue #30, emlak-katilim ihtiyac: '30.000,00 TL | 12 Ay | 1,69%'.
+
+    The 'Kar Orani' header plus the Vade/Ay column signature carries the
+    financing-profit + monthly meaning into the bare row, so the one real
+    monthly rate is recovered instead of falling to abstention.
+    """
+
+    document = make_document(
+        ("heading", "İhtiyaç Finansmanı"),
+        ("table", EMLAK_PROFIT_TABLE_HEADER),
+        ("table", EMLAK_PROFIT_TABLE_ROW),
+    )
+
+    draft = extract_rules(document)
+
+    assert len(draft.rates) == 1
+    rate = draft.rates[0].value
+    assert rate.value_percent == Decimal("1.69")
+    assert rate.kind is RateKind.FINANCING_PROFIT_RATE
+    assert rate.period is RatePeriod.MONTHLY
+    assert rate.status is EvidenceStatus.INFERRED
+    # The evidence span is the exact profit-column cell of the row.
+    assert draft.rates[0].span.quote == "1,69%"
+    assert ModelFactField.RATE not in draft.unresolved_fields
+
+
+def test_two_percent_row_attaches_hint_only_to_the_profit_column() -> None:
+    """Issue #30, vakif-katilim tasit: '100.000 TL | 12 Ay | %3.50 | ... | %72,5541'.
+
+    The row carries two percentages: the monthly kar orani (%3.50) and the
+    annual cost (%72,5541).  Positional attribution against the header keeps
+    the hint on the kar orani column only; the cost percentage is never
+    recorded as a rate.
+    """
+
+    document = make_document(
+        ("heading", "Taşıt Finansmanı"),
+        ("table", VAKIF_PROFIT_TABLE_HEADER),
+        ("table", VAKIF_PROFIT_TABLE_ROW),
+    )
+
+    draft = extract_rules(document)
+
+    assert len(draft.rates) == 1
+    rate = draft.rates[0].value
+    assert rate.value_percent == Decimal("3.50")
+    assert rate.kind is RateKind.FINANCING_PROFIT_RATE
+    assert rate.period is RatePeriod.MONTHLY
+    assert rate.status is EvidenceStatus.INFERRED
+    assert draft.rates[0].span.quote == "%3.50"
+    assert all(item.value.value_percent != Decimal("72.5541") for item in draft.rates)
+    assert ModelFactField.RATE not in draft.unresolved_fields
+
+
+def test_row_that_cannot_be_attributed_to_a_column_abstains() -> None:
+    """A ragged multi-percent row under a multi-rate header records nothing."""
+
+    document = make_document(
+        ("heading", "Taşıt Finansmanı"),
+        ("table", VAKIF_PROFIT_TABLE_HEADER),
+        ("table", "12 Ay | %3.50 | %72,5541"),
+    )
+
+    draft = extract_rules(document)
+
+    assert draft.rates == ()
+    assert ModelFactField.RATE in draft.unresolved_fields
+
+
+def test_participation_account_profit_table_never_becomes_a_financing_rate() -> None:
+    """A deposit 'Vade | Kar Payi Orani' table is a distribution share, not a price."""
+
+    document = make_document(
+        ("heading", "Katılma Hesabı Kâr Payı Dağıtım Oranları"),
+        ("table", "Vade | Kâr Payı Oranı"),
+        ("table", "12 Ay | %45,00"),
+    )
+
+    draft = extract_rules(document)
+
+    assert all(item.value.kind is not RateKind.FINANCING_PROFIT_RATE for item in draft.rates)
+    assert draft.rates == ()
 
 
 def test_unknown_context_percentage_is_not_recorded_as_a_rate() -> None:
