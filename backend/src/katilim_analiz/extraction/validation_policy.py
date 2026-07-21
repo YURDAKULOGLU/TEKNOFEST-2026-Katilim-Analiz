@@ -17,11 +17,13 @@ Design rules:
   zero, and the record simply remains ``needs_review`` when it is required.
 - Verbatim grounding is untouched: this policy only reads the issue list that
   the deterministic evidence validators produced; it never relaxes them.
-- Blocking issues are ambiguity on a required classification, prompt-injection
-  quarantine, rejected (ungrounded) model facts on a REQUIRED field, and any
-  unknown issue code. A rejected model fact on an optional field is
-  bookkeeping: the discarded proposal never reaches the record, so it must
-  not quarantine the remaining rule-grounded facts.
+- Blocking issues are ambiguity on a required classification that is still
+  unresolved (a stale ambiguity marker on a field a grounded fact later
+  resolved is bookkeeping), prompt-injection quarantine, rejected (ungrounded)
+  model facts on a REQUIRED field, and any unknown issue code. A rejected
+  model fact on an optional field is bookkeeping: the discarded proposal
+  never reaches the record, so it must not quarantine the remaining
+  rule-grounded facts.
   Model bookkeeping annotations that merely explain why an optional field
   stayed unresolved are not blocking; that includes the model being skipped
   or falling back to rules — a required field the model would have filled is
@@ -93,8 +95,13 @@ CAMPAIGN_TYPE_REQUIRED_FIELDS: Mapping[CampaignType, FieldRequirement | None] = 
 }
 
 # Ambiguity issues are field-scoped: they block only when the ambiguous field
-# is required for this record; ambiguity on an optional field leaves that
-# field unknown without disqualifying the rest of the evidence-backed record.
+# is required for this record AND the field is still unresolved. Ambiguity on
+# an optional field leaves that field unknown without disqualifying the rest
+# of the evidence-backed record, and ambiguity that a later, verbatim-grounded
+# fact resolved (the model or a registry hint settled the classification) is
+# bookkeeping: it explains why the rules alone could not fill the field, not
+# a defect in the published record. The field's own ``unresolved:<field>``
+# marker remains the single source of truth for "still open".
 _FIELD_AMBIGUITY_ISSUES: Mapping[str, ModelFactField] = {
     "product_family_ambiguous": ModelFactField.PRODUCT_FAMILY,
     "campaign_type_ambiguous": ModelFactField.CAMPAIGN_TYPE,
@@ -194,17 +201,23 @@ def evaluate_validation(
             reasons=("classification_not_validatable",),
         )
 
+    # First pass: collect the unresolved markers. The ambiguity issues below
+    # are judged against this set, so it must be complete before they are.
     unresolved: set[ModelFactField] = set()
-    blocking: list[str] = []
+    remaining: list[str] = []
     for issue in issues:
         if issue.startswith(UNRESOLVED_ISSUE_PREFIX):
             unresolved_field = _unresolved_field(issue)
             if unresolved_field is None:
                 # An unknown unresolved marker is treated conservatively.
-                blocking.append(issue)
+                remaining.append(issue)
             else:
                 unresolved.add(unresolved_field)
             continue
+        remaining.append(issue)
+
+    blocking: list[str] = []
+    for issue in remaining:
         if issue.startswith(_NON_BLOCKING_ISSUE_PREFIXES):
             continue
         if issue.endswith(_NON_BLOCKING_ISSUE_SUFFIXES):
@@ -221,9 +234,17 @@ def evaluate_validation(
             blocking.append(issue)
             continue
         ambiguous_field = _FIELD_AMBIGUITY_ISSUES.get(issue)
-        if ambiguous_field is not None and ambiguous_field not in (
-            requirement.all_of | requirement.any_of
-        ):
+        if ambiguous_field is not None:
+            if ambiguous_field not in (requirement.all_of | requirement.any_of):
+                continue
+            if ambiguous_field not in unresolved:
+                # The ambiguity was settled by a later, verbatim-grounded fact
+                # (model merge or registry hint filled the field); the stale
+                # marker only explains why the rules alone could not, so it is
+                # bookkeeping, not a quarantine. A field that is still open
+                # keeps blocking through this very issue.
+                continue
+            blocking.append(issue)
             continue
         blocking.append(issue)
 
