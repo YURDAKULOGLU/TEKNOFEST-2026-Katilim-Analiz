@@ -580,6 +580,48 @@ async def test_client_makes_one_compact_request_for_highest_signal_family(
 
 
 @pytest.mark.asyncio
+async def test_one_batched_call_answers_every_requested_field(
+    campaign_document: CleanDocument,
+) -> None:
+    """Field batching: one call, one fact per requested field, budget scaled."""
+
+    rate_quote = "finansman kâr payı oranı aylık %1,89"
+    amount_quote = "500.000 TL finansman tutarı"
+    captured: dict[str, Any] = {}
+
+    async def handler(request: httpx.Request) -> httpx.Response:
+        captured.update(json.loads(request.content))
+        return httpx.Response(
+            200,
+            json=_envelope(
+                _content(
+                    facts=[
+                        {"field": "rate", "quote": rate_quote},
+                        {"field": "financing_amount", "quote": amount_quote},
+                    ]
+                )
+            ),
+        )
+
+    client, http_client = _client(httpx.MockTransport(handler))
+    try:
+        response = await client.extract(
+            campaign_document,
+            frozenset({ModelFactField.RATE, ModelFactField.FINANCING_AMOUNT}),
+        )
+    finally:
+        await http_client.aclose()
+
+    assert {fact.field for fact in response.facts} == {
+        ModelFactField.RATE,
+        ModelFactField.FINANCING_AMOUNT,
+    }
+    requested = json.loads(captured["messages"][1]["content"])["requested_fields"]
+    assert captured["format"]["properties"]["facts"]["maxItems"] == len(requested)
+    assert captured["options"]["num_predict"] == 192 * len(requested)
+
+
+@pytest.mark.asyncio
 async def test_no_signal_field_is_typed_skip_without_calling_model() -> None:
     document = make_document(
         ("heading", "Eğitim Kampanyası"),

@@ -124,7 +124,10 @@ class _LiveModelFact(_EnvelopeModel):
 
 
 class _LiveModelBody(_EnvelopeModel):
-    facts: Annotated[list[_LiveModelFact], Field(max_length=1)]
+    # One batched request may answer every requested field at once; the
+    # request schema pins ``maxItems`` to the requested-field count and the
+    # 1.1 contract rejects a second fact for the same field.
+    facts: Annotated[list[_LiveModelFact], Field(max_length=len(ModelFactField))]
 
 
 class CircuitState(StrEnum):
@@ -297,7 +300,9 @@ class OllamaStructuredClient:
                 # CPU generation is about 2 tokens/s in the measured profile.
                 # Bound the response so valid completion can fit the 120s wall
                 # deadline; a larger/incomplete answer fails closed to rules.
-                "num_predict": 192,
+                # The per-fact output budget is unchanged; a batched request
+                # may legitimately answer one fact per requested field.
+                "num_predict": 192 * len(selected_fields),
             },
             # Ollama's HTTP API accepts negative infinity as a JSON number, while
             # positive Go-style durations remain strings (for example, "30m").
