@@ -33,7 +33,7 @@ from katilim_analiz.llm import (
     OllamaStructuredClient,
 )
 
-EXTRACTOR_VERSION = "hybrid-extractor/1.2"
+EXTRACTOR_VERSION = "hybrid-extractor/1.3"
 
 
 def extraction_processing_identity() -> str:
