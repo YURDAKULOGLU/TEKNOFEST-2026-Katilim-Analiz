@@ -215,10 +215,10 @@ class FakeScanStore:
         registry_version: str,
         observed_at: datetime,
     ) -> tuple[CampaignTarget, bool]:
-        del discovered_from, registry_version, observed_at
+        del registry_version, observed_at
         bank_targets = self.targets.setdefault(bank_id, {})
         created = canonical_url not in bank_targets
-        target = CampaignTarget(bank_id, campaign_key, canonical_url)
+        target = CampaignTarget(bank_id, campaign_key, canonical_url, discovered_from)
         bank_targets[canonical_url] = target
         return target, created
 
@@ -358,6 +358,7 @@ async def test_index_failure_retains_and_enqueues_known_targets() -> None:
         "bank-a",
         "bank-a:known",
         "https://bank.example/kampanyalar/known",
+        "https://bank.example/kampanyalar/",
     )
     store.targets["bank-a"] = {known.url: known}
     scanner = CampaignScanner(
@@ -446,6 +447,104 @@ async def test_blocked_static_page_marks_source_blocked_without_failing_the_run(
     assert source.error_code is not None
     assert result.enqueued_jobs == 2
     assert blocked_url not in {job.url for job in store.jobs}
+
+
+def _mixed_campaign_registry() -> MonitoredCampaignSourceRegistry:
+    """One bank monitored through both a campaign index and curated static pages."""
+
+    index_source = MonitoredCampaignSource(
+        bank_id="bank-a",
+        status=CampaignSourceStatus.VERIFIED,
+        observed_on=date(2026, 7, 21),
+        evidence_url="https://bank.example/kampanyalar/",
+        discovery_mode=DiscoveryMode.DETAIL_LINKS,
+        index_url="https://bank.example/kampanyalar/",
+        detail_path_prefixes=("/kampanyalar/",),
+        max_links=20,
+    )
+    static_source = MonitoredCampaignSource(
+        bank_id="bank-a",
+        status=CampaignSourceStatus.VERIFIED,
+        observed_on=date(2026, 7, 21),
+        evidence_url=STATIC_PAGE_URLS[0],
+        discovery_mode=DiscoveryMode.STATIC_PAGES,
+        static_pages=tuple(
+            MonitoredStaticPage(url=url, label=label)
+            for url, label in zip(STATIC_PAGE_URLS, ("konut", "tasit", "ihtiyac"), strict=True)
+        ),
+    )
+    return MonitoredCampaignSourceRegistry(
+        schema_version="1.0",
+        registry_id="monitored-campaign-sources",
+        registry_version="2026-07-21.1",
+        source_observed_on=date(2026, 7, 21),
+        bank_registry_version="2026-07-18.2",
+        sources=(index_source, static_source),
+    )
+
+
+def _mixed_collector(index_html: bytes) -> UrlKeyedCollector:
+    results = {url: _fetch(f"<h1>{url}</h1>".encode(), url=url) for url in STATIC_PAGE_URLS}
+    results["https://bank.example/kampanyalar/"] = _fetch(index_html)
+    return UrlKeyedCollector(results)
+
+
+@pytest.mark.asyncio
+async def test_repeat_scan_with_static_page_siblings_keeps_index_source_green() -> None:
+    """Regression: static-page targets persisted by an earlier scan must not make
+    the same bank's index source fail its known-target invariant on the next scan."""
+
+    index_html = b'<a href="/kampanyalar/a">A</a><a href="/kampanyalar/b">B</a>'
+    store = FakeScanStore()
+    scanner = CampaignScanner(
+        bank_registry=_bank_registry(),
+        campaign_registry=_mixed_campaign_registry(),
+        collector=_mixed_collector(index_html),
+        store=store,
+    )
+
+    first = await scanner.run("scan-mixed-001")
+    second = await scanner.run("scan-mixed-002")
+
+    assert first.has_failures is False
+    assert second.has_failures is False
+    index_first, static_first = first.sources
+    index_second, static_second = second.sources
+    assert index_first.status.value == "success"
+    assert static_first.status.value == "success"
+    assert index_second.status.value == "success"
+    assert static_second.status.value == "success"
+    assert index_second.error_code is None
+    assert index_second.source_index_changed is False
+    # The second scan re-enqueues every retained target under its own run id.
+    assert second.enqueued_jobs == 5
+    assert second.deduplicated_jobs == 5
+
+
+@pytest.mark.asyncio
+async def test_repeat_scan_after_index_content_change_succeeds_and_flags_change() -> None:
+    store = FakeScanStore()
+    collector = _mixed_collector(b'<a href="/kampanyalar/a">A</a>')
+    scanner = CampaignScanner(
+        bank_registry=_bank_registry(),
+        campaign_registry=_mixed_campaign_registry(),
+        collector=collector,
+        store=store,
+    )
+
+    first = await scanner.run("scan-change-001")
+    collector.results["https://bank.example/kampanyalar/"] = _fetch(
+        b'<a href="/kampanyalar/a">A</a><a href="/kampanyalar/new">New</a>'
+    )
+    second = await scanner.run("scan-change-002")
+
+    assert first.has_failures is False
+    assert second.has_failures is False
+    index_second = second.sources[0]
+    assert index_second.status.value == "success"
+    assert index_second.source_index_changed is True
+    assert index_second.discovered_targets == 1
+    assert "https://bank.example/kampanyalar/new" in {job.url for job in store.jobs}
 
 
 @pytest.mark.asyncio

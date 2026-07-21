@@ -64,6 +64,7 @@ class CampaignTarget:
     bank_id: str
     campaign_key: str
     url: str
+    discovered_from: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -280,13 +281,22 @@ class CampaignScanner:
                 if hashlib.sha256(raw_html).hexdigest() != artifact.raw_sha256:
                     raise ValueError("index content differs from the persisted fetch hash")
                 final_url = str(artifact.final_url or artifact.requested_url)
+                # A bank may monitor several sources (an index plus curated static
+                # pages). Discovery's known-target invariant is scoped to targets
+                # this index itself discovered; targets another source contributed
+                # legitimately live outside this index's detail path prefixes.
+                index_known = tuple(
+                    target.url
+                    for target in targets.values()
+                    if target.discovered_from == source.index_url
+                )
                 discovery = discover_campaign_index(
                     raw_html,
                     bank=bank,
                     index_url=final_url,
                     detail_path_prefixes=source.detail_path_prefixes,
                     max_links=source.max_links,
-                    known_targets=targets,
+                    known_targets=index_known,
                     previous_index_sha256=observation.previous_content_sha256,
                     mode=source.discovery_mode,
                 )
@@ -507,7 +517,8 @@ class PostgresCampaignScanStore:
         async with self._database.session() as session:
             rows = await MonitoredCampaignTargetRepository(session).list_active(bank_id)
         return tuple(
-            CampaignTarget(row.bank_id, row.campaign_key, row.canonical_url) for row in rows
+            CampaignTarget(row.bank_id, row.campaign_key, row.canonical_url, row.discovered_from)
+            for row in rows
         )
 
     async def observe_index(
@@ -574,7 +585,10 @@ class PostgresCampaignScanStore:
                 registry_version=registry_version,
                 observed_at=observed_at,
             )
-        return CampaignTarget(row.bank_id, row.campaign_key, row.canonical_url), created
+        return (
+            CampaignTarget(row.bank_id, row.campaign_key, row.canonical_url, row.discovered_from),
+            created,
+        )
 
     async def enqueue_detail(self, job: DetailScanJob, *, dedupe_key: str) -> bool:
         expected_dedupe_key = scan_job_dedupe_key(
