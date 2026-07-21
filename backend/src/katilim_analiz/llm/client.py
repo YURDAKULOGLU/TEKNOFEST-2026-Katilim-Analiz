@@ -35,6 +35,9 @@ from katilim_analiz.llm.prompt import (
 )
 
 _MAX_RESPONSE_BYTES = 1_000_000
+# Slowest measured generation profile (qwen3.5:4b, in-cluster CPU). Used to keep
+# the output-token budget inside what the wall deadline can actually generate.
+_MEASURED_TOKENS_PER_SECOND = 2.0
 
 
 class ModelFailureCode(StrEnum):
@@ -304,11 +307,18 @@ class OllamaStructuredClient:
                 "temperature": 0,
                 "num_ctx": self._max_context,
                 # CPU generation is about 2 tokens/s in the measured profile.
-                # Bound the response so valid completion can fit the 120s wall
-                # deadline; a larger/incomplete answer fails closed to rules.
-                # The per-fact output budget is unchanged; a batched request
-                # may legitimately answer one fact per requested field.
-                "num_predict": 192 * len(selected_fields),
+                # The response bound must stay below what the wall deadline can
+                # generate: a budget the deadline cannot fit would surface as a
+                # TIMEOUT (dependency failure, breaker threshold 2) instead of
+                # done_reason=length -> OUTPUT_TRUNCATED (content failure,
+                # patient threshold), taking the model out of service for slow
+                # content. Batched requests grow the budget per field but never
+                # past the deadline's generation capacity; an answer that no
+                # longer fits truncates and fails closed to rules.
+                "num_predict": min(
+                    192 * len(selected_fields),
+                    int(self._timeout * _MEASURED_TOKENS_PER_SECOND * 0.8),
+                ),
             },
             # Ollama's HTTP API accepts negative infinity as a JSON number, while
             # positive Go-style durations remain strings (for example, "30m").

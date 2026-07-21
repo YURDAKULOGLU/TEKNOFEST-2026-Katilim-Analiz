@@ -618,7 +618,12 @@ async def test_one_batched_call_answers_every_requested_field(
     }
     requested = json.loads(captured["messages"][1]["content"])["requested_fields"]
     assert captured["format"]["properties"]["facts"]["maxItems"] == len(requested)
-    assert captured["options"]["num_predict"] == 192 * len(requested)
+    # The batched budget must stay inside what the 120s wall deadline can
+    # generate at the measured ~2 tok/s: overshooting it converts truncation
+    # (content failure) into a timeout (dependency failure) and opens the
+    # circuit for slow content.
+    assert captured["options"]["num_predict"] == min(192 * len(requested), int(120 * 2.0 * 0.8))
+    assert captured["options"]["num_predict"] <= 120 * 2.0 * 0.8
 
 
 @pytest.mark.asyncio
