@@ -221,6 +221,45 @@ def test_model_bookkeeping_annotations_do_not_block() -> None:
     assert status is RecordStatus.VALIDATED
 
 
+def test_model_offline_with_required_fields_rule_resolved_validates() -> None:
+    """Issue #22: a model outage must not gate rule-complete records."""
+
+    decision = evaluate_validation(
+        ProductFamily.FINANCING,
+        CampaignType.FINANCING_RATE,
+        [
+            "model_skipped:model_disabled",
+            "model_skipped:no_relevant_source_signal",
+            "model_timeout:rules_fallback",
+            "model_unavailable:rules_fallback",
+            # Only optional fields were left unresolved by the skipped model.
+            "unresolved:reward",
+            *_OPTIONAL_UNRESOLVED,
+        ],
+    )
+
+    assert decision.status is RecordStatus.VALIDATED
+    assert decision.blocking_issues == ()
+
+
+def test_model_offline_never_rescues_a_missing_required_field() -> None:
+    """Issue #22 safety: the unresolved:<field> marker still blocks alone."""
+
+    decision = evaluate_validation(
+        ProductFamily.FINANCING,
+        CampaignType.FINANCING_RATE,
+        [
+            "model_skipped:model_disabled",
+            "model_timeout:rules_fallback",
+            "unresolved:rate",
+        ],
+    )
+
+    assert decision.status is RecordStatus.NEEDS_REVIEW
+    assert ModelFactField.RATE in decision.missing_required_fields
+    assert decision.reasons == ("required_field_unresolved",)
+
+
 def test_ambiguity_on_an_optional_field_does_not_block() -> None:
     status = decide_record_status(
         ProductFamily.CARD,
