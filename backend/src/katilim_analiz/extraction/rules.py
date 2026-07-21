@@ -123,6 +123,12 @@ _PRODUCT_PATTERNS: Mapping[ProductFamily, tuple[re.Pattern[str], ...]] = {
     ),
     ProductFamily.CARD: (
         re.compile(r"\b(?:kredi\s+kartı|banka\s+kartı|kartınız|kartiniz|kart)\b", re.I),
+        # A bank's card-programme brand names the card family deterministically
+        # even when the page never says "kart": Emlak Katilim's Paraf campaign
+        # pages ("Paraf ile ... taksit", "... TL ParafPara") carry no other
+        # family marker at all. The brand forms are enumerated exactly; the
+        # bare stem would also match "paraflamak" (to initial a document).
+        re.compile(r"\bparaf(?:para|kart)?\b", re.I),
     ),
     ProductFamily.PARTICIPATION_ACCOUNT: (
         re.compile(

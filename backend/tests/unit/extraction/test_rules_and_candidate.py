@@ -142,6 +142,47 @@ def test_ambiguous_classifications_abstain_instead_of_selecting() -> None:
     assert "campaign_type_ambiguous" in draft.issues
 
 
+@pytest.mark.parametrize(
+    ("heading", "body"),
+    [
+        (
+            "Paraf ile Twist'te 4 Taksit!",
+            "Paraf ile yapacağınız 4 taksitli alışverişler kampanyaya dahildir.",
+        ),
+        (
+            "Market Alışverişlerinize 800 TL ParafPara!",
+            "Kampanya süresince market harcamalarınıza 800 TL ParafPara hediye.",
+        ),
+    ],
+)
+def test_card_programme_brand_resolves_family_without_the_word_kart(
+    heading: str,
+    body: str,
+) -> None:
+    """A Paraf campaign page names no family except through its card brand."""
+
+    document = make_document(("heading", heading), ("paragraph", body))
+
+    draft = extract_rules(document)
+
+    assert draft.product_family is not None
+    assert draft.product_family.value is ProductFamily.CARD
+    assert draft.product_family.inferred
+    assert ModelFactField.PRODUCT_FAMILY not in draft.unresolved_fields
+
+
+def test_initialing_a_document_is_not_a_card_brand() -> None:
+    document = make_document(
+        ("heading", "Konut Finansmanı Kampanyası"),
+        ("paragraph", "Sözleşmeyi şubede paraflamanız gerekmektedir."),
+    )
+
+    draft = extract_rules(document)
+
+    assert draft.product_family is not None
+    assert draft.product_family.value is ProductFamily.FINANCING
+
+
 def test_negative_or_administrative_segment_mentions_are_not_eligible_segments() -> None:
     document = make_document(
         ("heading", "Puffy'de 6'ya varan Taksit"),
