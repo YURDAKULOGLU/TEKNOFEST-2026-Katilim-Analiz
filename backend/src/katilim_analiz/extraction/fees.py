@@ -17,7 +17,7 @@ from katilim_analiz.domain.normalization import normalize_money, normalize_rate
 # The stem carries case and derivation suffixes in Turkish, so the marker ends at
 # the stem and lets the suffix run on; a trailing word boundary would miss both
 # the possessive and the "-siz" derivation that states the fee does not apply.
-FEE_MARKER = re.compile(r"\b(?:ücret|ucret|masraf|tahsis|aidat)", re.I)
+FEE_MARKER = re.compile(r"\b(?:ücret|ucret|masraf|tahsis|aidat|komisyon)", re.I)
 #: Turkish negates a verb with an infix, so the positive "alinmaktadir" (it is
 #: charged) opens with the same letters as the negative "alinmamaktadir" (it is
 #: not charged).  Matching the stem loosely would read a charged fee as waived,

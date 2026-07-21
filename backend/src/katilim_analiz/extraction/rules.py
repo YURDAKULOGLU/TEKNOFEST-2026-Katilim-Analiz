@@ -208,6 +208,20 @@ _GENERIC_PROFIT_RATE_LABEL = re.compile(
     r"\b(?:aylık\s+|aylik\s+)?(?:kâr|kar)\s+(?:payı\s+|payi\s+)?oranı\b",
     re.I,
 )
+#: Issue #28: a "Finansman Orani" column in a value-bracket table
+#: (tutar araligi | % | vade) states the financing share of the asset value
+#: (LTV), not a profit rate.  The label alone is not enough — the bracket
+#: context must also be present, otherwise no hint is asserted.
+_LTV_TABLE_LABEL = re.compile(r"\b(?:azami\s+)?finansman\s+oran", re.I)
+_AMOUNT_BRACKET_CONTEXT = re.compile(r"\btutar\b|\baral[ıi][gğk]", re.I)
+#: Issue #28: a percentage in a fee sentence ("tahsis ucreti ... %0,5",
+#: "komisyon %X") prices a fee, never a financing rate.  The fee reader owns
+#: that sentence; recording its percentage as a rate mislabels a cost as a
+#: price, so the whole sentence is excluded from rate extraction.
+_FEE_PERCENT_CONTEXT = re.compile(
+    r"\b(?:ücret|ucret|masraf|tahsis|aidat|komisyon)",
+    re.I,
+)
 _FINANCING_RATE_CONTEXT = re.compile(r"\b(?:finansman|kullandırım|kullandirim)\b", re.I)
 _NON_FINANCING_PROFIT_CONTEXT = re.compile(
     r"\b(?:katılma\s+hesabı|katilim\s+hesabi|dağıtım|dagitim|paylaşım|paylasim|"
@@ -299,6 +313,21 @@ def is_explicit_new_customer_restriction(text: str) -> bool:
     return _new_customer_restriction_match(text) is not None
 
 
+def rate_semantics_unresolved(rates: Iterable[RateValue]) -> bool:
+    """Return whether the pricing-rate question is still open for these rates.
+
+    Issue #28: an LTV share is a structural ceiling, not a price.  It neither
+    answers the rate question nor blocks it — it has no period by nature, so
+    demanding one would keep every record with an LTV table permanently
+    unresolved.
+    """
+
+    pricing = tuple(rate for rate in rates if rate.kind is not RateKind.LTV_RATIO)
+    return not pricing or any(
+        rate.kind is RateKind.UNKNOWN or rate.period is RatePeriod.UNSPECIFIED for rate in pricing
+    )
+
+
 def _channel_matches(text: str) -> tuple[tuple[SalesChannel, re.Match[str]], ...]:
     if (
         _POSITIVE_CHANNEL_CONTEXT.search(text) is None
@@ -361,6 +390,15 @@ def _rate_context_hints(
                 current_table_hint = hint
             if hint is not None:
                 hints[block_id] = hint
+            continue
+
+        if (
+            kind == "table"
+            and _LTV_TABLE_LABEL.search(text) is not None
+            and _AMOUNT_BRACKET_CONTEXT.search(text) is not None
+        ):
+            current_table_hint = (RateKind.LTV_RATIO, None)
+            hints[block_id] = current_table_hint
             continue
 
         if kind == "table" and current_table_hint is not None:
@@ -556,7 +594,7 @@ def extract_rules(document: CleanDocument) -> ExtractionDraft:
     for span in all_sentences:
         text = span.quote
         lowered = text.casefold()
-        if _RATE_MARKER.search(text) is not None:
+        if _RATE_MARKER.search(text) is not None and _FEE_PERCENT_CONTEXT.search(text) is None:
             normalized_rate = normalize_rate(text)
             context_hint = rate_context_hints.get(span.block_id)
             if (
@@ -570,7 +608,13 @@ def extract_rules(document: CleanDocument) -> ExtractionDraft:
                     kind_hint=kind_hint,
                     period_hint=period_hint,
                 )
-            if normalized_rate.value is not None:
+            # Issue #28: a percentage whose kind stays unknown is not recorded.
+            # The field stays unresolved for the narrow model question instead;
+            # a missed rate is safe, a mislabeled one inverts the comparison.
+            if (
+                normalized_rate.value is not None
+                and normalized_rate.value.kind is not RateKind.UNKNOWN
+            ):
                 rates.append(
                     BoundFact(
                         normalized_rate.value,
@@ -696,10 +740,7 @@ def extract_rules(document: CleanDocument) -> ExtractionDraft:
     if campaign_type is None:
         unresolved.add(ModelFactField.CAMPAIGN_TYPE)
     typed_rates = _dedupe_bound(rates)
-    if not typed_rates or any(
-        rate.value.kind is RateKind.UNKNOWN or rate.value.period is RatePeriod.UNSPECIFIED
-        for rate in typed_rates
-    ):
+    if rate_semantics_unresolved(rate.value for rate in typed_rates):
         unresolved.add(ModelFactField.RATE)
     typed_amounts = _dedupe_bound(amounts)
     if not typed_amounts:
@@ -756,6 +797,7 @@ __all__ = [
     "extract_rules",
     "is_explicit_eligibility",
     "is_explicit_new_customer_restriction",
+    "rate_semantics_unresolved",
     "segment_key_for_text",
     "supported_campaign_types",
     "supported_product_families",

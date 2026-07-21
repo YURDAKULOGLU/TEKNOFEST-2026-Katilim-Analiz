@@ -375,6 +375,11 @@ def _rate_issue(rate: RateValue) -> str | None:
         return "rate_basis_unknown"
     if rate.kind is RateKind.UNKNOWN:
         return "rate_kind_unknown"
+    if rate.kind is RateKind.LTV_RATIO:
+        # A financing share of the asset value has no period, gross/net basis
+        # or pricing basis by nature; it is complete as a bare percentage.  The
+        # kind-aware signature still keeps it from ever meeting a pricing rate.
+        return None
     if rate.period is RatePeriod.UNSPECIFIED:
         return "rate_period_unknown"
     if rate.basis_label is None:
@@ -492,6 +497,8 @@ def _compare_rates(records: Sequence[CampaignRecord]) -> tuple[ComparisonOutcome
         RateKind.HISTORICAL_RETURN_RATE,
         RateKind.DISCOUNT_RATE,
         RateKind.REWARD_RATE,
+        # A higher financing share means a smaller required down payment.
+        RateKind.LTV_RATIO,
     }
     return _rank(selected, ComparisonDimension.RATE, higher_is_better=higher_is_better)
 

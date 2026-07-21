@@ -44,6 +44,10 @@ class CampaignType(StrEnum):
 class RateKind(StrEnum):
     FINANCING_PROFIT_RATE = "financing_profit_rate"
     ANNUAL_COST_RATE = "annual_cost_rate"
+    #: Financing share of the asset value ("azami finansman orani", LTV). A
+    #: structural ceiling, not a price: it has no period and is never the
+    #: campaign's headline rate.
+    LTV_RATIO = "ltv_ratio"
     PROFIT_SHARE_DISTRIBUTION_RATE = "profit_share_distribution_rate"
     HISTORICAL_RETURN_RATE = "historical_return_rate"
     DISCOUNT_RATE = "discount_rate"
