@@ -1,0 +1,170 @@
+{
+  "$schema": "./monitored-campaign-sources.schema.json",
+  "schema_version": "1.0",
+  "registry_id": "monitored-campaign-sources",
+  "registry_version": "2026-07-21.1",
+  "source_observed_on": "2026-07-21",
+  "bank_registry_version": "2026-07-18.2",
+  "bank_count": 10,
+  "sources": [
+    {
+      "bank_id": "adil-katilim",
+      "status": "unavailable",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://www.adilkatilim.com.tr/",
+      "unavailable_reason": "The official site exposed no campaign index, campaign-detail links, or stable financing product pages when observed; no URL or path prefix is inferred."
+    },
+    {
+      "bank_id": "albaraka-turk",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://www.albaraka.com.tr/tr/kampanyalar",
+      "discovery_mode": "detail_links",
+      "index_url": "https://www.albaraka.com.tr/tr/kampanyalar",
+      "detail_path_prefixes": ["/tr/kampanyalar/detay/"],
+      "max_links": 150
+    },
+    {
+      "bank_id": "albaraka-turk",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://www.albaraka.com.tr/tr/bireysel/finansmanlar/konut-finansmani",
+      "discovery_mode": "static_pages",
+      "static_pages": [
+        {"url": "https://www.albaraka.com.tr/tr/bireysel/finansmanlar/konut-finansmani", "label": "konut"},
+        {"url": "https://www.albaraka.com.tr/tr/bireysel/finansmanlar/tasit-finansmani", "label": "tasit"},
+        {"url": "https://www.albaraka.com.tr/tr/bireysel/finansmanlar/ihtiyac", "label": "ihtiyac"}
+      ]
+    },
+    {
+      "bank_id": "dunya-katilim",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://dunyakatilim.com.tr/kampanyalar/",
+      "discovery_mode": "detail_links",
+      "index_url": "https://dunyakatilim.com.tr/kampanyalar/",
+      "detail_path_prefixes": ["/kampanyalar/"],
+      "max_links": 150
+    },
+    {
+      "bank_id": "hayat-finans",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://hayatfinans.com.tr/kampanyalar",
+      "discovery_mode": "detail_links",
+      "index_url": "https://hayatfinans.com.tr/kampanyalar",
+      "detail_path_prefixes": ["/kampanyalar/"],
+      "max_links": 100
+    },
+    {
+      "bank_id": "kuveyt-turk",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://www.kuveytturk.com.tr/kampanyalar/kendim-icin/kart-kampanyalari",
+      "discovery_mode": "detail_links",
+      "index_url": "https://www.kuveytturk.com.tr/kampanyalar/kendim-icin/kart-kampanyalari",
+      "detail_path_prefixes": ["/kampanyalar/kendim-icin/kart-kampanyalari/"],
+      "max_links": 150
+    },
+    {
+      "bank_id": "kuveyt-turk",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://www.kuveytturk.com.tr/kendim-icin/finansmanlar/konut-finansmanlari/konut-finansmani",
+      "discovery_mode": "static_pages",
+      "static_pages": [
+        {"url": "https://www.kuveytturk.com.tr/kendim-icin/finansmanlar/konut-finansmanlari/konut-finansmani", "label": "konut"},
+        {"url": "https://www.kuveytturk.com.tr/kendim-icin/finansmanlar/arac-finansmanlari/arac-finansmani", "label": "tasit"},
+        {"url": "https://www.kuveytturk.com.tr/kendim-icin/finansmanlar/ihtiyac-finansmanlari", "label": "ihtiyac"}
+      ]
+    },
+    {
+      "bank_id": "tom-katilim",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://www.tombank.com.tr/kampanyalar.html",
+      "discovery_mode": "unsegmented_collection",
+      "index_url": "https://www.tombank.com.tr/kampanyalar.html",
+      "detail_path_prefixes": [],
+      "max_links": 0
+    },
+    {
+      "bank_id": "emlak-katilim",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://www.emlakkatilim.com.tr/tr/bireysel/kampanyalar",
+      "discovery_mode": "detail_links",
+      "index_url": "https://www.emlakkatilim.com.tr/tr/bireysel/kampanyalar",
+      "detail_path_prefixes": ["/tr/bireysel/kampanyalar/kampanya/"],
+      "max_links": 150
+    },
+    {
+      "bank_id": "emlak-katilim",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://www.emlakkatilim.com.tr/tr/bireysel/finansmanlar/konut-finansmani",
+      "discovery_mode": "static_pages",
+      "static_pages": [
+        {"url": "https://www.emlakkatilim.com.tr/tr/bireysel/finansmanlar/konut-finansmani", "label": "konut"},
+        {"url": "https://www.emlakkatilim.com.tr/tr/bireysel/finansmanlar/tasit-finansmani", "label": "tasit"},
+        {"url": "https://www.emlakkatilim.com.tr/tr/bireysel/finansmanlar/ihtiyac-finansmani", "label": "ihtiyac"}
+      ]
+    },
+    {
+      "bank_id": "turkiye-finans",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://www.turkiyefinans.com.tr/tr-tr/bireysel/konut-finansmani/Sayfalar/konut-finansmani.aspx",
+      "discovery_mode": "static_pages",
+      "static_pages": [
+        {"url": "https://www.turkiyefinans.com.tr/tr-tr/bireysel/konut-finansmani/Sayfalar/konut-finansmani.aspx", "label": "konut"},
+        {"url": "https://www.turkiyefinans.com.tr/tr-tr/bireysel/tasit-finansmani/Sayfalar/tasit-Finansmani.aspx", "label": "tasit"},
+        {"url": "https://www.turkiyefinans.com.tr/tr-tr/bireysel/ihtiyac-finansmani/Sayfalar/ihtiyac-finansmani.aspx", "label": "ihtiyac"}
+      ]
+    },
+    {
+      "bank_id": "vakif-katilim",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://www.vakifkatilim.com.tr/tr/kendim-icin/kampanyalar/mevcut-kampanyalar",
+      "discovery_mode": "detail_links",
+      "index_url": "https://www.vakifkatilim.com.tr/tr/kendim-icin/kampanyalar/mevcut-kampanyalar",
+      "detail_path_prefixes": ["/tr/kendim-icin/kampanyalar/detay/"],
+      "max_links": 150
+    },
+    {
+      "bank_id": "vakif-katilim",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://www.vakifkatilim.com.tr/tr/kendim-icin/finansmanlar/konut-finansmani",
+      "discovery_mode": "static_pages",
+      "static_pages": [
+        {"url": "https://www.vakifkatilim.com.tr/tr/kendim-icin/finansmanlar/konut-finansmani", "label": "konut"},
+        {"url": "https://www.vakifkatilim.com.tr/tr/kendim-icin/finansmanlar/tasit-finansmani", "label": "tasit"},
+        {"url": "https://www.vakifkatilim.com.tr/tr/kendim-icin/finansmanlar/ihtiyac-finansmani", "label": "ihtiyac"}
+      ]
+    },
+    {
+      "bank_id": "ziraat-katilim",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://www.ziraatkatilim.com.tr/kart-kampanyalari",
+      "discovery_mode": "detail_links",
+      "index_url": "https://www.ziraatkatilim.com.tr/kart-kampanyalari",
+      "detail_path_prefixes": ["/kart-kampanyalari/"],
+      "max_links": 200
+    },
+    {
+      "bank_id": "ziraat-katilim",
+      "status": "verified",
+      "observed_on": "2026-07-21",
+      "evidence_url": "https://www.ziraatkatilim.com.tr/bireysel/finansman-urunleri/konut-gayrimenkul-finansmani",
+      "discovery_mode": "static_pages",
+      "static_pages": [
+        {"url": "https://www.ziraatkatilim.com.tr/bireysel/finansman-urunleri/konut-gayrimenkul-finansmani", "label": "konut"},
+        {"url": "https://www.ziraatkatilim.com.tr/bireysel/finansman-urunleri/tasit-finansmani", "label": "tasit"},
+        {"url": "https://www.ziraatkatilim.com.tr/bireysel/finansman-urunleri/ihtiyac-finansmani", "label": "ihtiyac"}
+      ]
+    }
+  ]
+}

@@ -29,15 +29,24 @@ from katilim_analiz.storage.database import Database
 from katilim_analiz.storage.repositories import JobRepository, SourceRepository
 
 DEFAULT_REGISTRY_PATH = Path("data/registry/bddk-participation-banks-2026-07-18.json")
-DEFAULT_CAMPAIGN_REGISTRY_PATH = Path("data/registry/monitored-campaign-sources-2026-07-19.json")
+DEFAULT_CAMPAIGN_REGISTRY_PATH = Path("data/registry/monitored-campaign-sources-2026-07-21.json")
 SOURCE_JOB_KIND = "ingest_source"
 _CAMPAIGN_REGISTRY_ID = "monitored-campaign-sources"
 _REGISTRY_VERSION = re.compile(r"^(\d{4}-\d{2}-\d{2})\.([1-9]\d*)$")
+_STATIC_PAGE_LABEL = re.compile(r"^[a-z0-9]+(?:-[a-z0-9]+)*$")
 
 
 class CampaignSourceStatus(StrEnum):
     VERIFIED = "verified"
     UNAVAILABLE = "unavailable"
+
+
+@dataclass(frozen=True, slots=True)
+class MonitoredStaticPage:
+    """One curated, stable product page that is fetched directly as a document."""
+
+    url: str
+    label: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -50,6 +59,7 @@ class MonitoredCampaignSource:
     index_url: str | None = None
     detail_path_prefixes: tuple[str, ...] = ()
     max_links: int = 0
+    static_pages: tuple[MonitoredStaticPage, ...] = ()
     unavailable_reason: str | None = None
 
     @property
@@ -66,11 +76,11 @@ class MonitoredCampaignSourceRegistry:
     bank_registry_version: str
     sources: tuple[MonitoredCampaignSource, ...]
 
-    def source(self, bank_id: str) -> MonitoredCampaignSource:
-        for source in self.sources:
-            if source.bank_id == bank_id:
-                return source
-        raise KeyError(f"bank is not present in campaign registry: {bank_id}")
+    def bank_sources(self, bank_id: str) -> tuple[MonitoredCampaignSource, ...]:
+        matches = tuple(source for source in self.sources if source.bank_id == bank_id)
+        if not matches:
+            raise KeyError(f"bank is not present in campaign registry: {bank_id}")
+        return matches
 
     @property
     def verified_sources(self) -> tuple[MonitoredCampaignSource, ...]:
@@ -171,6 +181,26 @@ def _detail_prefixes(value: Any, context: str) -> tuple[str, ...]:
     return prefixes
 
 
+def _static_pages(value: Any, context: str, bank: BankSource) -> tuple[MonitoredStaticPage, ...]:
+    if not isinstance(value, list) or not 1 <= len(value) <= 20:
+        raise RegistryValidationError(f"{context}.static_pages must list 1..20 pages")
+    pages: list[MonitoredStaticPage] = []
+    seen_urls: set[str] = set()
+    for position, item in enumerate(value):
+        page_context = f"{context}.static_pages[{position}]"
+        payload = _mapping(item, page_context)
+        _exact_fields(payload, {"url", "label"}, page_context)
+        url = _official_url(payload, "url", page_context, bank)
+        label = _string(payload, "label", page_context, maximum=64)
+        if not _STATIC_PAGE_LABEL.fullmatch(label):
+            raise RegistryValidationError(f"{page_context}.label must be a lowercase slug")
+        if url in seen_urls:
+            raise RegistryValidationError(f"{context}.static_pages contains duplicate URLs")
+        seen_urls.add(url)
+        pages.append(MonitoredStaticPage(url=url, label=label))
+    return tuple(pages)
+
+
 def _parse_campaign_source(
     value: Any,
     position: int,
@@ -205,6 +235,22 @@ def _parse_campaign_source(
             unavailable_reason=_string(payload, "unavailable_reason", context),
         )
 
+    try:
+        mode = DiscoveryMode(_string(payload, "discovery_mode", context))
+    except ValueError as exc:
+        raise RegistryValidationError(f"{context}.discovery_mode is unsupported") from exc
+
+    if mode is DiscoveryMode.STATIC_PAGES:
+        _exact_fields(payload, common | {"discovery_mode", "static_pages"}, context)
+        return MonitoredCampaignSource(
+            bank_id=bank.id,
+            status=status,
+            observed_on=row_observed_on,
+            evidence_url=evidence_url,
+            discovery_mode=mode,
+            static_pages=_static_pages(payload.get("static_pages"), context, bank),
+        )
+
     verified_fields = common | {
         "discovery_mode",
         "index_url",
@@ -212,10 +258,6 @@ def _parse_campaign_source(
         "max_links",
     }
     _exact_fields(payload, verified_fields, context)
-    try:
-        mode = DiscoveryMode(_string(payload, "discovery_mode", context))
-    except ValueError as exc:
-        raise RegistryValidationError(f"{context}.discovery_mode is unsupported") from exc
     index_url = _official_url(payload, "index_url", context, bank)
     prefixes = _detail_prefixes(payload.get("detail_path_prefixes"), context)
     max_links = payload.get("max_links")
@@ -240,6 +282,27 @@ def _parse_campaign_source(
         detail_path_prefixes=prefixes,
         max_links=max_links,
     )
+
+
+def _validate_bank_source_groups(sources: tuple[MonitoredCampaignSource, ...]) -> None:
+    by_bank: dict[str, list[MonitoredCampaignSource]] = {}
+    for source in sources:
+        by_bank.setdefault(source.bank_id, []).append(source)
+    for bank_id, rows in by_bank.items():
+        if len(rows) == 1:
+            continue
+        if any(not row.verified for row in rows):
+            raise RegistryValidationError(
+                f"an unavailable bank cannot also declare verified sources: {bank_id}"
+            )
+        static_rows = sum(row.discovery_mode is DiscoveryMode.STATIC_PAGES for row in rows)
+        if static_rows > 1:
+            raise RegistryValidationError(
+                f"a bank cannot declare more than one static-page source: {bank_id}"
+            )
+        index_urls = [row.index_url for row in rows if row.index_url is not None]
+        if len(index_urls) != len(set(index_urls)):
+            raise RegistryValidationError(f"a bank declares duplicate index URLs: {bank_id}")
 
 
 def _parse_campaign_registry(
@@ -279,21 +342,27 @@ def _parse_campaign_registry(
     bank_count = payload.get("bank_count")
     if isinstance(bank_count, bool) or not isinstance(bank_count, int):
         raise RegistryValidationError("registry.bank_count must be an integer")
-    if bank_count != len(raw_sources) or bank_count != len(bank_registry.banks):
-        raise RegistryValidationError("campaign registry must contain one row per BDDK bank")
+    if bank_count != len(bank_registry.banks) or len(raw_sources) < bank_count:
+        raise RegistryValidationError("campaign registry must contain at least one row per bank")
     expected_ids = tuple(bank.id for bank in bank_registry.banks)
     actual_ids = tuple(
         _string(_mapping(source, f"sources[{position}]"), "bank_id", f"sources[{position}]")
         for position, source in enumerate(raw_sources)
     )
-    if actual_ids != expected_ids:
+    grouped_ids: list[str] = []
+    for bank_id in actual_ids:
+        if not grouped_ids or grouped_ids[-1] != bank_id:
+            grouped_ids.append(bank_id)
+    if tuple(grouped_ids) != expected_ids:
         raise RegistryValidationError(
-            "campaign registry bank IDs and order must exactly match the BDDK registry"
+            "campaign registry bank IDs and order must exactly match the BDDK registry, "
+            "with each bank's sources grouped contiguously"
         )
     sources = tuple(
         _parse_campaign_source(source, position, bank_registry, observed_on)
         for position, source in enumerate(raw_sources)
     )
+    _validate_bank_source_groups(sources)
     return MonitoredCampaignSourceRegistry(
         schema_version=schema_version,
         registry_id=registry_id,

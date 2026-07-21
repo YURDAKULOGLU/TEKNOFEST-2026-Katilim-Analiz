@@ -24,9 +24,9 @@ from katilim_analiz.ingestion import (
     StaticHostPolicyProvider,
 )
 from katilim_analiz.ingestion.artifacts import FetchResult
-from katilim_analiz.ingestion.discovery import discover_campaign_index
+from katilim_analiz.ingestion.discovery import DiscoveryMode, discover_campaign_index
 from katilim_analiz.ingestion.policy import validate_url_syntax
-from katilim_analiz.ingestion.registry import BankRegistry
+from katilim_analiz.ingestion.registry import BankRegistry, BankSource
 from katilim_analiz.runtime.composition import RuntimeConfigurationError
 from katilim_analiz.runtime.paths import resolve_runtime_path
 from katilim_analiz.runtime.registry import (
@@ -237,6 +237,15 @@ class CampaignScanner:
                 deduplicated_jobs=deduplicated,
             )
 
+        if source.discovery_mode is DiscoveryMode.STATIC_PAGES:
+            return await self._scan_static_pages(
+                scan_run_id,
+                source,
+                bank=bank,
+                targets=targets,
+                known_count=len(known),
+            )
+
         if source.index_url is None or source.discovery_mode is None:
             raise ValueError(f"verified campaign source lacks discovery configuration: {bank.id}")
         try:
@@ -320,6 +329,77 @@ class CampaignScanner:
             error_code=error_code,
         )
 
+    async def _scan_static_pages(
+        self,
+        scan_run_id: str,
+        source: MonitoredCampaignSource,
+        *,
+        bank: BankSource,
+        targets: dict[str, CampaignTarget],
+        known_count: int,
+    ) -> CampaignSourceScanResult:
+        """Enqueue each curated product page directly, without an index discovery step."""
+
+        if not source.static_pages:
+            raise ValueError(f"static-page campaign source lists no pages: {bank.id}")
+        discovered_count = 0
+        source_index_changed = False
+        statuses: list[CampaignSourceScanStatus] = []
+        error_code: str | None = None
+        for page in source.static_pages:
+            try:
+                fetched = await self._collector.fetch(bank.id, page.url)
+                artifact = fetched.artifact
+                if artifact.bank_id != bank.id or str(artifact.requested_url) != page.url:
+                    raise ValueError("static-page collector returned an artifact for another page")
+                observation = await self._store.observe_index(
+                    artifact,
+                    registry_version=self._campaign_registry.registry_version,
+                )
+                if artifact.status is FetchStatus.SUCCESS:
+                    raw_html = fetched.raw_content
+                    if raw_html is None or artifact.raw_sha256 is None:
+                        raise ValueError("successful static-page fetch lacks content or its hash")
+                    if hashlib.sha256(raw_html).hexdigest() != artifact.raw_sha256:
+                        raise ValueError("static-page content differs from the persisted hash")
+                    target, created = await self._store.upsert_seen(
+                        bank_id=bank.id,
+                        campaign_key=campaign_key_for_url(bank.id, page.url),
+                        canonical_url=page.url,
+                        discovered_from=page.url,
+                        registry_version=self._campaign_registry.registry_version,
+                        observed_at=artifact.fetched_at,
+                    )
+                    targets[target.url] = target
+                    discovered_count += int(created)
+                source_index_changed = source_index_changed or observation.source_index_changed
+                statuses.append(self._scan_status(artifact.status))
+                if error_code is None:
+                    error_code = artifact.error_code
+            except Exception as exc:
+                code = _exception_code("static_page", exc)
+                await self._store.observe_index_error(
+                    bank_id=bank.id,
+                    index_url=page.url,
+                    registry_version=self._campaign_registry.registry_version,
+                    observed_at=self._now(),
+                    error_code=code,
+                )
+                statuses.append(CampaignSourceScanStatus.FAILED)
+                if error_code is None:
+                    error_code = code
+        enqueued, deduplicated = await self._enqueue_targets(scan_run_id, targets)
+        return CampaignSourceScanResult(
+            bank_id=bank.id,
+            status=_aggregate_static_status(statuses),
+            known_targets=known_count,
+            discovered_targets=discovered_count,
+            enqueued_jobs=enqueued,
+            deduplicated_jobs=deduplicated,
+            source_index_changed=source_index_changed,
+            error_code=error_code,
+        )
+
     async def _failed_index_result(
         self,
         *,
@@ -395,6 +475,20 @@ class CampaignScanner:
         if status is FetchStatus.BLOCKED:
             return CampaignSourceScanStatus.BLOCKED
         return CampaignSourceScanStatus.FAILED
+
+
+def _aggregate_static_status(
+    statuses: list[CampaignSourceScanStatus],
+) -> CampaignSourceScanStatus:
+    """Summarize per-page outcomes: retryable failures first, then policy blocks."""
+
+    if CampaignSourceScanStatus.FAILED in statuses:
+        return CampaignSourceScanStatus.FAILED
+    if CampaignSourceScanStatus.BLOCKED in statuses:
+        return CampaignSourceScanStatus.BLOCKED
+    if CampaignSourceScanStatus.SUCCESS in statuses:
+        return CampaignSourceScanStatus.SUCCESS
+    return CampaignSourceScanStatus.NOT_MODIFIED
 
 
 def _exception_code(phase: str, exc: Exception) -> str:
