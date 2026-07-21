@@ -188,8 +188,6 @@ def test_welcome_campaign_validates_with_either_reward_or_fee() -> None:
     [
         "quarantined_prompt_injection_block:block-7",
         "model_fact_rejected:rate:raw_evidence_mismatch",
-        "campaign_type_ambiguous",
-        "product_family_ambiguous",
         "issues_truncated",
         "some_future_issue_code",
         "unresolved:not_a_known_field",
@@ -316,6 +314,52 @@ def test_prompt_injection_quarantine_blocks_despite_optional_rejection() -> None
 
     assert decision.status is RecordStatus.NEEDS_REVIEW
     assert decision.blocking_issues == ("quarantined_prompt_injection_block:block-7",)
+
+
+@pytest.mark.parametrize(
+    ("ambiguity_issue", "unresolved_marker"),
+    [
+        ("campaign_type_ambiguous", "unresolved:campaign_type"),
+        ("product_family_ambiguous", "unresolved:product_family"),
+    ],
+)
+def test_unresolved_required_ambiguity_still_blocks(
+    ambiguity_issue: str,
+    unresolved_marker: str,
+) -> None:
+    """An ambiguous classification nobody resolved keeps the record in review."""
+
+    decision = evaluate_validation(
+        ProductFamily.FINANCING,
+        CampaignType.FINANCING_RATE,
+        [ambiguity_issue, unresolved_marker],
+    )
+
+    assert decision.status is RecordStatus.NEEDS_REVIEW
+    assert decision.blocking_issues == (ambiguity_issue,)
+
+
+@pytest.mark.parametrize(
+    "ambiguity_issue",
+    ["campaign_type_ambiguous", "product_family_ambiguous"],
+)
+def test_resolved_required_ambiguity_is_bookkeeping(ambiguity_issue: str) -> None:
+    """Rule-side ambiguity that a grounded fact later settled must not block.
+
+    The rules saw two candidate classifications and abstained; the model (or a
+    registry hint) then filled the field with a verbatim-grounded fact, so the
+    ``unresolved:<field>`` marker is gone. The stale ambiguity annotation only
+    explains why the rules alone could not decide.
+    """
+
+    decision = evaluate_validation(
+        ProductFamily.CARD,
+        CampaignType.DISCOUNT,
+        [ambiguity_issue, "unresolved:rate", "unresolved:term", *_OPTIONAL_UNRESOLVED],
+    )
+
+    assert decision.status is RecordStatus.VALIDATED
+    assert decision.blocking_issues == ()
 
 
 def test_ambiguity_on_an_optional_field_does_not_block() -> None:
