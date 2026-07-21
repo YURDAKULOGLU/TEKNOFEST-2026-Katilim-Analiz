@@ -269,8 +269,14 @@ class OllamaStructuredClient:
         self,
         document: CleanDocument,
         requested_fields: frozenset[ModelFactField],
+        *,
+        priority_fields: frozenset[ModelFactField] = frozenset(),
     ) -> ModelExtractionResponse:
-        selected_fields = select_model_fields(document, requested_fields)
+        selected_fields = select_model_fields(
+            document,
+            requested_fields,
+            priority_fields=priority_fields,
+        )
         if not selected_fields:
             raise ModelInferenceSkipped("no_relevant_source_signal")
         package = build_prompt_package(document, selected_fields)

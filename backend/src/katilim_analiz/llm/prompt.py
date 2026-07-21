@@ -225,11 +225,18 @@ def select_model_fields(
     unresolved_fields: frozenset[ModelFactField],
     *,
     max_fields: int = MAX_MODEL_FIELDS,
+    priority_fields: frozenset[ModelFactField] = frozenset(),
 ) -> frozenset[ModelFactField]:
     """Choose one compact evidence-bearing family for a single CPU call.
 
     Unsupported/no-signal fields remain explicitly unresolved instead of
     inflating a prompt or producing one abstention sentence per field.
+
+    ``priority_fields`` orders, never widens: a family containing an
+    evidence-bearing priority field (typically the fields the validation gate
+    requires for this record) is asked before a family with more raw signal,
+    and priority fields are picked first within the family.  Optional fields
+    are not dropped; they simply wait for a later call.
     """
 
     if max_fields <= 0:
@@ -237,23 +244,30 @@ def select_model_fields(
     if not unresolved_fields:
         return frozenset()
     scores = {field: _field_signal_score(document, field) for field in unresolved_fields}
-    ranked_families: list[tuple[int, int, int, frozenset[ModelFactField]]] = []
+    ranked_families: list[tuple[bool, int, int, int, frozenset[ModelFactField]]] = []
     for index, family in enumerate(_FIELD_FAMILIES):
         eligible = family.intersection(unresolved_fields)
         if not eligible:
             continue
         family_scores = [scores[field] for field in eligible]
+        has_evidenced_priority = any(scores[field] > 0 for field in eligible & priority_fields)
         ranked_families.append(
-            (max(family_scores), sum(family_scores), -index, frozenset(eligible))
+            (
+                has_evidenced_priority,
+                max(family_scores),
+                sum(family_scores),
+                -index,
+                frozenset(eligible),
+            )
         )
     if not ranked_families:
         return frozenset()
-    best_peak, _best_total, _order, best_family = max(ranked_families)
+    _has_priority, best_peak, _best_total, _order, best_family = max(ranked_families)
     if best_peak <= 0:
         return frozenset()
     selected = sorted(
         (field for field in best_family if scores[field] > 0),
-        key=lambda field: (-scores[field], field.value),
+        key=lambda field: (field not in priority_fields, -scores[field], field.value),
     )[:max_fields]
     return frozenset(selected)
 

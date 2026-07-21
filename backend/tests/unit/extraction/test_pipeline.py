@@ -11,9 +11,13 @@ from katilim_analiz.contracts import (
     CampaignType,
     CleanDocument,
     ExtractionMethod,
+    ProductFamily,
 )
 from katilim_analiz.extraction import ExtractionOutcome, ExtractionPipeline
+from katilim_analiz.extraction.draft import BoundFact, ExtractionDraft
+from katilim_analiz.extraction.evidence import TextSpan
 from katilim_analiz.extraction.model_merge import merge_model_response
+from katilim_analiz.extraction.pipeline import _gate_priority_fields
 from katilim_analiz.extraction.rules import extract_rules
 from katilim_analiz.llm import (
     ModelEvidenceSpan,
@@ -25,6 +29,7 @@ from katilim_analiz.llm import (
     ModelInferenceSkipped,
 )
 from katilim_analiz.llm.contracts import ModelExtractionOutcome
+from katilim_analiz.llm.prompt import select_model_fields
 
 
 @dataclass
@@ -34,13 +39,17 @@ class FakeModel:
     model_id: str = "qwen3.5:4b"
     model_digest: str = "2a654d98e6fba55d452b7043684e9b57a947e393bbffa62485a7aac05ee4eefd"
     requested: frozenset[ModelFactField] | None = None
+    priority: frozenset[ModelFactField] | None = None
 
     async def extract(
         self,
         document: CleanDocument,
         requested_fields: frozenset[ModelFactField],
+        *,
+        priority_fields: frozenset[ModelFactField] = frozenset(),
     ) -> ModelExtractionResponse:
         self.requested = requested_fields
+        self.priority = priority_fields
         if self.error is not None:
             raise self.error
         assert self.response is not None
@@ -252,6 +261,99 @@ async def test_tom_listing_campaigns_are_extracted_separately_without_cross_cont
 
     assert unresolved[0].outcome is ExtractionOutcome.ABSTAINED
     assert unresolved[0].issues == ("campaign_listing_segmentation_unresolved",)
+
+
+def test_gate_required_fields_are_prioritized_once_classification_is_bound() -> None:
+    span = TextSpan(block_id="block-0", quote="Konut Finansmanı", start_char=0, end_char=16)
+    draft = ExtractionDraft(
+        bank_id="test-bank",
+        product_family=BoundFact(ProductFamily.FINANCING, span),
+        campaign_type=BoundFact(CampaignType.FINANCING_RATE, span),
+        unresolved_fields=frozenset(
+            {
+                ModelFactField.RATE,
+                ModelFactField.TERM,
+                ModelFactField.VALIDITY,
+                ModelFactField.CUSTOMER_SEGMENT,
+            }
+        ),
+    )
+
+    assert _gate_priority_fields(draft) == frozenset({ModelFactField.RATE, ModelFactField.TERM})
+
+
+def test_open_classification_prioritizes_the_base_required_fields() -> None:
+    draft = ExtractionDraft(
+        bank_id="test-bank",
+        unresolved_fields=frozenset({ModelFactField.CAMPAIGN_TYPE, ModelFactField.VALIDITY}),
+    )
+
+    assert _gate_priority_fields(draft) == frozenset({ModelFactField.CAMPAIGN_TYPE})
+
+
+def test_unvalidatable_classification_has_no_priority_fields() -> None:
+    span = TextSpan(block_id="block-0", quote="Kampanya", start_char=0, end_char=8)
+    draft = ExtractionDraft(
+        bank_id="test-bank",
+        product_family=BoundFact(ProductFamily.OTHER, span),
+        campaign_type=BoundFact(CampaignType.OTHER, span),
+        unresolved_fields=frozenset({ModelFactField.RATE}),
+    )
+
+    assert _gate_priority_fields(draft) == frozenset()
+
+
+@pytest.mark.asyncio
+async def test_pipeline_passes_gate_priority_to_the_model() -> None:
+    document = make_document(
+        ("heading", "Kart Kampanyası"),
+        ("paragraph", "Seçili alışverişlerde indirim ve taksit fırsatı sunulur."),
+    )
+    model = FakeModel(
+        response=ModelExtractionResponse(
+            schema_version="model-extraction/1.1",
+            document_id=document.id,
+            facts=[],
+        )
+    )
+
+    await ExtractionPipeline(model=model, model_enabled=True, clock=_clock).extract(document)
+
+    assert model.requested is not None
+    assert model.priority is not None
+    assert model.priority == _gate_priority_fields(extract_rules(document))
+    assert model.priority <= model.requested
+
+
+def test_priority_family_with_evidence_outranks_a_louder_optional_family() -> None:
+    document = make_document(
+        ("heading", "Kampanya"),
+        ("paragraph", "Aylık kâr payı oranı %1,89 uygulanır."),
+        (
+            "paragraph",
+            "Başvurular mobil şubeden, internet şubesinden ve çağrı merkezinden "
+            "yalnızca yeni müşteriler için yapılabilir; koşullar şubede geçerlidir.",
+        ),
+    )
+    unresolved = frozenset(
+        {
+            ModelFactField.RATE,
+            ModelFactField.SALES_CHANNEL,
+            ModelFactField.CUSTOMER_SEGMENT,
+            ModelFactField.NEW_CUSTOMER_ONLY,
+            ModelFactField.ELIGIBILITY_CONDITION,
+        }
+    )
+
+    without_priority = select_model_fields(document, unresolved)
+    with_priority = select_model_fields(
+        document,
+        unresolved,
+        priority_fields=frozenset({ModelFactField.RATE}),
+    )
+
+    assert ModelFactField.RATE not in without_priority, "the optional family is louder"
+    assert ModelFactField.RATE in with_priority
 
 
 def test_quote_only_model_fact_derives_unique_offsets_deterministically() -> None:
