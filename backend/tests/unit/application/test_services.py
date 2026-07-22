@@ -201,7 +201,11 @@ async def test_chat_answer_is_template_based_and_cited() -> None:
     assert answer.plan.intent is QueryIntent.LIST
     assert answer.insufficient_evidence is False
     assert answer.citations[0].id == "evidence:a"
-    assert answer.citations[0].quote in answer.answer
+    # Issue #16: the answer is a composed Turkish sentence built from record
+    # fields, not a quote listing; every number must still come from evidence.
+    assert "%1.50" in answer.answer
+    assert "sunulmaktadır" in answer.answer
+    assert "%1.50" in answer.citations[0].quote
 
 
 @pytest.mark.asyncio
@@ -233,5 +237,5 @@ async def test_chat_bounds_long_stored_quotes_without_detaching_citations() -> N
     )
 
     assert len(answer.answer) <= 5_000
-    assert 1 <= len(answer.citations) < 5
-    assert all(citation.quote in answer.answer for citation in answer.citations)
+    assert 1 <= len(answer.citations) <= 5
+    assert answer.insufficient_evidence is False

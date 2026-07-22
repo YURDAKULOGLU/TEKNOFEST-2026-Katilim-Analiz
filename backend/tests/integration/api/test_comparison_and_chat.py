@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import re
+
 import httpx
 import pytest
 from conftest import FakeReads, make_projection
@@ -66,7 +68,12 @@ async def test_chat_response_is_grounded_and_template_based(client: httpx.AsyncC
     assert payload["insufficient_evidence"] is False
     assert payload["plan"]["intent"] == "list"
     assert payload["citations"]
-    assert payload["citations"][0]["quote"] in payload["answer"]
+    # Issue #16: the answer is composed Turkish prose; grounding now means
+    # every number in the answer appears verbatim in the cited evidence.
+    quotes = " ".join(citation["quote"] for citation in payload["citations"])
+    numbers = re.findall(r"\d+(?:[.,]\d+)?", payload["answer"])
+    assert numbers
+    assert all(number in quotes for number in numbers)
 
 
 @pytest.mark.asyncio
