@@ -16,6 +16,7 @@ from katilim_analiz.application.preview import ExtractionPreviewService
 from katilim_analiz.application.services import CampaignService, ChatService
 from katilim_analiz.config import AppEnvironment, ModelProfile, Settings, get_settings
 from katilim_analiz.extraction import pipeline_from_settings
+from katilim_analiz.llm.composer import OllamaAnswerComposer
 from katilim_analiz.logging import configure_logging
 from katilim_analiz.runtime.adapters import OllamaModelHealth, PipelinePreviewAdapter
 from katilim_analiz.runtime.paths import RuntimePathError, resolve_runtime_path
@@ -94,9 +95,23 @@ def build_api_runtime(
         else None
     )
     preview_pipeline = pipeline_from_settings(effective, http_client=model_http_client)
+    # Issue #16: composition is optional by design — without a model the chat
+    # serves the deterministic template built from the same retrieved facts.
+    answer_composer = (
+        OllamaAnswerComposer(
+            base_url=str(effective.ollama_base_url),
+            model=effective.ollama_model,
+            timeout_seconds=float(effective.model_timeout_seconds),
+            max_context=effective.model_max_context,
+            keep_alive=effective.model_keep_alive,
+            http_client=model_http_client,
+        )
+        if model_required
+        else None
+    )
     container = ApplicationContainer(
         campaigns=CampaignService(reads),
-        chat=ChatService(reads),
+        chat=ChatService(reads, composer=answer_composer),
         readiness=ReadinessService(
             database=database_health,
             model=model_health,

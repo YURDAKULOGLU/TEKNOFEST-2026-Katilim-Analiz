@@ -2,9 +2,11 @@
 
 from __future__ import annotations
 
+from collections.abc import Sequence
 from datetime import datetime
 from typing import Protocol
 
+from katilim_analiz.application.answering import ComposerFact
 from katilim_analiz.application.health import MigrationRevisions
 from katilim_analiz.application.models import (
     CampaignCursor,
@@ -87,6 +89,17 @@ class ChatPlanCandidatePort(Protocol):
     """A model may propose only a typed plan and receives no execution authority."""
 
     async def propose(self, question: str) -> ChatQueryPlan | None: ...
+
+
+class AnswerComposerPort(Protocol):
+    """A model may only rephrase supplied verified facts into Turkish prose.
+
+    ``None`` means the model is unavailable or declined; the caller falls back
+    to the deterministic template. The returned text remains untrusted until it
+    passes the deterministic number-grounding gate.
+    """
+
+    async def compose(self, question: str, facts: Sequence[ComposerFact]) -> str | None: ...
 
 
 class CollectionPort(Protocol):

@@ -31,18 +31,34 @@ _UNSAFE_PHRASES = (
 )
 _STOP_WORDS = {
     "acaba",
+    "avantajli",
     "bana",
+    "banka",
+    "bankada",
+    "bankalar",
+    "bankalarda",
+    "bankasinda",
     "bir",
     "bu",
+    "daha",
+    "en",
+    "hangi",
+    "hangisi",
     "icin",
     "ile",
+    "kac",
+    "kadar",
     "kampanya",
     "kampanyalari",
     "kampanyalarini",
     "mi",
     "mı",
+    "ne",
     "gore",
     "olan",
+    "sunuyor",
+    "uygun",
+    "var",
     "ve",
 }
 
@@ -71,9 +87,39 @@ _DIMENSION_TERMS: tuple[tuple[ComparisonDimension, tuple[str, ...]], ...] = (
 )
 _INTENT_TERMS: tuple[tuple[QueryIntent, tuple[str, ...]], ...] = (
     (QueryIntent.COVERAGE, ("kapsam", "hangi bankalar", "erisilemeyen", "toplanan banka")),
-    (QueryIntent.COMPARE, ("karsilastir", "kiyasla", "hangisi daha", "farklari")),
-    (QueryIntent.GLOSSARY, ("ne demek", "nedir", "sozluk")),
-    (QueryIntent.DETAIL, ("detay", "ayrinti", "kosullari")),
+    (
+        QueryIntent.COMPARE,
+        (
+            "karsilastir",
+            "kiyasla",
+            "hangisi daha",
+            "farklari",
+            # Issue #16: superlative product questions ("en uygun oran hangi
+            # bankada?") ask for a side-by-side reading of validated values.
+            "en uygun",
+            "en dusuk",
+            "en yuksek",
+            "en avantajli",
+            "daha avantajli",
+            "hangi banka",
+            "hangisinde",
+        ),
+    ),
+    (QueryIntent.GLOSSARY, ("ne demek", "sozluk")),
+    (
+        QueryIntent.DETAIL,
+        (
+            "detay",
+            "ayrinti",
+            "kosullari",
+            # Issue #16: value interrogatives about one product ("vade kac
+            # ay?", "oran ne kadar?") are detail lookups, not unknown intent.
+            "kac ay",
+            "kac tl",
+            "ne kadar",
+            "nedir",
+        ),
+    ),
     (QueryIntent.LIST, ("listele", "goster", "kampanya", "urun")),
 )
 _TERM_DURATION = re.compile(r"(?:^| )\d{1,4} ay(?: |$)")
@@ -105,6 +151,24 @@ def _dimensions(text: str) -> list[ComparisonDimension]:
 
 def _intent(text: str) -> QueryIntent:
     return _first_match(text, _INTENT_TERMS) or QueryIntent.UNKNOWN
+
+
+def _campaign_type(
+    text: str,
+    family: ProductFamily | None,
+    dimensions: list[ComparisonDimension],
+) -> CampaignType | None:
+    value = _first_match(text, _CAMPAIGN_TERMS)
+    if (
+        value in {CampaignType.PROFIT_SHARE, CampaignType.FINANCING_RATE}
+        and family is ProductFamily.FINANCING
+        and ComparisonDimension.RATE in dimensions
+    ):
+        # Issue #16: in a financing question, "kar payi orani" names the price
+        # dimension being asked about, not a campaign-type filter; keeping the
+        # inferred type would exclude the very records that state the rate.
+        return None
+    return value
 
 
 def _consumed_spans(text: str) -> list[tuple[int, int]]:
@@ -158,11 +222,13 @@ class SafeChatPlanner:
                 warnings=("Soru güvenli sorgu planı sınırlarının dışında bırakıldı.",),
             )
 
+        family = _first_match(canonical, _PRODUCT_TERMS)
+        dimensions = _dimensions(canonical)
         deterministic = ChatQueryPlan(
             intent=_intent(canonical),
-            product_family=_first_match(canonical, _PRODUCT_TERMS),
-            campaign_type=_first_match(canonical, _CAMPAIGN_TERMS),
-            comparison_dimensions=_dimensions(canonical),
+            product_family=family,
+            campaign_type=_campaign_type(canonical, family, dimensions),
+            comparison_dimensions=dimensions,
             keywords=_keywords(canonical),
             limit=5,
         )

@@ -6,6 +6,12 @@ from collections.abc import Callable, Iterable
 from datetime import UTC, datetime
 from decimal import Decimal
 
+from katilim_analiz.application.answering import (
+    AnswerBundle,
+    answer_is_grounded,
+    build_answer_bundle,
+    select_relevant,
+)
 from katilim_analiz.application.cursor import CursorCodec
 from katilim_analiz.application.models import (
     CampaignCursor,
@@ -21,17 +27,18 @@ from katilim_analiz.application.models import (
     PrimaryValue,
 )
 from katilim_analiz.application.planning import SafeChatPlanner
-from katilim_analiz.application.ports import CampaignReadPort, DashboardReadPort
+from katilim_analiz.application.ports import (
+    AnswerComposerPort,
+    CampaignReadPort,
+    DashboardReadPort,
+)
 from katilim_analiz.contracts import (
-    AnswerCitation,
     ChatAnswer,
     ChatQueryPlan,
     ChatRequest,
-    CitationStatus,
     ComparisonRequest,
     ComparisonResponse,
     CoverageEntry,
-    EvidenceStatus,
     QueryIntent,
     RateKind,
     RatePeriod,
@@ -273,32 +280,6 @@ class CampaignService:
         return report.to_response(generated_at=generated_at)
 
 
-def _citations(
-    projection: CampaignProjection,
-    *,
-    allowed_ids: set[str] | None = None,
-) -> list[AnswerCitation]:
-    citations: list[AnswerCitation] = []
-    candidates = sorted(projection.record.evidence, key=lambda item: item.id)
-    for evidence in candidates:
-        if evidence.status is not EvidenceStatus.STATED:
-            continue
-        if allowed_ids is not None and evidence.id not in allowed_ids:
-            continue
-        citations.append(
-            AnswerCitation(
-                id=evidence.id,
-                source_document_id=evidence.source_document_id,
-                block_id=evidence.block_id,
-                source_url=projection.source_url,
-                source_title=projection.source_title,
-                quote=evidence.quote,
-                status=CitationStatus.VERIFIED,
-            )
-        )
-    return citations
-
-
 def _abstention(plan: ChatQueryPlan, warnings: Iterable[str] = ()) -> ChatAnswer:
     return ChatAnswer(
         answer="Bu soruyu yanıtlamak için yeterli doğrulanmış kaynak kanıtı bulunamadı.",
@@ -310,17 +291,27 @@ def _abstention(plan: ChatQueryPlan, warnings: Iterable[str] = ()) -> ChatAnswer
 
 
 class ChatService:
-    """Execute typed plans and render templates; never execute model-authored text."""
+    """Three-layer grounded chat (issue #16).
+
+    Layer 1 retrieves and ranks validated records deterministically; layer 2
+    lets an optional local model rephrase only the retrieved facts; layer 3 is
+    a deterministic number-grounding gate that falls back to the template
+    answer, so chat keeps working — with the same facts — when the model is
+    down or its answer drifts. Model-authored text is never executed and never
+    passes the gate with numbers the evidence does not contain.
+    """
 
     def __init__(
         self,
         reads: CampaignReadPort,
         *,
         planner: SafeChatPlanner | None = None,
+        composer: AnswerComposerPort | None = None,
         clock: Callable[[], datetime] = _utc_now,
     ) -> None:
         self._reads = reads
         self._planner = planner or SafeChatPlanner()
+        self._composer = composer
         self._clock = clock
 
     async def answer(self, request: ChatRequest) -> ChatAnswer:
@@ -330,105 +321,65 @@ class ChatService:
         if plan.intent in {QueryIntent.UNKNOWN, QueryIntent.GLOSSARY, QueryIntent.COVERAGE}:
             return _abstention(plan, planned.warnings)
 
-        projections = [
-            item
-            for item in await self._reads.search(plan, as_of=as_of)
-            if item.record.status is RecordStatus.VALIDATED
-        ]
-        if plan.intent is QueryIntent.COMPARE:
-            return self._comparison_answer(plan, projections, as_of, planned.warnings)
-        return self._list_answer(plan, projections, planned.warnings)
+        projections = select_relevant(
+            request.question,
+            plan,
+            await self._retrieve_validated(plan, as_of),
+        )
+        if not projections:
+            return _abstention(plan, planned.warnings)
+        bundle = build_answer_bundle(request.question, plan, projections, as_of=as_of)
+        if bundle is None:
+            return _abstention(plan, planned.warnings)
 
-    @staticmethod
-    def _list_answer(
-        plan: ChatQueryPlan,
-        projections: list[CampaignProjection],
-        warnings: tuple[str, ...],
-    ) -> ChatAnswer:
-        cited: list[tuple[CampaignProjection, AnswerCitation]] = []
-        for projection in projections:
-            citations = _citations(projection)
-            if citations:
-                cited.append((projection, citations[0]))
-        if not cited:
-            return _abstention(plan, warnings)
-        answer = "Resmî kaynaklarda doğrulanmış şu ifadeler bulundu:"
-        selected: list[AnswerCitation] = []
-        for projection, citation in cited[:20]:
-            line = f"- {projection.bank_name}: “{citation.quote}”"
-            if len(answer) + 1 + len(line) > 5_000:
-                continue
-            answer += f"\n{line}"
-            selected.append(citation)
-        if not selected:
-            return _abstention(plan, warnings)
+        answer_text = bundle.template_answer
+        warnings = [*planned.warnings, *bundle.warnings]
+        composed = await self._compose(request.question, bundle)
+        if composed is not None:
+            if answer_is_grounded(composed, bundle.facts):
+                answer_text = composed
+            else:
+                warnings.append("Model cevabı kanıt kapısından geçemedi; şablon cevap sunuldu.")
         return ChatAnswer(
-            answer=answer,
+            answer=answer_text,
             plan=plan,
-            citations=selected,
+            citations=list(bundle.citations),
             insufficient_evidence=False,
-            warnings=list(warnings),
+            warnings=warnings,
         )
 
-    @staticmethod
-    def _comparison_answer(
+    async def _retrieve_validated(
+        self,
         plan: ChatQueryPlan,
-        projections: list[CampaignProjection],
         as_of: datetime,
-        warnings: tuple[str, ...],
-    ) -> ChatAnswer:
-        if len(projections) < 2 or not plan.comparison_dimensions:
-            return _abstention(
-                plan,
-                (*warnings, "Karşılaştırma için en az iki kayıt ve açık bir boyut gerekir."),
-            )
-        report = compare_campaigns(
-            [item.record for item in projections],
-            plan.comparison_dimensions,
-            as_of=as_of,
-        )
-        evidence_ids = {
-            evidence_id
-            for item in report.items
-            if item.comparable
-            for evidence_id in item.evidence_ids
-        }
-        citations = [
-            citation
-            for projection in projections
-            for citation in _citations(projection, allowed_ids=evidence_ids)
-        ]
-        citation_by_id = {citation.id: citation for citation in citations[:20]}
-        comparable = [
-            item
-            for item in report.items
-            if item.comparable and any(value in citation_by_id for value in item.evidence_ids)
-        ]
-        if not comparable or not citations:
-            return _abstention(plan, (*warnings, *report.warnings))
-        projection_by_id = {item.record.id: item for item in projections}
-        answer = "Aynı bazdaki doğrulanmış değerlerin karşılaştırması:"
-        selected_ids: set[str] = set()
-        for item in comparable:
-            projection = projection_by_id[item.campaign_id]
-            line = f"- {projection.bank_name} — {item.dimension.value}: {item.display_value}"
-            if item.rank is not None:
-                line += f" (sıra {item.rank})"
-            if len(answer) + 1 + len(line) > 5_000:
-                continue
-            answer += f"\n{line}"
-            selected_ids.update(
-                evidence_id for evidence_id in item.evidence_ids if evidence_id in citation_by_id
-            )
-        selected_citations = [
-            citation for citation in citations[:20] if citation.id in selected_ids
-        ]
-        if not selected_citations:
-            return _abstention(plan, (*warnings, *report.warnings))
-        return ChatAnswer(
-            answer=answer,
-            plan=plan,
-            citations=selected_citations,
-            insufficient_evidence=False,
-            warnings=[*warnings, *report.warnings],
-        )
+    ) -> list[CampaignProjection]:
+        """Run the typed search with a deterministic relaxation ladder.
+
+        The strict plan may over-constrain retrieval (AND-semantics keyword
+        text search, or an inferred campaign type the stated records do not
+        carry). Each relaxation only widens recall; `select_relevant` restores
+        keyword and bank precision in-process before anything is answered.
+        """
+
+        attempts = [plan]
+        if plan.keywords:
+            attempts.append(attempts[-1].model_copy(update={"keywords": []}))
+        if plan.campaign_type is not None:
+            attempts.append(attempts[-1].model_copy(update={"campaign_type": None}))
+        for attempt in attempts:
+            validated = [
+                item
+                for item in await self._reads.search(attempt, as_of=as_of)
+                if item.record.status is RecordStatus.VALIDATED
+            ]
+            if validated:
+                return validated
+        return []
+
+    async def _compose(self, question: str, bundle: AnswerBundle) -> str | None:
+        if self._composer is None:
+            return None
+        try:
+            return await self._composer.compose(question, bundle.facts)
+        except Exception:  # a sick model must never break the deterministic answer
+            return None
