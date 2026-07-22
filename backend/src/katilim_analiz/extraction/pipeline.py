@@ -37,7 +37,7 @@ from katilim_analiz.llm import (
 # so cached conditional fetches must reprocess under the new identity.
 # 1.5: card+installment no longer requires TERM in the validation matrix, so
 # record statuses change and cached conditional fetches must reprocess.
-EXTRACTOR_VERSION = "hybrid-extractor/1.5"
+EXTRACTOR_VERSION = "hybrid-extractor/1.6"
 
 
 def extraction_processing_identity() -> str:

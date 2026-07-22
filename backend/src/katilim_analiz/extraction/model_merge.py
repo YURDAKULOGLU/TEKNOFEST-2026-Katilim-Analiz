@@ -28,6 +28,7 @@ from katilim_analiz.extraction.fees import FEE_MARKER, read_fee
 from katilim_analiz.extraction.rules import (
     is_explicit_eligibility,
     is_explicit_new_customer_restriction,
+    is_explicit_new_customer_universal,
     rate_semantics_unresolved,
     segment_key_for_text,
     supported_campaign_types,
@@ -341,11 +342,18 @@ def _apply(
             sales_channel=BoundFact(sales_channel, span, inferred=True),
         )
     if field is ModelFactField.NEW_CUSTOMER_ONLY:
-        if not is_explicit_new_customer_restriction(text):
-            raise ProposalRejected("new_customer_restriction_not_explicit")
-        if proposal.boolean_value is not None and proposal.boolean_value is not True:
-            raise ProposalRejected("new_customer_hint_contradicts_quote")
-        return replace(draft, new_customer_only=BoundFact(True, span, inferred=True))
+        if is_explicit_new_customer_restriction(text):
+            if proposal.boolean_value is not None and proposal.boolean_value is not True:
+                raise ProposalRejected("new_customer_hint_contradicts_quote")
+            return replace(draft, new_customer_only=BoundFact(True, span, inferred=True))
+        if is_explicit_new_customer_universal(text):
+            # Explicit universal wording ("tüm müşterilerimiz") grounds False;
+            # a quote with neither signal stays rejected — absence of a
+            # restriction sentence is never itself a fact (ADR-002).
+            if proposal.boolean_value is not None and proposal.boolean_value is not False:
+                raise ProposalRejected("new_customer_hint_contradicts_quote")
+            return replace(draft, new_customer_only=BoundFact(False, span, inferred=True))
+        raise ProposalRejected("new_customer_restriction_not_explicit")
     raise ProposalRejected("field_not_supported")
 
 

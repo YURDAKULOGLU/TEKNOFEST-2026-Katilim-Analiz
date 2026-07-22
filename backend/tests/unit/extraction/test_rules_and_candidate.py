@@ -248,6 +248,64 @@ def test_new_customer_mention_without_positive_restriction_is_not_eligibility(
     assert draft.new_customer_only is None
 
 
+def test_gercek_kisi_wording_binds_the_bireysel_segment() -> None:
+    """Vakif Katilim scopes financing eligibility as 'gercek kisi', not 'bireysel'."""
+
+    document = make_document(
+        ("heading", "Taşıt Finansmanı"),
+        ("paragraph", "Taşıt finansmanından gerçek kişi olarak yararlanmak isterseniz:"),
+    )
+
+    draft = extract_rules(document)
+
+    assert [
+        (segment.display_value, segment.canonical_key) for segment in draft.customer_segments
+    ] == [("gerçek kişi", "bireysel")]
+
+
+def test_explicit_universal_customer_wording_binds_new_customer_false() -> None:
+    """'Tüm müşterilerimiz' is stated evidence that no new-customer limit exists."""
+
+    text = "Kampanyadan tüm müşterilerimiz yararlanabilir."
+    document = make_document(("heading", "Kampanya"), ("paragraph", text))
+
+    draft = extract_rules(document)
+
+    assert draft.new_customer_only is not None
+    assert draft.new_customer_only.value is False
+    assert draft.new_customer_only.span.quote == "tüm müşterilerimiz"
+    assert (
+        text[draft.new_customer_only.span.start_char : draft.new_customer_only.span.end_char]
+        == draft.new_customer_only.span.quote
+    )
+
+
+def test_restriction_wording_beats_universal_wording() -> None:
+    document = make_document(
+        ("heading", "Kampanya"),
+        ("paragraph", "Kampanyadan sadece yeni müşterilerimiz yararlanabilir."),
+        ("paragraph", "Sonuçlar tüm müşterilerimize duyurulur."),
+    )
+
+    draft = extract_rules(document)
+
+    assert draft.new_customer_only is not None
+    assert draft.new_customer_only.value is True
+
+
+def test_negated_universal_wording_does_not_bind_false() -> None:
+    """ADR-002: a negated or absent universal phrase never fabricates False."""
+
+    document = make_document(
+        ("heading", "Kampanya"),
+        ("paragraph", "Tüm müşterilerimiz bu kampanyadan yararlanamaz."),
+    )
+
+    draft = extract_rules(document)
+
+    assert draft.new_customer_only is None
+
+
 def test_negated_branch_is_ignored_and_explicit_combined_digital_channel_wins() -> None:
     excluded_branch = (
         "Herhangi bir sebeple müşteri olma süreci şubeden tamamlanan müşteriler "

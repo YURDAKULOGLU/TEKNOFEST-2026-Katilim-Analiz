@@ -131,6 +131,31 @@ _NEW_CUSTOMER_RESTRICTION_PATTERNS = (
     ),
 )
 
+#: Evidence-based universal eligibility: a page that explicitly opens the
+#: campaign to every customer ("tüm müşterilerimiz", "mevcut ve yeni
+#: müşteriler") states that no new-customer restriction exists, which grounds
+#: ``new_customer_only=False`` to that exact quote.  Pure absence of any
+#: signal never binds a value (ADR-002).  The plural/possessive customer form
+#: is required so an unrelated noun phrase ("tüm müşteri temsilcileri") does
+#: not read as an eligibility statement.
+_UNIVERSAL_CUSTOMER_FORM = (
+    r"(?:müşteriler(?:imiz)?(?:e|in|den|de)?|musteriler(?:imiz)?(?:e|in|den|de)?)"
+)
+_NEW_CUSTOMER_UNIVERSAL_PATTERNS = (
+    re.compile(
+        rf"\b(?P<universal>(?:t[üu]m|b[üu]t[üu]n)\s+{_UNIVERSAL_CUSTOMER_FORM})\b",
+        re.I,
+    ),
+    re.compile(
+        rf"\b(?P<universal>mevcut\s+ve\s+{_NEW_CUSTOMER_TERM})\b",
+        re.I,
+    ),
+    re.compile(
+        rf"\b(?P<universal>yeni\s+ve\s+mevcut\s+{_UNIVERSAL_CUSTOMER_FORM})\b",
+        re.I,
+    ),
+)
+
 _PRODUCT_PATTERNS: Mapping[ProductFamily, tuple[re.Pattern[str], ...]] = {
     ProductFamily.FINANCING: (
         re.compile(
@@ -181,7 +206,14 @@ _CAMPAIGN_PATTERNS: Mapping[CampaignType, tuple[re.Pattern[str], ...]] = {
 }
 
 _SEGMENT_PATTERNS: Mapping[str, re.Pattern[str]] = {
-    "bireysel": re.compile(r"\bbireysel\b", re.I),
+    # "Gercek kisi" is banking Turkish for a natural person; a page that scopes
+    # eligibility to "gercek kisi (bireysel)" states the retail segment without
+    # necessarily using the word "bireysel" itself (Vakif Katilim financing
+    # pages), so both wordings bind the same canonical key.
+    "bireysel": re.compile(
+        r"\bbireysel\b|\bger[cç]ek\s+ki[şs][iı](?:ler)?\b",
+        re.I,
+    ),
     "ticari": re.compile(r"\bticari\b", re.I),
     "kobi": re.compile(r"\bKOBİ\b|\bkobi\b", re.I),
     "emekli": re.compile(r"\bemekli(?:ler)?\b", re.I),
@@ -349,6 +381,20 @@ def is_explicit_new_customer_restriction(text: str) -> bool:
     """Return whether text explicitly limits eligibility to new customers."""
 
     return _new_customer_restriction_match(text) is not None
+
+
+def _new_customer_universal_match(text: str) -> re.Match[str] | None:
+    for pattern in _NEW_CUSTOMER_UNIVERSAL_PATTERNS:
+        match = pattern.search(text)
+        if match is not None:
+            return match
+    return None
+
+
+def is_explicit_new_customer_universal(text: str) -> bool:
+    """Return whether text explicitly opens eligibility to all customers."""
+
+    return _new_customer_universal_match(text) is not None
 
 
 def is_single_currency_try_quote(text: str) -> bool:
@@ -951,6 +997,25 @@ def extract_rules(document: CleanDocument) -> ExtractionDraft:
                 inferred=True,
             )
             break
+    if new_customer_only is None:
+        # Explicit universal wording ("tüm müşterilerimiz") grounds a False
+        # only when no restriction phrase exists anywhere on the page; a
+        # sentence that negates the phrase ("... yararlanamaz") is skipped.
+        for sentence in all_sentences:
+            if _NEGATIVE_SEGMENT_CONTEXT.search(sentence.quote) is not None:
+                continue
+            if _NEGATIVE_CHANNEL_CONTEXT.search(sentence.quote) is not None:
+                continue
+            universal = _new_customer_universal_match(sentence.quote)
+            if universal is not None:
+                start = sentence.start_char + universal.start("universal")
+                end = sentence.start_char + universal.end("universal")
+                new_customer_only = BoundFact(
+                    False,
+                    TextSpan(sentence.block_id, universal.group("universal"), start, end),
+                    inferred=True,
+                )
+                break
 
     product_mechanism: BoundFact[str] | None = None
     mechanism_hit = _product_mechanism_hit(safe_blocks)
@@ -1024,6 +1089,7 @@ __all__ = [
     "infer_page_currency",
     "is_explicit_eligibility",
     "is_explicit_new_customer_restriction",
+    "is_explicit_new_customer_universal",
     "is_single_currency_try_quote",
     "product_family_block_spans",
     "rate_semantics_unresolved",

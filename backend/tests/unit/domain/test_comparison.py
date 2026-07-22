@@ -679,6 +679,94 @@ def test_comparison_requires_unique_campaigns_and_a_dimension() -> None:
         compare_campaigns([record, _record("b")], [], as_of=AS_OF)
 
 
+def _absent_optional_context() -> ComparisonContext:
+    return _context(
+        channel=SalesChannel.UNKNOWN,
+        new_customer_only=None,
+        mechanism=None,
+        secured=None,
+    )
+
+
+def test_symmetric_absence_of_optional_context_is_compatible_with_notes() -> None:
+    """Issues #22/#37 precedent: no evidence on either side must not mute the pair.
+
+    The facts stay unknown (ADR-002); only the gate treats the axis as
+    compatible and says so in an explicit 'kisit kaniti yok' warning.
+    """
+
+    report = _compare(
+        [
+            _record("a", rates=(_rate("1.69"),), context=_absent_optional_context()),
+            _record("b", rates=(_rate("3.40"),), context=_absent_optional_context()),
+        ],
+        ComparisonDimension.RATE,
+    )
+    items = _by_campaign(report)
+
+    assert all(item.comparable for item in report.items)
+    assert items["a"].rank == 1  # type: ignore[attr-defined]
+    assert items["b"].rank == 2  # type: ignore[attr-defined]
+    absence_notes = [warning for warning in report.warnings if "kısıt kanıtı yok" in warning]
+    assert len(absence_notes) == 4  # kanal, yeni müşteri, mekanizma, teminat
+    assert any("Yeni müşteri" in warning for warning in absence_notes)
+
+
+@pytest.mark.parametrize(
+    ("left_context", "right_context", "reason_code"),
+    [
+        (
+            _context(new_customer_only=True),
+            _context(new_customer_only=None),
+            "new_customer_context_unknown",
+        ),
+        (
+            _context(new_customer_only=False),
+            _context(new_customer_only=None),
+            "new_customer_context_unknown",
+        ),
+        (
+            _context(new_customer_only=True),
+            _context(new_customer_only=False),
+            "new_customer_context_mismatch",
+        ),
+        (
+            _context(),
+            _context(channel=SalesChannel.UNKNOWN),
+            "sales_channel_context_unknown",
+        ),
+        (
+            _context(),
+            _context(mechanism=None),
+            "product_mechanism_context_unknown",
+        ),
+        (
+            _context(),
+            _context(secured=None),
+            "security_context_unknown",
+        ),
+    ],
+)
+def test_asymmetric_optional_context_evidence_still_blocks(
+    left_context: ComparisonContext,
+    right_context: ComparisonContext,
+    reason_code: str,
+) -> None:
+    """One-sided evidence is a real asymmetry, never compatible-by-absence."""
+
+    report = _compare(
+        [
+            _record("a", rates=(_rate("1.2"),), context=left_context),
+            _record("b", rates=(_rate("1.1"),), context=right_context),
+        ],
+        ComparisonDimension.RATE,
+    )
+
+    assert all(not item.comparable for item in report.items)
+    assert {item.reason_code for item in report.items} == {reason_code}
+    assert not any("kısıt kanıtı yok" in warning for warning in report.warnings)
+
+
 def test_ltv_share_and_profit_rate_are_never_compared_on_the_rate_axis() -> None:
     """Issue #28: a %70 financing share must not meet a %1,69 profit rate."""
 

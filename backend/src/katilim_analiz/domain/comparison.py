@@ -31,7 +31,33 @@ from katilim_analiz.contracts import (
 from katilim_analiz.contracts.models import ComparisonItem
 from katilim_analiz.domain.normalization import canonicalize_turkish_text
 
-RULESET_VERSION = "comparison-v1"
+RULESET_VERSION = "comparison-v2"
+
+#: Optional-context axes soften on *symmetric* absence (issues #22 and #37
+#: precedent: an optional context may not permanently mute the product).  When
+#: NEITHER record carries any evidence for an axis, no fact is fabricated
+#: (ADR-002) — the axis values stay unknown — but the comparison gate treats
+#: the pair as compatible and says so with an explicit "kisit kaniti yok"
+#: note in the report warnings.  The moment exactly ONE side carries evidence
+#: the asymmetry is real and the pair stays blocked with the unknown reason.
+_ABSENCE_COMPATIBLE_NOTES: dict[str, str] = {
+    "sales_channel": (
+        "Satış kanalı ekseni 'kısıt kanıtı yok' olarak uyumlu sayıldı: "
+        "hiçbir kayıtta kanal kanıtı bulunmuyor."
+    ),
+    "new_customer": (
+        "Yeni müşteri ekseni 'kısıt kanıtı yok' olarak uyumlu sayıldı: "
+        "hiçbir kayıtta yeni müşteri kısıtına dair kanıt bulunmuyor."
+    ),
+    "product_mechanism": (
+        "Ürün mekanizması ekseni 'kısıt kanıtı yok' olarak uyumlu sayıldı: "
+        "hiçbir kayıtta mekanizma kanıtı bulunmuyor."
+    ),
+    "secured": (
+        "Teminat ekseni 'kısıt kanıtı yok' olarak uyumlu sayıldı: "
+        "hiçbir kayıtta teminat kanıtı bulunmuyor."
+    ),
+}
 
 _REASONS: dict[str, str] = {
     "record_not_validated": "Doğrulanmamış kayıt karşılaştırmaya alınamaz.",
@@ -196,53 +222,76 @@ def _as_date(value: date | datetime) -> date:
 def _first_global_incompatibility(
     records: Sequence[CampaignRecord],
     as_of: date | datetime | None,
-) -> str | None:
+) -> tuple[str | None, tuple[str, ...]]:
+    """Return (blocking reason, absence-compatibility notes).
+
+    A non-``None`` reason blocks every dimension and carries no notes.  A
+    ``None`` reason may carry notes: each optional-context axis on which no
+    record has any evidence was treated as compatible-by-absence, explicitly
+    flagged instead of silently blocking forever (issues #22/#37 precedent);
+    the underlying facts stay unknown per ADR-002.
+    """
+
     if any(record.status is not RecordStatus.VALIDATED for record in records):
-        return "record_not_validated"
+        return "record_not_validated", ()
 
     families = {record.data.product_family for record in records}
     if families & {ProductFamily.UNKNOWN, ProductFamily.OTHER}:
-        return "product_family_unknown"
+        return "product_family_unknown", ()
     if len(families) != 1:
-        return "product_family_mismatch"
+        return "product_family_mismatch", ()
 
     contexts = [record.data.comparison_context for record in records]
     currencies = {context.product_currency for context in contexts}
     if None in currencies:
-        return "currency_context_unknown"
+        return "currency_context_unknown", ()
     if len(currencies) != 1:
-        return "currency_context_mismatch"
+        return "currency_context_mismatch", ()
 
     segment_keys = {tuple(sorted(context.customer_segment_keys)) for context in contexts}
     if any(not key for key in segment_keys):
-        return "customer_segment_context_unknown"
+        return "customer_segment_context_unknown", ()
     if len(segment_keys) != 1:
-        return "customer_segment_context_mismatch"
+        return "customer_segment_context_mismatch", ()
+
+    notes: list[str] = []
 
     channels = {context.sales_channel for context in contexts}
-    if SalesChannel.UNKNOWN in channels:
-        return "sales_channel_context_unknown"
-    if len(channels) != 1:
-        return "sales_channel_context_mismatch"
+    known_channels = channels - {SalesChannel.UNKNOWN}
+    if not known_channels:
+        notes.append(_ABSENCE_COMPATIBLE_NOTES["sales_channel"])
+    elif SalesChannel.UNKNOWN in channels:
+        return "sales_channel_context_unknown", ()
+    elif len(known_channels) != 1:
+        return "sales_channel_context_mismatch", ()
 
     new_customer_flags = {context.new_customer_only for context in contexts}
-    if None in new_customer_flags:
-        return "new_customer_context_unknown"
-    if len(new_customer_flags) != 1:
-        return "new_customer_context_mismatch"
+    known_new_customer = {flag for flag in new_customer_flags if flag is not None}
+    if not known_new_customer:
+        notes.append(_ABSENCE_COMPATIBLE_NOTES["new_customer"])
+    elif None in new_customer_flags:
+        return "new_customer_context_unknown", ()
+    elif len(known_new_customer) != 1:
+        return "new_customer_context_mismatch", ()
 
     mechanisms = {context.product_mechanism for context in contexts}
-    if None in mechanisms:
-        return "product_mechanism_context_unknown"
-    if len(mechanisms) != 1:
-        return "product_mechanism_context_mismatch"
+    known_mechanisms = {mechanism for mechanism in mechanisms if mechanism is not None}
+    if not known_mechanisms:
+        notes.append(_ABSENCE_COMPATIBLE_NOTES["product_mechanism"])
+    elif None in mechanisms:
+        return "product_mechanism_context_unknown", ()
+    elif len(known_mechanisms) != 1:
+        return "product_mechanism_context_mismatch", ()
 
     if next(iter(families)) is ProductFamily.FINANCING:
         secured_flags = {context.secured for context in contexts}
-        if None in secured_flags:
-            return "security_context_unknown"
-        if len(secured_flags) != 1:
-            return "security_context_mismatch"
+        known_secured = {flag for flag in secured_flags if flag is not None}
+        if not known_secured:
+            notes.append(_ABSENCE_COMPATIBLE_NOTES["secured"])
+        elif None in secured_flags:
+            return "security_context_unknown", ()
+        elif len(known_secured) != 1:
+            return "security_context_mismatch", ()
 
     # Issue #13: free-text eligibility sentences are bank-specific prose; two
     # banks never publish verbatim-identical wording, so raw-sentence equality
@@ -252,26 +301,26 @@ def _first_global_incompatibility(
     # evidence for display and citation.
 
     if as_of is None:
-        return "as_of_required"
+        return "as_of_required", ()
     selected_date = _as_date(as_of)
     for record in records:
         if isinstance(as_of, datetime):
             if record.observed_at > as_of:
-                return "not_observed_as_of"
+                return "not_observed_as_of", ()
         elif record.observed_at.date() > selected_date:
-            return "not_observed_as_of"
+            return "not_observed_as_of", ()
         validity = record.data.validity
         if (
             validity is None
             or validity.status in {EvidenceStatus.UNKNOWN, EvidenceStatus.AMBIGUOUS}
             or (validity.starts_on is None and validity.ends_on is None)
         ):
-            return "validity_unknown"
+            return "validity_unknown", ()
         if validity.starts_on is not None and selected_date < validity.starts_on:
-            return "campaign_not_active_as_of"
+            return "campaign_not_active_as_of", ()
         if validity.ends_on is not None and selected_date > validity.ends_on:
-            return "campaign_not_active_as_of"
-    return None
+            return "campaign_not_active_as_of", ()
+    return None, tuple(notes)
 
 
 def _display_for(record: CampaignRecord, dimension: ComparisonDimension) -> str:
@@ -976,14 +1025,17 @@ def compare_campaigns(
     if not ruleset_version.strip():
         raise ValueError("ruleset_version must not be empty")
 
-    global_reason = _first_global_incompatibility(ordered_records, as_of)
+    global_reason, context_notes = _first_global_incompatibility(ordered_records, as_of)
     items: list[ComparisonOutcome] = []
     for dimension in ordered_dimensions:
         if global_reason is not None:
             items.extend(_reject_all(ordered_records, dimension, global_reason))
         else:
             items.extend(_compare_dimension(ordered_records, dimension))
-    warnings = ("Boyutlar arasında birleşik bir puan veya genel kazanan üretilmedi.",)
+    warnings = (
+        *context_notes,
+        "Boyutlar arasında birleşik bir puan veya genel kazanan üretilmedi.",
+    )
     canonical_sha256 = _canonical_hash(ruleset_version, as_of, items, warnings)
     return ComparisonReport(
         ruleset_version=ruleset_version,
