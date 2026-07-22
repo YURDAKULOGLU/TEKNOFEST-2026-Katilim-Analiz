@@ -96,7 +96,11 @@ _ELIGIBILITY_MARKER = re.compile(
 )
 _POSITIVE_SEGMENT_CONTEXT = re.compile(
     r"\b(?:yararlanabilir|yararlanmak|geçerli|gecerli|dahildir|kapsar|özel|ozel|"
-    r"sunulur|yalnızca|yalnizca|sadece)\b",
+    r"sunulur|yalnızca|yalnizca|sadece|"
+    # "saglanacak"/"saglanan" and "yonelik" scope a product to an audience the
+    # same way "sunulur" does ("gercek kisi musterilerimize saglanacak bireysel
+    # bir finansman"); both are affirmative scoping forms, never exclusions.
+    r"sağlan\w*|saglan\w*|yönelik|yonelik)\b",
     re.I,
 )
 _NEGATIVE_SEGMENT_CONTEXT = re.compile(

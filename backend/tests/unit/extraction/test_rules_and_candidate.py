@@ -263,6 +263,23 @@ def test_gercek_kisi_wording_binds_the_bireysel_segment() -> None:
     ] == [("gerçek kişi", "bireysel")]
 
 
+def test_saglanacak_wording_binds_the_bireysel_segment() -> None:
+    """Emlak Katilim scopes a product with 'saglanacak', not 'sunulur'."""
+
+    document = make_document(
+        ("heading", "İhtiyaç Finansmanı"),
+        (
+            "paragraph",
+            "Devre Mülk Finansmanı, gerçek kişi müşterilerimize sağlanacak "
+            "bireysel bir finansman desteğidir.",
+        ),
+    )
+
+    draft = extract_rules(document)
+
+    assert [segment.canonical_key for segment in draft.customer_segments] == ["bireysel"]
+
+
 def test_explicit_universal_customer_wording_binds_new_customer_false() -> None:
     """'Tüm müşterilerimiz' is stated evidence that no new-customer limit exists."""
 
