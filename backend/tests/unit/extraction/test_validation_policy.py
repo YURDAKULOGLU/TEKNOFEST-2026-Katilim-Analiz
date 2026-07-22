@@ -370,3 +370,62 @@ def test_ambiguity_on_an_optional_field_does_not_block() -> None:
     )
 
     assert status is RecordStatus.VALIDATED
+
+
+def test_card_installment_without_term_validates() -> None:
+    """ "N taksit" is an installment count, not a term in months; the domain's
+    installment_count_is_not_term refusal stands, so card+installment must not
+    demand a TERM the source can never state as months."""
+
+    requirement = required_fields(ProductFamily.CARD, CampaignType.INSTALLMENT)
+    assert requirement is not None
+    assert requirement.all_of == BASE_REQUIRED_FIELDS
+    assert requirement.any_of == frozenset()
+
+    decision = evaluate_validation(
+        ProductFamily.CARD,
+        CampaignType.INSTALLMENT,
+        [
+            "unresolved:rate",
+            "unresolved:term",
+            "unresolved:financing_amount",
+            "unresolved:fee",
+            "unresolved:reward",
+            *_OPTIONAL_UNRESOLVED,
+        ],
+    )
+
+    assert decision.status is RecordStatus.VALIDATED
+    assert decision.missing_required_fields == frozenset()
+    assert decision.blocking_issues == ()
+
+
+def test_financing_installment_still_requires_term() -> None:
+    """The relaxation is pair-scoped: a financing installment offer without a
+    month-denominated term stays needs_review."""
+
+    requirement = required_fields(ProductFamily.FINANCING, CampaignType.INSTALLMENT)
+    assert requirement is not None
+    assert ModelFactField.TERM in requirement.all_of
+
+    decision = evaluate_validation(
+        ProductFamily.FINANCING,
+        CampaignType.INSTALLMENT,
+        ["unresolved:term"],
+    )
+
+    assert decision.status is RecordStatus.NEEDS_REVIEW
+    assert ModelFactField.TERM in decision.missing_required_fields
+
+
+def test_card_installment_blocking_issues_still_block() -> None:
+    """Dropping the TERM requirement never relaxes quarantine or grounding."""
+
+    decision = evaluate_validation(
+        ProductFamily.CARD,
+        CampaignType.INSTALLMENT,
+        ["quarantined_prompt_injection_block:block-3", "unresolved:term"],
+    )
+
+    assert decision.status is RecordStatus.NEEDS_REVIEW
+    assert decision.blocking_issues == ("quarantined_prompt_injection_block:block-3",)
