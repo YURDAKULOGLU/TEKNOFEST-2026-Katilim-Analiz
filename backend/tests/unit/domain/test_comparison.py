@@ -344,17 +344,6 @@ def test_incompatible_family_rate_or_eligibility_context_is_rejected(
             ),
             "rate_kind_unknown",
         ),
-        (
-            RateValue(
-                raw="%1",
-                value_percent=Decimal("1"),
-                kind=RateKind.FINANCING_PROFIT_RATE,
-                period=RatePeriod.MONTHLY,
-                term_months=12,
-                basis_label=None,
-            ),
-            "rate_basis_unknown",
-        ),
         (_rate("1", term_months=0), "rate_term_context_unknown"),
     ],
 )
@@ -365,6 +354,42 @@ def test_unknown_rate_semantics_are_not_ranked(rate: RateValue, reason_code: str
     )
 
     assert {item.reason_code for item in report.items} == {reason_code}
+
+
+def test_symmetric_unlabeled_basis_ranks_and_asymmetric_never_meets() -> None:
+    """An absent basis label blocks only asymmetrically: unlabeled rates meet
+    unlabeled rates of the same shape, mirroring the other context axes."""
+
+    def _plain(value: str, basis_label: str | None) -> RateValue:
+        return RateValue(
+            raw=f"%{value}",
+            value_percent=Decimal(value),
+            kind=RateKind.FINANCING_PROFIT_RATE,
+            period=RatePeriod.MONTHLY,
+            term_months=12,
+            basis_label=basis_label,
+        )
+
+    symmetric = _compare(
+        [
+            _record("a", rates=(_plain("1.69", None),)),
+            _record("b", rates=(_plain("3.40", None),)),
+        ],
+        ComparisonDimension.RATE,
+    )
+    asymmetric = _compare(
+        [
+            _record("a", rates=(_plain("1.69", None),)),
+            _record("b", rates=(_plain("3.40", "aylık kâr payı"),)),
+        ],
+        ComparisonDimension.RATE,
+    )
+
+    assert [(item.rank, item.comparable) for item in symmetric.items] == [
+        (1, True),
+        (2, True),
+    ]
+    assert all(not item.comparable for item in asymmetric.items)
 
 
 def test_bank_specific_condition_wording_does_not_block_comparison() -> None:
