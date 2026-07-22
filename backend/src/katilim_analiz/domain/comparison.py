@@ -467,8 +467,11 @@ def _rate_issue(rate: RateValue) -> str | None:
         return None
     if rate.period is RatePeriod.UNSPECIFIED:
         return "rate_period_unknown"
-    if rate.basis_label is None:
-        return "rate_basis_unknown"
+    # A missing basis label no longer disqualifies the rate on its own: the
+    # signature embeds the canonicalized label ("" when absent), so unlabeled
+    # rates can only ever meet other unlabeled rates of the same kind, period
+    # and term — symmetric absence, like the other context axes. A labeled
+    # rate never meets an unlabeled one.
     if rate.kind in {RateKind.FINANCING_PROFIT_RATE, RateKind.ANNUAL_COST_RATE} and (
         rate.term_months is None or rate.term_months <= 0
     ):
