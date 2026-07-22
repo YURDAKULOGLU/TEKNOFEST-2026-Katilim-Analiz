@@ -94,6 +94,24 @@ CAMPAIGN_TYPE_REQUIRED_FIELDS: Mapping[CampaignType, FieldRequirement | None] = 
     CampaignType.UNKNOWN: None,
 }
 
+# Pair-specific overrides replace the campaign-type requirement for one exact
+# (family, type) combination. A card installment campaign states "N taksit" —
+# an installment count the domain deliberately refuses to read as a term in
+# months (``installment_count_is_not_term``), because a count of equal
+# installments is not a duration. Requiring TERM for card+installment therefore
+# made validation unreachable by design; the requirement is dropped for that
+# pair only. The installment count itself stays evidence-only (the "N taksit"
+# sentence remains quotable source text): no month-denominated fact is
+# fabricated from it, and no new contract field is invented for it (ADR-002).
+# Financing installment campaigns keep their TERM requirement through the
+# family matrix, which this override never touches.
+PAIR_REQUIRED_FIELD_OVERRIDES: Mapping[
+    tuple[ProductFamily, CampaignType],
+    FieldRequirement,
+] = {
+    (ProductFamily.CARD, CampaignType.INSTALLMENT): FieldRequirement(),
+}
+
 # Ambiguity issues are field-scoped: they block only when the ambiguous field
 # is required for this record AND the field is still unresolved. Ambiguity on
 # an optional field leaves that field unknown without disqualifying the rest
@@ -163,6 +181,9 @@ def required_fields(
     type_requirement = CAMPAIGN_TYPE_REQUIRED_FIELDS[campaign_type]
     if family_requirement is None or type_requirement is None:
         return None
+    override = PAIR_REQUIRED_FIELD_OVERRIDES.get((product_family, campaign_type))
+    if override is not None:
+        type_requirement = override
     return FieldRequirement(
         all_of=BASE_REQUIRED_FIELDS | family_requirement.all_of | type_requirement.all_of,
         any_of=family_requirement.any_of | type_requirement.any_of,
@@ -282,6 +303,7 @@ __all__ = [
     "BASE_REQUIRED_FIELDS",
     "CAMPAIGN_TYPE_REQUIRED_FIELDS",
     "FAMILY_REQUIRED_FIELDS",
+    "PAIR_REQUIRED_FIELD_OVERRIDES",
     "UNRESOLVED_ISSUE_PREFIX",
     "FieldRequirement",
     "ValidationDecision",
