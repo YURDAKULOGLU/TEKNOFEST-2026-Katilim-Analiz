@@ -651,3 +651,182 @@ def test_unsettled_polarity_abstains_instead_of_guessing() -> None:
 
     assert draft.fees == ()
     assert ModelFactField.FEE in draft.unresolved_fields
+
+
+def test_tl_only_page_without_amount_binds_inferred_try_currency() -> None:
+    """Single-currency TL evidence binds product_currency=TRY as an inferred,
+    grounded fact — the gate that kept every same-family pair at
+    currency_context_unknown."""
+
+    document = make_document(
+        ("heading", "Kart Kampanyası"),
+        ("paragraph", "Kampanya kapsamında 500 TL nakit iade kazanabilirsiniz."),
+    )
+
+    draft = extract_rules(document)
+    assert draft.financing_amounts == ()
+
+    candidate = build_candidate(
+        draft,
+        document,
+        started_at=_NOW,
+        completed_at=_NOW,
+        extractor_version="test/1",
+    )
+
+    assert candidate.data.comparison_context.product_currency == "TRY"
+    currency_refs = [
+        item
+        for item in candidate.evidence
+        if item.field_pointer == "/data/comparison_context/product_currency"
+    ]
+    assert len(currency_refs) == 1
+    assert currency_refs[0].status.value == "inferred"
+    assert "TL" in currency_refs[0].quote
+    validate_candidate(candidate, document)
+
+
+@pytest.mark.parametrize(
+    "mixed_sentence",
+    [
+        "USD ve EUR cinsinden finansmanda azami vade 60 aydır.",
+        "Dövizde $ bazlı fiyatlama uygulanır.",
+        "Dolar cinsinden hesaplar kampanyaya dahil değildir.",
+    ],
+)
+def test_mixed_currency_page_leaves_product_currency_unknown(mixed_sentence: str) -> None:
+    """Any foreign currency signal anywhere on the page vetoes the binding:
+    mixed evidence abstains, it never defaults (ADR-002)."""
+
+    document = make_document(
+        ("heading", "Kart Kampanyası"),
+        ("paragraph", "Kampanya kapsamında 500 TL nakit iade kazanabilirsiniz."),
+        ("paragraph", mixed_sentence),
+    )
+
+    candidate = build_candidate(
+        extract_rules(document),
+        document,
+        started_at=_NOW,
+        completed_at=_NOW,
+        extractor_version="test/1",
+    )
+
+    assert candidate.data.comparison_context.product_currency is None
+    assert all(
+        item.field_pointer != "/data/comparison_context/product_currency"
+        for item in candidate.evidence
+    )
+    validate_candidate(candidate, document)
+
+
+def test_page_without_any_currency_signal_stays_unknown() -> None:
+    document = make_document(
+        ("heading", "Kart Kampanyası"),
+        ("paragraph", "Kampanya kapsamında nakit iade fırsatları sizi bekliyor."),
+    )
+
+    candidate = build_candidate(
+        extract_rules(document),
+        document,
+        started_at=_NOW,
+        completed_at=_NOW,
+        extractor_version="test/1",
+    )
+
+    assert candidate.data.comparison_context.product_currency is None
+
+
+def test_inferred_currency_fails_replay_when_page_signals_turn_mixed() -> None:
+    """The replay re-derives the inference: a TRY binding is rejected as soon
+    as the source page carries a foreign-currency signal the binding cannot
+    support (mixed evidence must abstain, ADR-002)."""
+
+    document = make_document(
+        ("heading", "Kart Kampanyası"),
+        ("paragraph", "Kampanya kapsamında 500 TL nakit iade kazanabilirsiniz."),
+    )
+    candidate = build_candidate(
+        extract_rules(document),
+        document,
+        started_at=_NOW,
+        completed_at=_NOW,
+        extractor_version="test/1",
+    )
+    assert candidate.data.comparison_context.product_currency == "TRY"
+
+    mixed_document = make_document(
+        ("heading", "Kart Kampanyası"),
+        ("paragraph", "Kampanya kapsamında 500 TL nakit iade kazanabilirsiniz."),
+        ("paragraph", "USD ve EUR cinsinden hesaplar kampanya dışıdır."),
+    )
+
+    with pytest.raises(CandidateValidationError) as excinfo:
+        validate_candidate(candidate, mixed_document)
+    assert excinfo.value.code == "product_currency_derivation_mismatch"
+
+
+def test_try_pair_from_tl_only_pages_passes_the_currency_gate() -> None:
+    """Two TL-only pages both bind TRY, so a same-family pair is no longer
+    rejected with currency_context_unknown at comparison time."""
+
+    from datetime import date
+
+    from katilim_analiz.contracts import CampaignRecord, ComparisonDimension, RecordStatus
+    from katilim_analiz.domain.comparison import compatibility_reasons
+
+    def _record_from(document: CleanDocument, record_id: str) -> CampaignRecord:
+        candidate = build_candidate(
+            extract_rules(document),
+            document,
+            started_at=_NOW,
+            completed_at=_NOW,
+            extractor_version="test/1",
+        )
+        assert candidate.data.comparison_context.product_currency == "TRY"
+        return CampaignRecord(
+            id=record_id,
+            version=1,
+            source_document_id=candidate.source_document_id,
+            observed_at=_NOW,
+            data=candidate.data,
+            evidence=candidate.evidence,
+            extraction=candidate.metadata,
+            status=RecordStatus.VALIDATED,
+            record_sha256="0" * 64,
+        )
+
+    left = _record_from(
+        make_document(
+            ("heading", "Taşıt Finansmanı Fırsatı"),
+            (
+                "paragraph",
+                "Bireysel müşterilere özel finansman kâr payı oranı aylık %1,85 uygulanır.",
+            ),
+            ("paragraph", "Başvuru ücreti 500 TL olarak tahsil edilir."),
+            ("paragraph", "Kampanya 1 Temmuz 2026 - 31 Aralık 2026 tarihleri arasında geçerlidir."),
+        ),
+        "record-left",
+    )
+    right = _record_from(
+        make_document(
+            ("heading", "Taşıt Finansmanında Avantaj"),
+            (
+                "paragraph",
+                "Bireysel müşterilere özel finansman kâr payı oranı aylık %1,99 uygulanır.",
+            ),
+            ("paragraph", "Başvuru ücreti 750 TL olarak tahsil edilir."),
+            ("paragraph", "Kampanya 1 Temmuz 2026 - 31 Aralık 2026 tarihleri arasında geçerlidir."),
+        ),
+        "record-right",
+    )
+
+    reasons = compatibility_reasons(
+        left,
+        right,
+        dimension=ComparisonDimension.RATE,
+        as_of=date(2026, 7, 20),
+    )
+
+    assert "currency_context_unknown" not in reasons
+    assert "currency_context_mismatch" not in reasons

@@ -48,6 +48,22 @@ _MONEY_VALUE = re.compile(
     r"(?:TL|TRY|Türk\s+lirası|USD|EUR|dolar|euro))",
     re.I,
 )
+#: Evidence-based currency binding: a TL amount is a lira figure the page
+#: itself states (``500.000 TL``, ``₺250``, ``1.000 Turk lirasi``).  The match
+#: is the exact grounding quote for an inferred ``product_currency``.
+_TRY_AMOUNT = re.compile(
+    r"(?:₺\s*\d[\d.,]*|"
+    r"\d[\d.,]*\s*(?:bin\s+|milyon\s+|milyar\s+)?(?:TL|TRY|Türk\s+lirası)\b)",
+    re.I,
+)
+#: Any non-lira currency symbol or code anywhere on the page is a mixed-signal
+#: veto: the mere mention of USD/EUR pricing ("USD/EUR azami 60 ay") means the
+#: product is not single-currency, so the binding abstains.
+_FOREIGN_CURRENCY_SIGNAL = re.compile(
+    r"[$€£]|\b(?:USD|EUR|GBP|CHF|JPY|SAR|AED|RUB|CNY)\b"
+    r"|\b(?:dolar|euro|avro|sterlin|frang|frank)\w*",
+    re.I,
+)
 _DATE_MARKER = re.compile(
     r"\b\d{1,2}[./-]\d{1,2}(?:[./-]\d{2,4})?\b|"
     r"\b(?:ocak|şubat|subat|mart|nisan|mayıs|mayis|haziran|temmuz|ağustos|agustos|"
@@ -333,6 +349,42 @@ def is_explicit_new_customer_restriction(text: str) -> bool:
     """Return whether text explicitly limits eligibility to new customers."""
 
     return _new_customer_restriction_match(text) is not None
+
+
+def is_single_currency_try_quote(text: str) -> bool:
+    """Return whether one quote alone carries a TL amount and no foreign signal."""
+
+    return _TRY_AMOUNT.search(text) is not None and _FOREIGN_CURRENCY_SIGNAL.search(text) is None
+
+
+def infer_page_currency(document: CleanDocument) -> TextSpan | None:
+    """Ground ``product_currency=TRY`` in single-currency TL page evidence.
+
+    The rule is deliberately page-scoped and vetoed by any foreign signal: TRY
+    is bound only when the document's safe (non-quarantined) blocks state at
+    least one lira amount AND no block anywhere mentions another currency
+    symbol or code.  A page that also prices in USD/EUR ("TL cinsinden 120 aya
+    kadar; USD/EUR azami 60 ay") therefore stays unknown — this is
+    evidence-based inference grounded to an exact TL-amount quote, never a
+    default (ADR-002).  The record's own fact quotes are part of that scope by
+    construction; scanning the whole page instead of only the fact quotes can
+    only widen the veto, so it is strictly more conservative.
+
+    Returns the span of the first TL amount as the grounding quote, or ``None``
+    when currency signals are absent or mixed.
+    """
+
+    first_try_span: TextSpan | None = None
+    for block in document.blocks:
+        if is_obvious_prompt_injection(block.text):
+            continue
+        if _FOREIGN_CURRENCY_SIGNAL.search(block.text) is not None:
+            return None
+        if first_try_span is None:
+            match = _TRY_AMOUNT.search(block.text)
+            if match is not None and 0 < len(match.group()) <= 500:
+                first_try_span = TextSpan(block.id, match.group(), match.start(), match.end())
+    return first_try_span
 
 
 def rate_semantics_unresolved(rates: Iterable[RateValue]) -> bool:
@@ -969,8 +1021,10 @@ def with_issue(draft: ExtractionDraft, issue: str) -> ExtractionDraft:
 
 __all__ = [
     "extract_rules",
+    "infer_page_currency",
     "is_explicit_eligibility",
     "is_explicit_new_customer_restriction",
+    "is_single_currency_try_quote",
     "product_family_block_spans",
     "rate_semantics_unresolved",
     "segment_key_for_text",

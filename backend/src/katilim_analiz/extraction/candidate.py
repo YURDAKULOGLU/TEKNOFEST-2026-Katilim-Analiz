@@ -29,8 +29,10 @@ from katilim_analiz.domain import (
     normalize_validity,
 )
 from katilim_analiz.extraction.draft import BoundFact, ExtractionDraft
-from katilim_analiz.extraction.evidence import bind_evidence, verify_evidence_ref
+from katilim_analiz.extraction.evidence import TextSpan, bind_evidence, verify_evidence_ref
 from katilim_analiz.extraction.rules import (
+    infer_page_currency,
+    is_single_currency_try_quote,
     segment_key_for_text,
     supported_campaign_types,
     supported_product_families,
@@ -106,6 +108,14 @@ def build_candidate(
     )
     currencies = {fact.value.currency for fact in draft.financing_amounts}
     product_currency = next(iter(currencies)) if len(currencies) == 1 else None
+    inferred_currency_span: TextSpan | None = None
+    if product_currency is None:
+        # Evidence-based currency binding: a page whose safe blocks state TL
+        # amounts and mention no other currency binds TRY as an INFERRED fact
+        # grounded to the exact TL-amount quote (never a default; ADR-002).
+        inferred_currency_span = infer_page_currency(document)
+        if inferred_currency_span is not None:
+            product_currency = "TRY"
     context = ComparisonContext(
         product_currency=product_currency,
         customer_segment_keys=[item.canonical_key for item in draft.customer_segments],
@@ -167,7 +177,16 @@ def build_candidate(
         add(f"/data/comparison_context/customer_segment_keys/{index}", fact)
     for index, condition_fact in enumerate(draft.eligibility_conditions):
         add(f"/data/eligibility_conditions/{index}", condition_fact)
-    if product_currency is not None:
+    if inferred_currency_span is not None:
+        evidence.append(
+            bind_evidence(
+                document,
+                "/data/comparison_context/product_currency",
+                inferred_currency_span,
+                status=EvidenceStatus.INFERRED,
+            )
+        )
+    elif product_currency is not None:
         add("/data/comparison_context/product_currency", draft.financing_amounts[0])
     if draft.sales_channel is not None:
         add("/data/comparison_context/sales_channel", draft.sales_channel)
@@ -395,11 +414,28 @@ def validate_candidate(candidate: ExtractionCandidate, document: CleanDocument) 
     context = candidate.data.comparison_context
     currencies = {item.currency for item in candidate.data.financing_amounts}
     derived_currency = next(iter(currencies)) if len(currencies) == 1 else None
-    if context.product_currency != derived_currency:
+    expected_currency = derived_currency
+    if expected_currency is None and infer_page_currency(document) is not None:
+        # The replay re-derives the inference deterministically: single-currency
+        # TL page evidence binds TRY; mixed or absent signals stay unknown.
+        expected_currency = "TRY"
+    if context.product_currency != expected_currency:
         raise CandidateValidationError(
             "product_currency_derivation_mismatch",
-            "comparison currency must derive from financing amounts",
+            "comparison currency must derive from financing amounts "
+            "or single-currency TL page evidence",
         )
+    if derived_currency is None and context.product_currency is not None:
+        currency_refs = by_pointer.get("/data/comparison_context/product_currency", [])
+        if not any(
+            reference.status is EvidenceStatus.INFERRED
+            and is_single_currency_try_quote(reference.quote)
+            for reference in currency_refs
+        ):
+            raise CandidateValidationError(
+                "currency_evidence_laundering",
+                "inferred product currency is not grounded to a TL-amount quote",
+            )
     derived_segments = [segment_key_for_text(value) for value in candidate.data.customer_segments]
     if (
         any(value is None for value in derived_segments)
