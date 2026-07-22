@@ -33,7 +33,9 @@ from katilim_analiz.llm import (
     OllamaStructuredClient,
 )
 
-EXTRACTOR_VERSION = "hybrid-extractor/1.3"
+# 1.4: evidence-based single-currency TRY binding changes extraction output,
+# so cached conditional fetches must reprocess under the new identity.
+EXTRACTOR_VERSION = "hybrid-extractor/1.4"
 
 
 def extraction_processing_identity() -> str:
