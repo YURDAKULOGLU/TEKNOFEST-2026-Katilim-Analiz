@@ -57,6 +57,10 @@ _ABSENCE_COMPATIBLE_NOTES: dict[str, str] = {
         "Teminat ekseni 'kısıt kanıtı yok' olarak uyumlu sayıldı: "
         "hiçbir kayıtta teminat kanıtı bulunmuyor."
     ),
+    "validity": (
+        "Geçerlilik ekseni 'süre kanıtı yok' olarak uyumlu sayıldı: "
+        "hiçbir kayıt bir kampanya süresi beyan etmiyor (duran ürün sayfaları)."
+    ),
 }
 
 _REASONS: dict[str, str] = {
@@ -309,17 +313,31 @@ def _first_global_incompatibility(
                 return "not_observed_as_of", ()
         elif record.observed_at.date() > selected_date:
             return "not_observed_as_of", ()
+
+    def _validity_stated(record: CampaignRecord) -> bool:
         validity = record.data.validity
-        if (
-            validity is None
-            or validity.status in {EvidenceStatus.UNKNOWN, EvidenceStatus.AMBIGUOUS}
-            or (validity.starts_on is None and validity.ends_on is None)
-        ):
-            return "validity_unknown", ()
-        if validity.starts_on is not None and selected_date < validity.starts_on:
-            return "campaign_not_active_as_of", ()
-        if validity.ends_on is not None and selected_date > validity.ends_on:
-            return "campaign_not_active_as_of", ()
+        return (
+            validity is not None
+            and validity.status not in {EvidenceStatus.UNKNOWN, EvidenceStatus.AMBIGUOUS}
+            and (validity.starts_on is not None or validity.ends_on is not None)
+        )
+
+    stated = [record for record in records if _validity_stated(record)]
+    if not stated:
+        # Standing product sheets never declare a campaign window. Symmetric
+        # absence is compatible-with-note, mirroring the other context axes;
+        # a pair where only ONE side declares a window stays blocked below.
+        notes.append(_ABSENCE_COMPATIBLE_NOTES["validity"])
+    elif len(stated) != len(records):
+        return "validity_unknown", ()
+    else:
+        for record in stated:
+            validity = record.data.validity
+            assert validity is not None
+            if validity.starts_on is not None and selected_date < validity.starts_on:
+                return "campaign_not_active_as_of", ()
+            if validity.ends_on is not None and selected_date > validity.ends_on:
+                return "campaign_not_active_as_of", ()
     return None, tuple(notes)
 
 
