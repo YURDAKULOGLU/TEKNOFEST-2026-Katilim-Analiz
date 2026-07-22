@@ -67,10 +67,10 @@ spec:
             timeoutSeconds: 3
           resources:
             requests:
-              cpu: "1"
+              cpu: "4"
               memory: 4Gi
             limits:
-              cpu: "6"
+              cpu: "16"
               memory: 8Gi
           securityContext:
             allowPrivilegeEscalation: false
