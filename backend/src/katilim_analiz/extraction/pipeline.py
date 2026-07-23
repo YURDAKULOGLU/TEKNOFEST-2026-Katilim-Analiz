@@ -37,7 +37,9 @@ from katilim_analiz.llm import (
 # so cached conditional fetches must reprocess under the new identity.
 # 1.5: card+installment no longer requires TERM in the validation matrix, so
 # record statuses change and cached conditional fetches must reprocess.
-EXTRACTOR_VERSION = "hybrid-extractor/1.7"
+# 1.8: installment-table rows now bind their term cell ("12 Ay") to the row's
+# profit rate, so rate values gain term_months and must be re-extracted.
+EXTRACTOR_VERSION = "hybrid-extractor/1.8"
 
 
 def extraction_processing_identity() -> str:
