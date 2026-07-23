@@ -493,6 +493,8 @@ class _RateContextHint:
     profit_column: int | None = None
     column_count: int | None = None
     sole_rate_column: bool = False
+    term_column: int | None = None
+    term_column_in_months: bool = False
 
 
 def _table_cells(text: str) -> tuple[tuple[int, int, str], ...]:
@@ -542,17 +544,56 @@ def _profit_rate_table_hint(
     other_cells = tuple(
         cell for index, (_start, _end, cell) in enumerate(cells) if index != profit_column
     )
-    if not any(_TERM_COLUMN_LABEL.search(cell) is not None for cell in other_cells):
+    term_columns = tuple(
+        index
+        for index, (_start, _end, cell) in enumerate(cells)
+        if index != profit_column and _TERM_COLUMN_LABEL.search(cell) is not None
+    )
+    if not term_columns:
         return None
     if not financing_document and _FINANCING_RATE_CONTEXT.search(text) is None:
         return None
+    term_column = term_columns[0] if len(term_columns) == 1 else None
     return _RateContextHint(
         kind=RateKind.FINANCING_PROFIT_RATE,
         period=RatePeriod.MONTHLY,
         profit_column=profit_column,
         column_count=len(cells),
         sole_rate_column=all(_RATE_LIKE_COLUMN_LABEL.search(cell) is None for cell in other_cells),
+        term_column=term_column,
+        term_column_in_months=(
+            term_column is not None
+            and re.search(r"\bay\b", cells[term_column][2], re.I) is not None
+        ),
     )
+
+
+_ROW_TERM_MONTHS = re.compile(r"(?P<months>\d{1,3})\s*ay\b\.?", re.I)
+_ROW_TERM_BARE_NUMBER = re.compile(r"\d{1,3}")
+
+
+def _row_term_months(sentence: TextSpan, hint: _RateContextHint) -> int | None:
+    """Read the row's single exact term cell named by the header, if unambiguous.
+
+    Only a positionally attributed row (cell count matches the header) with a
+    plain "12 Ay" cell — or a bare number under an "Ay"-labeled header — binds
+    the term to the row's profit rate.  Ranges, deferral notes, and ragged rows
+    stay unbound: a missed term is safe, a misattributed one prices the wrong
+    vade bucket.
+    """
+
+    if hint.term_column is None or hint.column_count is None:
+        return None
+    cells = _table_cells(sentence.quote)
+    if len(cells) != hint.column_count:
+        return None
+    cell = cells[hint.term_column][2]
+    match = _ROW_TERM_MONTHS.fullmatch(cell)
+    if match is not None:
+        return int(match.group("months"))
+    if hint.term_column_in_months and _ROW_TERM_BARE_NUMBER.fullmatch(cell) is not None:
+        return int(cell)
+    return None
 
 
 def _profit_column_cell(sentence: TextSpan, hint: _RateContextHint) -> TextSpan | None:
@@ -864,6 +905,7 @@ def extract_rules(document: CleanDocument) -> ExtractionDraft:
         if _RATE_MARKER.search(text) is not None and _FEE_PERCENT_CONTEXT.search(text) is None:
             context_hint = rate_context_hints.get(span.block_id)
             rate_span = span
+            row_term_months: int | None = None
             if context_hint is not None and context_hint.column_count is not None:
                 # Issue #30: a column-shaped hint applies only to the header's
                 # profit column; when the cell cannot be attributed the hint is
@@ -873,6 +915,7 @@ def extract_rules(document: CleanDocument) -> ExtractionDraft:
                     context_hint = None
                 else:
                     rate_span = cell_span
+                    row_term_months = _row_term_months(span, context_hint)
             normalized_rate = normalize_rate(rate_span.quote)
             if (
                 context_hint is not None
@@ -883,6 +926,7 @@ def extract_rules(document: CleanDocument) -> ExtractionDraft:
                     rate_span.quote,
                     kind_hint=context_hint.kind,
                     period_hint=context_hint.period,
+                    term_months_hint=row_term_months,
                 )
             # Issue #28: a percentage whose kind stays unknown is not recorded.
             # The field stays unresolved for the narrow model question instead;

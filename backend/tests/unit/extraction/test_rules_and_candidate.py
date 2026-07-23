@@ -404,6 +404,60 @@ def test_financing_table_header_supplies_conservative_generic_rate_semantics() -
     assert draft.rates[0].value.kind is RateKind.FINANCING_PROFIT_RATE
     assert draft.rates[0].value.period is RatePeriod.MONTHLY
     assert draft.rates[0].value.status.value == "inferred"
+    assert draft.rates[0].value.term_months is None
+
+
+def test_table_row_term_cell_binds_the_rate_term_months() -> None:
+    """A "12 Ay" cell in the header's Vade column prices the row's rate at 12 months."""
+
+    document = make_document(
+        ("heading", "Taşıt Finansmanı Oranları"),
+        ("table", "Finansman Tutarı | Vade | Kar Oranı"),
+        ("table", "100.000 TL | 12 Ay | %3,50"),
+        ("table", "100.000 TL | 24 Ay | %3,45"),
+    )
+
+    draft = extract_rules(document)
+
+    assert [rate.value.value_percent for rate in draft.rates] == [
+        Decimal("3.50"),
+        Decimal("3.45"),
+    ]
+    assert [rate.value.term_months for rate in draft.rates] == [12, 24]
+    assert all(rate.value.kind is RateKind.FINANCING_PROFIT_RATE for rate in draft.rates)
+    assert all(rate.value.period is RatePeriod.MONTHLY for rate in draft.rates)
+
+
+def test_table_row_term_range_or_ragged_row_stays_unbound() -> None:
+    """Ranges and ragged rows never guess a term; a missed term is safe."""
+
+    document = make_document(
+        ("heading", "Taşıt Finansmanı Oranları"),
+        ("table", "Finansman Tutarı | Vade | Kar Oranı"),
+        ("table", "100.000 TL | 12-24 Ay | %3,50"),
+        ("table", "36 Ay | %3,40"),
+    )
+
+    draft = extract_rules(document)
+
+    assert [rate.value.value_percent for rate in draft.rates] == [
+        Decimal("3.50"),
+        Decimal("3.40"),
+    ]
+    assert all(rate.value.term_months is None for rate in draft.rates)
+
+
+def test_bare_number_term_cell_binds_only_under_an_ay_labeled_header() -> None:
+    document = make_document(
+        ("heading", "Taşıt Finansmanı Oranları"),
+        ("table", "Finansman Tutarı | Vade (Ay) | Kar Oranı"),
+        ("table", "100.000 TL | 48 | %3,40"),
+    )
+
+    draft = extract_rules(document)
+
+    assert len(draft.rates) == 1
+    assert draft.rates[0].value.term_months == 48
 
 
 def test_generic_profit_rate_without_financing_context_is_not_recorded() -> None:
