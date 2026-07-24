@@ -1,0 +1,124 @@
+{
+  "schema_version": "1.0",
+  "dataset_id": "human-verified-intake",
+  "intake_version": "1.0.0",
+  "campaigns": [
+    {
+      "intake_id": "kuveyt-turk-ornek-konut-finansmani",
+      "bank_id": "kuveyt-turk",
+      "source_url": "https://www.kuveytturk.com.tr/ORNEK-DOLDUR-kampanya-sayfasi",
+      "observed_at": "2026-07-24T10:00:00+03:00",
+      "attested_by": "ORNEK-DOLDUR Ad Soyad",
+      "attested_on": "2026-07-24",
+      "title": "ORNEK-DOLDUR kampanya basligi (gercek veri degildir)",
+      "title_quote": "ORNEK-DOLDUR kampanya basligi (gercek veri degildir)",
+      "product_family": "financing",
+      "product_family_quote": "ORNEK-DOLDUR konut finansman ürünü",
+      "campaign_type": "financing_rate",
+      "campaign_type_quote": "ORNEK-DOLDUR finansman kar payı oranı",
+      "rates": [
+        {
+          "quote": "ORNEK-DOLDUR yıllık %1,00 oran",
+          "kind": "financing_profit_rate",
+          "period": "annual"
+        }
+      ],
+      "financing_amounts": [
+        {
+          "quote": "ORNEK-DOLDUR 100.000 TL tutar"
+        }
+      ],
+      "terms": [
+        {
+          "quote": "ORNEK-DOLDUR 12 ay ile 60 ay arası vade"
+        }
+      ],
+      "fees": [],
+      "rewards": [],
+      "validity": {
+        "quote": "ORNEK-DOLDUR 31.12.2026 tarihine kadar geçerlidir"
+      }
+    },
+    {
+      "intake_id": "turkiye-finans-ornek-kart-puan",
+      "bank_id": "turkiye-finans",
+      "source_url": "https://www.turkiyefinans.com.tr/ORNEK-DOLDUR-kampanya-sayfasi",
+      "observed_at": "2026-07-24T10:00:00+03:00",
+      "attested_by": "ORNEK-DOLDUR Ad Soyad",
+      "attested_on": "2026-07-24",
+      "title": "ORNEK-DOLDUR kart kampanyasi basligi (gercek veri degildir)",
+      "title_quote": "ORNEK-DOLDUR kart kampanyasi basligi (gercek veri degildir)",
+      "product_family": "card",
+      "product_family_quote": "ORNEK-DOLDUR kredi kartı kampanyası",
+      "campaign_type": "points",
+      "campaign_type_quote": "ORNEK-DOLDUR harcamalara puan kazanımı",
+      "rates": [],
+      "financing_amounts": [],
+      "terms": [],
+      "fees": [],
+      "rewards": [
+        {
+          "quote": "ORNEK-DOLDUR 100 puan kazanımı",
+          "kind": "points",
+          "basis": "per_customer",
+          "points": "100"
+        }
+      ],
+      "validity": null
+    },
+    {
+      "intake_id": "hayat-finans-ornek-katilma-hesabi",
+      "bank_id": "hayat-finans",
+      "source_url": "https://www.hayatfinans.com.tr/ORNEK-DOLDUR-kampanya-sayfasi",
+      "observed_at": "2026-07-24T10:00:00+03:00",
+      "attested_by": "ORNEK-DOLDUR Ad Soyad",
+      "attested_on": "2026-07-24",
+      "title": "ORNEK-DOLDUR katilma hesabi kampanyasi (gercek veri degildir)",
+      "title_quote": "ORNEK-DOLDUR katilma hesabi kampanyasi (gercek veri degildir)",
+      "product_family": "participation_account",
+      "product_family_quote": "ORNEK-DOLDUR katılma hesabı",
+      "campaign_type": "profit_share",
+      "campaign_type_quote": "ORNEK-DOLDUR kâr payı dağıtım oranı",
+      "rates": [
+        {
+          "quote": "ORNEK-DOLDUR yıllık %1,00 pay",
+          "kind": "profit_share_distribution_rate",
+          "period": "annual",
+          "gross_net_basis": "gross"
+        }
+      ],
+      "financing_amounts": [],
+      "terms": [],
+      "fees": [],
+      "rewards": [],
+      "validity": null
+    },
+    {
+      "intake_id": "adil-katilim-ornek-masrafsiz-finansman",
+      "bank_id": "adil-katilim",
+      "source_url": "https://www.adilkatilim.com.tr/ORNEK-DOLDUR-kampanya-sayfasi",
+      "observed_at": "2026-07-24T10:00:00+03:00",
+      "attested_by": "ORNEK-DOLDUR Ad Soyad",
+      "attested_on": "2026-07-24",
+      "title": "ORNEK-DOLDUR masrafsiz finansman kampanyasi (gercek veri degildir)",
+      "title_quote": "ORNEK-DOLDUR masrafsiz finansman kampanyasi (gercek veri degildir)",
+      "product_family": "financing",
+      "product_family_quote": "ORNEK-DOLDUR ihtiyaç finansman ürünü",
+      "campaign_type": "fee_waiver",
+      "campaign_type_quote": "ORNEK-DOLDUR masrafsız finansman fırsatı",
+      "rates": [],
+      "financing_amounts": [],
+      "terms": [],
+      "fees": [
+        {
+          "quote": "ORNEK-DOLDUR dosya masrafı alınmaz",
+          "kind": "allocation",
+          "basis": "one_time",
+          "waived": true
+        }
+      ],
+      "rewards": [],
+      "validity": null
+    }
+  ]
+}
