@@ -73,6 +73,52 @@ async def test_rule_first_planner_keeps_only_residual_free_text_as_keywords() ->
 
 
 @pytest.mark.asyncio
+async def test_named_bank_becomes_a_structured_filter_not_a_keyword() -> None:
+    planned = await SafeChatPlanner().plan(
+        "Vakıf Katılım'ın taşıt finansmanında azami vade kaç ay?"
+    )
+
+    assert planned.plan.intent is QueryIntent.DETAIL
+    assert planned.plan.bank_ids == ["vakif-katilim"]
+    assert planned.plan.product_family is ProductFamily.FINANCING
+    assert ComparisonDimension.TERM in planned.plan.comparison_dimensions
+    # The apostrophe suffix ("'ın" -> "in") and the bank tokens must not leak
+    # into the AND-composed keyword search.
+    assert "vakif" not in planned.plan.keywords
+    assert "katilim" not in planned.plan.keywords
+    assert "in" not in planned.plan.keywords
+
+
+@pytest.mark.asyncio
+async def test_two_named_banks_both_become_filters() -> None:
+    planned = await SafeChatPlanner().plan(
+        "Hangi banka daha uzun vade sunuyor, Vakıf mı Emlak mı?"
+    )
+
+    assert planned.plan.intent is QueryIntent.COMPARE
+    assert set(planned.plan.bank_ids) == {"vakif-katilim", "emlak-katilim"}
+    assert ComparisonDimension.TERM in planned.plan.comparison_dimensions
+
+
+@pytest.mark.asyncio
+async def test_percentage_interrogative_is_a_detail_lookup() -> None:
+    planned = await SafeChatPlanner().plan(
+        "Vakıf Katılım taşıt finansmanında 36 ay vadede oran yüzde kaç?"
+    )
+
+    assert planned.plan.intent is QueryIntent.DETAIL
+    assert planned.plan.bank_ids == ["vakif-katilim"]
+    assert ComparisonDimension.RATE in planned.plan.comparison_dimensions
+
+
+@pytest.mark.asyncio
+async def test_generic_katilim_bankalari_matches_no_bank_filter() -> None:
+    planned = await SafeChatPlanner().plan("Katılım bankaları hangi kampanyaları sunuyor?")
+
+    assert planned.plan.bank_ids == []
+
+
+@pytest.mark.asyncio
 async def test_prompt_injection_never_reaches_candidate_provider() -> None:
     class FailingProvider:
         called = False
