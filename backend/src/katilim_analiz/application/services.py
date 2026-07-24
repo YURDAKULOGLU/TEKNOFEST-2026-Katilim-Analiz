@@ -320,6 +320,21 @@ class ChatService:
         as_of = _effective_time(request.as_of, self._clock)
         if plan.intent in {QueryIntent.UNKNOWN, QueryIntent.GLOSSARY, QueryIntent.COVERAGE}:
             return _abstention(plan, planned.warnings)
+        if plan.intent in {QueryIntent.DETAIL, QueryIntent.LIST} and not (
+            plan.bank_ids or plan.product_family is not None or plan.campaign_type is not None
+        ):
+            # Live QA finding 1: a garbage/unscoped detail question ("oran
+            # nedir?") must not be answered from arbitrary records with
+            # cross-record numbers.  COMPARE stays as-is: superlative
+            # questions without bank names legitimately carry only a
+            # product-family scope.
+            return _abstention(
+                plan,
+                [
+                    *planned.warnings,
+                    "Soru bir bankaya veya ürün ailesine bağlanamadığı için cevaplanmadı.",
+                ],
+            )
 
         projections = select_relevant(
             request.question,
@@ -334,9 +349,7 @@ class ChatService:
 
         answer_text = bundle.template_answer
         warnings = [*planned.warnings, *bundle.warnings]
-        composed = (
-            await self._compose(request.question, bundle) if bundle.compose_allowed else None
-        )
+        composed = await self._compose(request.question, bundle) if bundle.compose_allowed else None
         if composed is not None:
             if answer_is_grounded(composed, bundle.facts):
                 answer_text = composed

@@ -233,7 +233,9 @@ async def test_chat_bounds_long_stored_quotes_without_detaching_citations() -> N
         ]
     )
     answer = await ChatService(reads, clock=lambda: NOW).answer(
-        ChatRequest(question="kampanyaları listele", as_of=NOW)
+        # QA fix 1: an unscoped LIST question now abstains, so this bounds
+        # test names the product family to stay on the answering path.
+        ChatRequest(question="finansman kampanyalarını listele", as_of=NOW)
     )
 
     assert len(answer.answer) <= 5_000

@@ -289,7 +289,7 @@ async def test_noise_keyword_does_not_veto_a_bank_scoped_question() -> None:
 
 
 async def test_term_specific_rate_question_selects_the_matching_table_row() -> None:
-    """"36 ay vadede oran?" must answer %3.40@36, not the 12-month headline.
+    """ "36 ay vadede oran?" must answer %3.40@36, not the 12-month headline.
 
     The per-term rates are table-bound (INFERRED with verbatim cell quotes),
     exercising the inferred-evidence fallback of the rate fact."""
@@ -393,6 +393,79 @@ async def test_absent_fee_question_states_absence_and_never_reaches_the_composer
     assert "ücret bilgisi kaynak kanıtıyla yer almıyor" in answer.answer
     assert "30.000" not in answer.answer
     assert composer.calls == 0
+
+
+async def test_unscoped_detail_question_abstains_instead_of_answering_from_anything() -> None:
+    """Live QA finding 1: "oran nedir?" without a bank, family or campaign
+    type must abstain instead of answering from arbitrary records with
+    cross-record numbers."""
+
+    reads = StrictSearchReads([ZIRAAT, VAKIF])
+    answer = await ChatService(reads, clock=lambda: NOW).answer(
+        ChatRequest(question="oran\n\t nedir?", as_of=NOW)
+    )
+
+    assert answer.insufficient_evidence is True
+    assert answer.citations == []
+    assert answer.answer == (
+        "Bu soruyu yanıtlamak için yeterli doğrulanmış kaynak kanıtı bulunamadı."
+    )
+    assert any("bağlanamadığı için cevaplanmadı" in warning for warning in answer.warnings)
+
+
+EMLAK_IHTIYAC = financing_projection(
+    "emlak-ihtiyac-sheet",
+    bank_id="emlak-katilim",
+    bank_name="TÜRKİYE EMLAK KATILIM BANKASI A.Ş.",
+    title="İhtiyaç Finansmanı",
+    rate_raw="%1,69",
+    rate_value="1.69",
+    term_months=12,
+)
+
+
+async def test_subfamily_question_abstains_instead_of_cross_answering() -> None:
+    """Live QA finding 2: the bank has only an ihtiyac sheet, so tasit and
+    konut questions must abstain instead of answering with %1,69."""
+
+    for question in (
+        "Emlak Katılım'ın taşıt finansmanı oranı nedir?",
+        "Emlak Katılım'ın konut finansmanı oranı nedir?",
+    ):
+        reads = StrictSearchReads([EMLAK_IHTIYAC])
+        answer = await ChatService(reads, clock=lambda: NOW).answer(
+            ChatRequest(question=question, as_of=NOW)
+        )
+
+        assert answer.insufficient_evidence is True, question
+        assert "%1,69" not in answer.answer
+        assert answer.citations == []
+
+
+async def test_same_bank_matching_subfamily_question_still_answers() -> None:
+    reads = StrictSearchReads([EMLAK_IHTIYAC])
+    answer = await ChatService(reads, clock=lambda: NOW).answer(
+        ChatRequest(question="Emlak Katılım'ın ihtiyaç finansmanı oranı nedir?", as_of=NOW)
+    )
+
+    assert answer.insufficient_evidence is False
+    assert "%1,69" in answer.answer
+    assert "EMLAK KATILIM" in answer.answer
+
+
+async def test_out_of_scope_institution_question_abstains_with_the_scope_warning() -> None:
+    """Live QA finding 3: "Vakifbank" must never resolve to VAKIF KATILIM
+    through name-prefix tolerance."""
+
+    reads = StrictSearchReads([ZIRAAT, VAKIF])
+    answer = await ChatService(reads, clock=lambda: NOW).answer(
+        ChatRequest(question="Vakıfbank'ın taşıt kredisi oranı?", as_of=NOW)
+    )
+
+    assert answer.insufficient_evidence is True
+    assert "%3,5" not in answer.answer
+    assert answer.citations == []
+    assert any("katılım bankası kapsamı dışında" in warning for warning in answer.warnings)
 
 
 async def test_abstention_is_unchanged_when_nothing_matches() -> None:

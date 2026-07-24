@@ -36,6 +36,12 @@ _NUMBER_RE = re.compile(r"\d+(?:[.,]\d+)?")
 #: Trailing legal-form tokens that do not distinguish one bank from another.
 _GENERIC_NAME_TOKENS = frozenset({"a", "s", "as", "anonim", "sirketi", "bankasi", "turkiye"})
 
+#: Live QA finding 2: the financing sub-family words are a HARD scope for
+#: relevance selection.  Detected again here from the canonicalized question
+#: (same token list the planner uses) so the guarantee does not depend on the
+#: soft keyword list surviving retrieval relaxation.
+_FINANCING_SUBFAMILY_TERMS = ("konut", "tasit", "ihtiyac")
+
 _DIMENSION_LABELS: dict[ComparisonDimension, str] = {
     ComparisonDimension.RATE: "Kâr payı oranı",
     ComparisonDimension.TERM: "Vade",
@@ -163,13 +169,30 @@ def select_relevant(
         partial = [
             projection
             for projection in projections
-            if any(
-                _keyword_matches(keyword, _projection_words(projection)) for keyword in keywords
-            )
+            if any(_keyword_matches(keyword, _projection_words(projection)) for keyword in keywords)
         ]
         surviving = partial or list(projections)
 
     canonical_question = f" {canonicalize_turkish_text(question)} "
+    requested_subfamilies = [
+        term
+        for term in _FINANCING_SUBFAMILY_TERMS
+        if re.search(rf"\b{term}", canonical_question) is not None
+    ]
+    if requested_subfamilies:
+        # Live QA finding 2: a question naming a financing sub-family
+        # ("tasit finansmani") must never fall back to another sub-family's
+        # record ("ihtiyac") of the same bank.  When no surviving record's
+        # own words state the requested sub-family, the selection becomes
+        # empty and the service abstains instead of cross-answering.
+        surviving = [
+            projection
+            for projection in surviving
+            if any(
+                _keyword_matches(term, _projection_words(projection))
+                for term in requested_subfamilies
+            )
+        ]
     mentioned = [
         projection
         for projection in surviving

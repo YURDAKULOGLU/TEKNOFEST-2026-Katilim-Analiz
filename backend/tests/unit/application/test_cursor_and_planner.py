@@ -93,9 +93,7 @@ async def test_named_bank_becomes_a_structured_filter_not_a_keyword() -> None:
 
 @pytest.mark.asyncio
 async def test_two_named_banks_both_become_filters() -> None:
-    planned = await SafeChatPlanner().plan(
-        "Hangi banka daha uzun vade sunuyor, Vakıf mı Emlak mı?"
-    )
+    planned = await SafeChatPlanner().plan("Hangi banka daha uzun vade sunuyor, Vakıf mı Emlak mı?")
 
     assert planned.plan.intent is QueryIntent.COMPARE
     assert set(planned.plan.bank_ids) == {"vakif-katilim", "emlak-katilim"}
@@ -118,6 +116,39 @@ async def test_generic_katilim_bankalari_matches_no_bank_filter() -> None:
     planned = await SafeChatPlanner().plan("Katılım bankaları hangi kampanyaları sunuyor?")
 
     assert planned.plan.bank_ids == []
+
+
+@pytest.mark.asyncio
+@pytest.mark.parametrize(
+    "question",
+    [
+        "Vakıfbank'ın taşıt kredisi oranı?",
+        "Vakıflar Bankası konut kredisi veriyor mu?",
+        "Ziraat Bankası konut kredisi faiz oranı nedir?",
+        "Emlak Konut'un kampanyası var mı?",
+        "Garanti taşıt kredisi oranları?",
+        "İş Bankası ihtiyaç kredisi?",
+    ],
+)
+async def test_out_of_scope_institution_yields_unknown_plan_with_scope_warning(
+    question: str,
+) -> None:
+    planned = await SafeChatPlanner().plan(question)
+
+    assert planned.plan.intent is QueryIntent.UNKNOWN
+    assert planned.plan.bank_ids == []
+    assert planned.warnings == ("Sorudaki kurum katılım bankası kapsamı dışında.",)
+
+
+@pytest.mark.asyncio
+async def test_explicit_katilim_form_keeps_planning_despite_similar_name() -> None:
+    # "ziraat bankasi" is out of scope, yet "ziraat katilim" names the
+    # in-scope bank explicitly and must keep working.
+    planned = await SafeChatPlanner().plan("Ziraat Katılım konut finansmanı oranı nedir?")
+
+    assert planned.plan.intent is QueryIntent.DETAIL
+    assert planned.plan.bank_ids == ["ziraat-katilim"]
+    assert planned.warnings == ()
 
 
 @pytest.mark.asyncio
