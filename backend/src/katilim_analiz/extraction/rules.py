@@ -810,6 +810,18 @@ def _reward_from_span(span: TextSpan) -> RewardValue | None:
             basis=RewardBasis.CAMPAIGN_TOTAL,
             points=points,
         )
+    if re.search(r"\b(?:parafpara|worldpuan)\b", lowered):
+        # A branded point credit is TL-denominated ("700 TL ParafPara"); the
+        # money reader keeps its own honesty rules (bounds and multi-value
+        # sentences fail normalization and the field stays unresolved).
+        money = normalize_money(text)
+        if money.value is not None:
+            return RewardValue(
+                raw=text,
+                kind=RewardKind.MONEY,
+                basis=RewardBasis.CAMPAIGN_TOTAL,
+                money=money.value,
+            )
     if re.search(r"\b(?:nakit\s+iade|para\s+iadesi)\b", lowered):
         money = normalize_money(text)
         if money.value is not None:
