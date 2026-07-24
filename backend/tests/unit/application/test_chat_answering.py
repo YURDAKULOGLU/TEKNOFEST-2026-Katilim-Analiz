@@ -288,6 +288,27 @@ async def test_noise_keyword_does_not_veto_a_bank_scoped_question() -> None:
     assert "ZİRAAT" not in answer.answer
 
 
+async def test_absent_fee_question_states_absence_and_never_reaches_the_composer() -> None:
+    """Live battery regression: the emlak record states no fee, and the model
+    answered the fee question with the financing amount (30.000 TL). The
+    absent dimension must be named explicitly and the composer skipped —
+    the grounding gate checks number presence, not attribution."""
+
+    composer = FixedComposer("Tahsis ücreti 30.000,00 TL ödenmektedir.")
+    reads = StrictSearchReads([VAKIF])
+    answer = await ChatService(reads, composer=composer, clock=lambda: NOW).answer(
+        ChatRequest(
+            question="Vakıf Katılım taşıt finansmanında tahsis ücreti ne kadar?",
+            as_of=NOW,
+        )
+    )
+
+    assert answer.insufficient_evidence is False
+    assert "ücret bilgisi kaynak kanıtıyla yer almıyor" in answer.answer
+    assert "30.000" not in answer.answer
+    assert composer.calls == 0
+
+
 async def test_abstention_is_unchanged_when_nothing_matches() -> None:
     reads = StrictSearchReads([])
     answer = await ChatService(reads, clock=lambda: NOW).answer(

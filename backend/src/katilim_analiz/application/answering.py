@@ -64,6 +64,11 @@ class AnswerBundle:
     facts: tuple[ComposerFact, ...]
     citations: tuple[AnswerCitation, ...]
     warnings: tuple[str, ...] = ()
+    #: False when the asked-about dimension is stated by no selected record.
+    #: The composer must then be skipped entirely: handing it neighbouring
+    #: numbers (amount, rate) invites attributing them to the absent field,
+    #: and the number-grounding gate cannot see attribution, only presence.
+    compose_allowed: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -302,6 +307,13 @@ _FACT_BUILDERS = {
     ComparisonDimension.REWARD: _reward_fact,
 }
 
+_DIMENSION_ABSENCE_NAMES = {
+    ComparisonDimension.RATE: "kâr payı oranı",
+    ComparisonDimension.TERM: "vade",
+    ComparisonDimension.FEE: "ücret",
+    ComparisonDimension.REWARD: "ödül/fayda",
+}
+
 
 def _record_facts(
     projection: CampaignProjection,
@@ -392,6 +404,21 @@ def build_answer_bundle(
     if not per_record:
         return None
 
+    requested = [
+        dimension for dimension in plan.comparison_dimensions if dimension in _FACT_BUILDERS
+    ]
+    requested_stated = not requested or any(
+        fact.dimension in requested for _, facts in per_record for fact in facts
+    )
+    absence_sentences: list[str] = []
+    if not requested_stated:
+        # ADR-002: the asked-about field has no stated evidence, and silence
+        # here reads as the neighbouring numbers answering the question.
+        names = ", ".join(_DIMENSION_ABSENCE_NAMES[dimension] for dimension in requested)
+        absence_sentences.append(
+            f"İncelenen doğrulanmış kayıtlarda {names} bilgisi kaynak kanıtıyla yer almıyor."
+        )
+
     warnings: list[str] = []
     verdicts: list[str] = []
     notes: list[str] = []
@@ -419,7 +446,7 @@ def build_answer_bundle(
                 "yapılamadı; mevcut doğrulanmış değerler sunuldu."
             )
 
-    sentences = [*verdicts]
+    sentences = [*absence_sentences, *verdicts]
     composer_facts: list[ComposerFact] = [
         ComposerFact(
             bank_name="-",
@@ -462,7 +489,7 @@ def build_answer_bundle(
                         status=CitationStatus.VERIFIED,
                     ),
                 )
-    if len(sentences) <= len(verdicts):
+    if len(sentences) <= len(absence_sentences) + len(verdicts):
         return None
     sentences.extend(f"Not: {note}." for note in notes)
     return AnswerBundle(
@@ -470,6 +497,7 @@ def build_answer_bundle(
         facts=tuple(composer_facts),
         citations=tuple(citations.values()),
         warnings=tuple(warnings),
+        compose_allowed=requested_stated,
     )
 
 
