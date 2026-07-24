@@ -189,24 +189,35 @@ class PostgresCampaignReadAdapter(CampaignReadPort):
         if plan.campaign_type is not None:
             statement = statement.where(CampaignRecordRow.campaign_type == plan.campaign_type.value)
 
+        structured = statement.order_by(
+            desc(CampaignRecordRow.observed_at), asc(CampaignRecordRow.id)
+        ).limit(plan.limit)
+
         keywords = " ".join(plan.keywords).strip()
         if keywords:
             ts_query = func.websearch_to_tsquery("turkish", func.immutable_unaccent(keywords))
-            statement = statement.where(
-                CampaignRecordRow.search_vector.op("@@")(ts_query)
-            ).order_by(
-                desc(func.ts_rank_cd(CampaignRecordRow.search_vector, ts_query)),
-                desc(CampaignRecordRow.observed_at),
-                asc(CampaignRecordRow.id),
+            statement = (
+                statement.where(CampaignRecordRow.search_vector.op("@@")(ts_query))
+                .order_by(
+                    desc(func.ts_rank_cd(CampaignRecordRow.search_vector, ts_query)),
+                    desc(CampaignRecordRow.observed_at),
+                    asc(CampaignRecordRow.id),
+                )
+                .limit(plan.limit)
             )
         else:
-            statement = statement.order_by(
-                desc(CampaignRecordRow.observed_at), asc(CampaignRecordRow.id)
-            )
-        statement = statement.limit(plan.limit)
+            statement = structured
 
         async with self._sessions() as session:
             rows = list((await session.execute(statement)).all())
+            if not rows and keywords and (
+                plan.bank_ids or plan.product_family is not None or plan.campaign_type is not None
+            ):
+                # Keywords rank; they must not veto. websearch_to_tsquery ANDs
+                # every term, so one leftover word a record never states
+                # ("azami") would zero out a question whose bank, family, and
+                # type filters already pin the answer set down.
+                rows = list((await session.execute(structured)).all())
             evidence = await self._evidence_by_record(session, [row[0].id for row in rows])
         return [self._project(row, evidence.get(row[0].id, [])) for row in rows]
 

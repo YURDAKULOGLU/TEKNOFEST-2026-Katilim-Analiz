@@ -444,6 +444,29 @@ async def test_detail_many_search_and_evidence_projection(database, seeded_reads
     )
     assert [item.record.id for item in matches] == [seeded_reads.second_id]
 
+    # Keywords rank, they must not veto: a leftover word no record states
+    # ("azami") falls back to the structured bank filter instead of zeroing
+    # out the answer set.
+    fallback = await adapter.search(
+        ChatQueryPlan(
+            intent=QueryIntent.DETAIL,
+            bank_ids=[seeded_reads.bank_a],
+            keywords=["azami", "qqxzyw"],
+            limit=10,
+        ),
+        as_of=seeded_reads.as_of,
+    )
+    assert fallback, "structured filters must survive unmatched keywords"
+    assert all(item.bank_name == seeded_reads.bank_a_name for item in fallback)
+
+    # Without any structured filter the same unmatched keywords stay empty:
+    # there is nothing pinned down to fall back to.
+    unfiltered = await adapter.search(
+        ChatQueryPlan(intent=QueryIntent.DETAIL, keywords=["qqxzyw"], limit=10),
+        as_of=seeded_reads.as_of,
+    )
+    assert unfiltered == []
+
 
 @pytest.mark.asyncio
 async def test_public_latest_hides_rejected_without_resurrection_and_search_is_validated(  # type: ignore[no-untyped-def]

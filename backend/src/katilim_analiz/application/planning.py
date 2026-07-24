@@ -37,15 +37,25 @@ _STOP_WORDS = {
     "bankada",
     "bankalar",
     "bankalarda",
+    "bankanin",
+    "bankasi",
     "bankasinda",
+    "bankasinin",
     "bir",
     "bu",
     "daha",
+    # Canonicalization splits suffixed apostrophes into bare case-suffix
+    # tokens ("Katilim'in" -> "katilim in"); they carry no search meaning.
+    "da",
+    "dan",
+    "de",
+    "den",
     "en",
     "hangi",
     "hangisi",
     "icin",
     "ile",
+    "in",
     "kac",
     "kadar",
     "kampanya",
@@ -53,14 +63,35 @@ _STOP_WORDS = {
     "kampanyalarini",
     "mi",
     "mı",
+    "mu",
     "ne",
+    "nin",
+    "nun",
     "gore",
     "olan",
     "sunuyor",
+    "un",
     "uygun",
     "var",
     "ve",
 }
+
+#: Issue #16 follow-up: a bank named in the question is a structured filter,
+#: not a free-text keyword.  Patterns run over the canonicalized (ascii,
+#: punctuation-free) question; the optional "katilim/bankasi" tails are
+#: consumed so their tokens do not leak into the keyword list.
+_BANK_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
+    ("albaraka-turk", re.compile(r"\balbaraka\b(?: turk\w*)?(?: katilim\w*)?(?: bankasi\w*)?")),
+    ("adil-katilim", re.compile(r"\badil katilim\w*(?: bankasi\w*)?")),
+    ("dunya-katilim", re.compile(r"\bdunya katilim\w*(?: bankasi\w*)?")),
+    ("emlak-katilim", re.compile(r"\bemlak\b(?: katilim\w*)?(?: bankasi\w*)?")),
+    ("hayat-finans", re.compile(r"\bhayat finans\w*(?: katilim\w*)?(?: bankasi\w*)?")),
+    ("kuveyt-turk", re.compile(r"\bkuveyt\b(?: turk\w*)?(?: katilim\w*)?(?: bankasi\w*)?")),
+    ("tom-katilim", re.compile(r"\b(?:tom|t o m) katilim\w*(?: bankasi\w*)?")),
+    ("turkiye-finans", re.compile(r"\bturkiye finans\w*(?: katilim\w*)?(?: bankasi\w*)?")),
+    ("vakif-katilim", re.compile(r"\bvakif\b(?: katilim\w*)?(?: bankasi\w*)?")),
+    ("ziraat-katilim", re.compile(r"\bziraat\b(?: katilim\w*)?(?: bankasi\w*)?")),
+)
 
 _PRODUCT_TERMS: tuple[tuple[ProductFamily, tuple[str, ...]], ...] = (
     (ProductFamily.FINANCING, ("finansman", "konut", "tasit", "ihtiyac")),
@@ -118,6 +149,7 @@ _INTENT_TERMS: tuple[tuple[QueryIntent, tuple[str, ...]], ...] = (
             "kac tl",
             "ne kadar",
             "nedir",
+            "yuzde kac",
         ),
     ),
     (QueryIntent.LIST, ("listele", "goster", "kampanya", "urun")),
@@ -171,6 +203,10 @@ def _campaign_type(
     return value
 
 
+def _bank_ids(text: str) -> list[str]:
+    return [bank_id for bank_id, pattern in _BANK_PATTERNS if pattern.search(text)][:10]
+
+
 def _consumed_spans(text: str) -> list[tuple[int, int]]:
     mappings = (_INTENT_TERMS, _PRODUCT_TERMS, _CAMPAIGN_TERMS, _DIMENSION_TERMS)
     spans = [
@@ -180,6 +216,9 @@ def _consumed_spans(text: str) -> list[tuple[int, int]]:
         for term in terms
         for match in re.finditer(re.escape(term), text)
     ]
+    spans.extend(
+        match.span() for _, pattern in _BANK_PATTERNS for match in pattern.finditer(text)
+    )
     spans.extend(match.span() for match in _TERM_DURATION.finditer(text))
     return spans
 
@@ -226,6 +265,7 @@ class SafeChatPlanner:
         dimensions = _dimensions(canonical)
         deterministic = ChatQueryPlan(
             intent=_intent(canonical),
+            bank_ids=_bank_ids(canonical),
             product_family=family,
             campaign_type=_campaign_type(canonical, family, dimensions),
             comparison_dimensions=dimensions,
