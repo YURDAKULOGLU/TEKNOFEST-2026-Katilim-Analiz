@@ -68,10 +68,14 @@ spec:
           resources:
             requests:
               cpu: "4"
-              memory: 4Gi
+              memory: 6Gi
             limits:
               cpu: "16"
-              memory: 8Gi
+              # 8Gi was OOMKilling the pod under load (21 restarts in 46h,
+              # Reason: OOMKilled): the 3.2GB model plus KV cache and prompt
+              # batches peak above it, and each kill mid-inference opened the
+              # model circuit breaker. Host has 62GB; 16Gi leaves headroom.
+              memory: 16Gi
           securityContext:
             allowPrivilegeEscalation: false
             readOnlyRootFilesystem: true
