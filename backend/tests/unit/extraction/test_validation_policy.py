@@ -258,6 +258,25 @@ def test_title_hint_is_provenance_bookkeeping_not_a_block() -> None:
     assert decision.blocking_issues == ()
 
 
+def test_model_value_grounding_is_provenance_bookkeeping_not_a_block() -> None:
+    """A model-proposed, rules-grounded campaign type validates like a title hint."""
+
+    decision = evaluate_validation(
+        ProductFamily.CARD,
+        CampaignType.INSTALLMENT,
+        [
+            "campaign_type_ambiguous",
+            "model_value_grounded:campaign_type",
+            "unresolved:term",
+            "unresolved:rate",
+            "unresolved:reward",
+        ],
+    )
+
+    assert decision.status is RecordStatus.VALIDATED
+    assert decision.blocking_issues == ()
+
+
 def test_model_offline_never_rescues_a_missing_required_field() -> None:
     """Issue #22 safety: the unresolved:<field> marker still blocks alone."""
 

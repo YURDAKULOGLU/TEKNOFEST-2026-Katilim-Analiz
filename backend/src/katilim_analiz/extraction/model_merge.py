@@ -26,6 +26,7 @@ from katilim_analiz.extraction.draft import BoundFact, CustomerSegmentFact, Extr
 from katilim_analiz.extraction.evidence import EvidenceBindingError, TextSpan, verify_span
 from katilim_analiz.extraction.fees import FEE_MARKER, read_fee
 from katilim_analiz.extraction.rules import (
+    campaign_type_evidence_span,
     is_explicit_eligibility,
     is_explicit_new_customer_restriction,
     is_explicit_new_customer_universal,
@@ -376,6 +377,54 @@ def _with_issue(draft: ExtractionDraft, issue: str) -> ExtractionDraft:
     return replace(draft, issues=(*draft.issues, issue))
 
 
+def _value_grounded_campaign_type(
+    draft: ExtractionDraft,
+    proposal: ModelFactProposal,
+    document: CleanDocument,
+) -> ExtractionDraft | None:
+    """Bind a quote-rejected campaign_type VALUE to the rules' own marker span.
+
+    Measured live, the local model usually names the right campaign type but
+    fails verbatim quote grounding (dominant codes: block_not_sent,
+    evidence_quote_non_unique, campaign_type_not_supported_by_quote).  The
+    proposal's value is not discarded with its broken quote: when the document
+    itself carries the proposed type's deterministic marker, the fact is bound
+    to that marker span instead.  The model therefore only arbitrates among
+    signals the rules already found - it can never introduce a type the page
+    does not state, and every published fact keeps a verbatim source span
+    (ADR-002 unchanged).  Returns the updated draft, or None when value
+    grounding does not apply and today's rejection must stand.
+    """
+
+    if proposal.field is not ModelFactField.CAMPAIGN_TYPE:
+        return None
+    if draft.campaign_type is not None:
+        # Rules, title hint, or registry hint already bound the field; a
+        # quote-rejected proposal never overrides a grounded classification.
+        return None
+    campaign_type = proposal.campaign_type
+    if campaign_type is None:
+        # No typed hint: the value is readable only when the model's quote
+        # names exactly one type, even though the quote itself failed to
+        # ground verbatim in the document.
+        quote = proposal.proposed_quote
+        if not quote:
+            return None
+        supported = supported_campaign_types(quote)
+        if len(supported) != 1:
+            return None
+        campaign_type = next(iter(supported))
+    span = campaign_type_evidence_span(document, campaign_type)
+    if span is None:
+        # The page never signals the proposed type; the model may not invent
+        # one, so the original rejection stands.
+        return None
+    return replace(
+        _with_issue(draft, "model_value_grounded:campaign_type"),
+        campaign_type=BoundFact(campaign_type, span, inferred=True),
+    )
+
+
 def _rejection_issue(proposal: ModelFactProposal, exc: Exception) -> str:
     code = (
         exc.code
@@ -405,13 +454,27 @@ def merge_model_response(
 
     for field in sorted(scalar_proposals, key=lambda item: item.value):
         valid: list[ModelFactProposal] = []
+        rejected: list[tuple[ModelFactProposal, Exception]] = []
         for proposal in scalar_proposals[field]:
             try:
                 _apply(draft, proposal, document)
             except (ProposalRejected, EvidenceBindingError, ValueError) as exc:
-                merged = _with_issue(merged, _rejection_issue(proposal, exc))
+                rejected.append((proposal, exc))
             else:
                 valid.append(proposal)
+        for proposal, exc in rejected:
+            if not valid:
+                # Campaign-type value grounding: a quote-rejected proposal may
+                # still bind when the rules can locate its value's own marker
+                # in the document.  A fully grounded proposal for the same
+                # field (valid above) always takes precedence instead.
+                grounded = _value_grounded_campaign_type(merged, proposal, document)
+                if grounded is not None:
+                    merged = grounded
+                    accepted += 1
+                    resolved.add(field)
+                    continue
+            merged = _with_issue(merged, _rejection_issue(proposal, exc))
         if len(valid) > 1:
             merged = _with_issue(
                 merged,

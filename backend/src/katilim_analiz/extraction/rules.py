@@ -748,6 +748,31 @@ def supported_product_families(text: str) -> frozenset[ProductFamily]:
     )
 
 
+def campaign_type_evidence_span(
+    document: CleanDocument,
+    campaign_type: CampaignType,
+) -> TextSpan | None:
+    """Locate the first deterministic marker span for one exact campaign type.
+
+    Model value-grounding (extractor 1.11): when a model proposal names a
+    campaign type but its own quote fails verbatim grounding, the value may be
+    honored only if the document itself carries that type's deterministic
+    marker.  The returned span is the rules' own first pattern hit over the
+    safe (non-quarantined) blocks and becomes the fact's evidence, so the
+    zero-fabrication contract is unchanged: no marker span, no fact.
+    """
+
+    patterns = _CAMPAIGN_PATTERNS.get(campaign_type)
+    if not patterns:
+        return None
+    safe_blocks = tuple(
+        (block.id, block.text)
+        for block in document.blocks
+        if not is_obvious_prompt_injection(block.text)
+    )
+    return _pattern_hits(safe_blocks, {campaign_type: patterns}).get(campaign_type)
+
+
 def supported_campaign_types(text: str) -> frozenset[CampaignType]:
     return frozenset(
         value
@@ -1165,6 +1190,7 @@ def with_issue(draft: ExtractionDraft, issue: str) -> ExtractionDraft:
 
 
 __all__ = [
+    "campaign_type_evidence_span",
     "extract_rules",
     "infer_page_currency",
     "is_explicit_eligibility",
