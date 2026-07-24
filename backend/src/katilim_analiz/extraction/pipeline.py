@@ -47,7 +47,13 @@ from katilim_analiz.llm import (
 # 1.11: model value-grounding for campaign_type - a quote-rejected model
 # proposal now binds when the rules locate the proposed type's own marker in
 # the document, so campaign classifications change and records must reprocess.
-EXTRACTOR_VERSION = "hybrid-extractor/1.11"
+# 1.12: gold-set wrong-value fixes - adjacent-table hints no longer bleed past
+# a header-shaped row (annual cost tables read as annual_cost_rate), LTV table
+# labels and side-perk "ucretsiz" sentences no longer type campaigns, "baz
+# puan" no longer marks POINTS and prices an early_exit fee, dot-grouped
+# foreign-currency amounts keep their magnitude, and dated out-of-force rates
+# are skipped; extraction output changes and records must reprocess.
+EXTRACTOR_VERSION = "hybrid-extractor/1.12"
 
 
 def extraction_processing_identity() -> str:

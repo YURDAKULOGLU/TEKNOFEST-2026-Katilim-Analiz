@@ -28,6 +28,10 @@ from katilim_analiz.domain.normalization import (
         ("1,250.75 USD", Decimal("1250.75"), "USD"),
         ("2.500,00 €", Decimal("2500.00"), "EUR"),
         ("GBP 99.95", Decimal("99.95"), "GBP"),
+        # Turkish dot-grouping keeps its magnitude in any currency: 10.000 USD
+        # is ten thousand dollars, never ten (gold-edge-cur-001).
+        ("10.000 USD", Decimal("10000"), "USD"),
+        ("2.500 EUR", Decimal("2500"), "EUR"),
     ],
 )
 def test_normalize_money_handles_turkish_and_international_variants(
