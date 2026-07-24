@@ -64,10 +64,12 @@ class AnswerBundle:
     facts: tuple[ComposerFact, ...]
     citations: tuple[AnswerCitation, ...]
     warnings: tuple[str, ...] = ()
-    #: False when the asked-about dimension is stated by no selected record.
-    #: The composer must then be skipped entirely: handing it neighbouring
-    #: numbers (amount, rate) invites attributing them to the absent field,
-    #: and the number-grounding gate cannot see attribution, only presence.
+    #: False when the asked-about dimension is stated by no selected record,
+    #: or when the plan intent is COMPARE. The composer must then be skipped
+    #: entirely: handing it neighbouring numbers (amount, rate) invites
+    #: attributing them to the absent field, and a composed comparison invites
+    #: phrasing a winner claim — the number-grounding gate cannot see
+    #: attribution or non-numeric ranking claims, only number presence.
     compose_allowed: bool = True
 
 
@@ -555,17 +557,60 @@ def build_answer_bundle(
     if len(sentences) <= len(absence_sentences) + len(verdicts):
         return None
     sentences.extend(f"Not: {note}." for note in notes)
+    # COMPARE answers are template-only: ranking/winner wording must come from
+    # the deterministic verdict sentences (ADR-004). The number gate cannot see
+    # non-numeric claims, so a composed "bank X is better" claim would pass it
+    # unchecked even when no dimension actually ranked.
+    compose_allowed = requested_stated and plan.intent is not QueryIntent.COMPARE
     return AnswerBundle(
         template_answer=" ".join(sentences)[:_MAX_ANSWER_CHARS].strip(),
         facts=tuple(composer_facts),
         citations=tuple(citations.values()),
         warnings=tuple(warnings),
-        compose_allowed=requested_stated,
+        compose_allowed=compose_allowed,
     )
 
 
 def _number_tokens(text: str) -> set[str]:
     return {token.replace(",", ".") for token in _NUMBER_RE.findall(text)}
+
+
+#: Conservative unit annotations recognized directly adjacent to a number
+#: token. Anything else leaves the number unit-less (presence-only check).
+_UNIT_PERCENT = "percent"
+_UNIT_CURRENCY = "currency"
+_UNIT_MONTHS = "months"
+
+_PERCENT_BEFORE_RE = re.compile(r"(?:%\s*|(?:\byüzde|\byuzde)\s+)$", re.IGNORECASE)
+_PERCENT_AFTER_RE = re.compile(r"\s*%")
+_CURRENCY_BEFORE_RE = re.compile(r"₺\s*$")
+_CURRENCY_AFTER_RE = re.compile(r"(?:\s*₺|\s+TL\b|\s+lira\b)", re.IGNORECASE)
+_MONTHS_AFTER_RE = re.compile(r"\s+aya?\b", re.IGNORECASE)
+
+
+def _unit_class(text: str, start: int, end: int) -> str | None:
+    """Classify the unit annotation immediately adjacent to text[start:end]."""
+
+    prefix = text[:start]
+    suffix = text[end:]
+    if _PERCENT_BEFORE_RE.search(prefix) or _PERCENT_AFTER_RE.match(suffix):
+        return _UNIT_PERCENT
+    if _CURRENCY_BEFORE_RE.search(prefix) or _CURRENCY_AFTER_RE.match(suffix):
+        return _UNIT_CURRENCY
+    if _MONTHS_AFTER_RE.match(suffix):
+        return _UNIT_MONTHS
+    return None
+
+
+def _unit_number_tokens(text: str) -> set[tuple[str, str]]:
+    """Normalized (number, unit-class) pairs for unit-annotated numbers."""
+
+    pairs: set[tuple[str, str]] = set()
+    for match in _NUMBER_RE.finditer(text):
+        unit = _unit_class(text, match.start(), match.end())
+        if unit is not None:
+            pairs.add((match.group().replace(",", "."), unit))
+    return pairs
 
 
 def answer_is_grounded(answer: str, facts: tuple[ComposerFact, ...]) -> bool:
@@ -574,12 +619,20 @@ def answer_is_grounded(answer: str, facts: tuple[ComposerFact, ...]) -> bool:
     The check is deliberately strict and format-aware only to the extent of the
     decimal separator: "3,5" and "3.5" are the same number, "3,50" is not. A
     single unmatched number rejects the whole composed answer.
+
+    Numbers carrying a discernible unit annotation ("%3,5", "yüzde 3,5",
+    "3,50 TL", "48 ay") are additionally unit-checked: the same normalized
+    number must appear with the same unit class somewhere in the fact texts,
+    so evidence stating "%3,50" can never ground an answer saying "3,50 TL".
+    A number with no discernible unit keeps the presence-only behavior.
     """
 
     allowed: set[str] = set()
+    allowed_units: set[tuple[str, str]] = set()
     for fact in facts:
-        allowed |= _number_tokens(fact.value)
-        allowed |= _number_tokens(fact.product_title)
-        if fact.quote:
-            allowed |= _number_tokens(fact.quote)
-    return _number_tokens(answer) <= allowed
+        for text in (fact.value, fact.product_title, fact.quote or ""):
+            allowed |= _number_tokens(text)
+            allowed_units |= _unit_number_tokens(text)
+    if not _number_tokens(answer) <= allowed:
+        return False
+    return _unit_number_tokens(answer) <= allowed_units

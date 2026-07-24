@@ -469,6 +469,25 @@ async def test_model_failure_still_serves_the_template_answer() -> None:
     assert answer.citations
 
 
+async def test_compare_question_never_reaches_the_composer() -> None:
+    """Live battery regression: for COMPARE questions the model could phrase or
+    invent a winner claim ("bank X is better") that the number gate cannot
+    see. Ranking wording must always come from the deterministic verdict
+    template, so the composer is never called for COMPARE intent."""
+
+    composer = FixedComposer("ZİRAAT KATILIM daha avantajlıdır.")
+    reads = StrictSearchReads([ZIRAAT, VAKIF])
+    answer = await ChatService(reads, composer=composer, clock=lambda: NOW).answer(
+        ChatRequest(question=QUESTION_BEST_RATE, as_of=NOW)
+    )
+
+    assert composer.calls == 0
+    assert "ZİRAAT KATILIM daha avantajlıdır" not in answer.answer
+    assert "Kâr payı oranı açısından VAKIF KATILIM BANKASI A.Ş. daha avantajlıdır" in answer.answer
+    assert "%3,5" in answer.answer
+    assert "%4,2" in answer.answer
+
+
 def test_number_gate_normalizes_decimal_separator_only() -> None:
     facts = (
         ComposerFact(
@@ -485,3 +504,47 @@ def test_number_gate_normalizes_decimal_separator_only() -> None:
     assert not answer_is_grounded("Oran %3,50 düzeyindedir.", facts)
     assert not answer_is_grounded("Oran %3,5, vade 120 aydır.", facts)
     assert answer_is_grounded("Sayı içermeyen cevap.", facts)
+
+
+def test_number_gate_rejects_a_unit_swap_on_a_grounded_number() -> None:
+    """Live battery regression: evidence stating "%3,50" grounded a composed
+    answer saying "3,50 TL" because the gate only checked number presence.
+    A unit-annotated number must be grounded with a compatible unit."""
+
+    facts = (
+        ComposerFact(
+            bank_name="VAKIF KATILIM BANKASI A.Ş.",
+            product_title="Taşıt Finansmanı",
+            label="Kâr payı oranı",
+            value="%3,5",
+            quote="Aylık kâr payı oranı %3,5 olarak uygulanır.",
+        ),
+    )
+
+    # Percent evidence must not ground a currency claim of the same number.
+    assert not answer_is_grounded("Oran 3,5 TL olarak uygulanır.", facts)
+    assert not answer_is_grounded("Oran 3.5 lira olarak uygulanır.", facts)
+    assert not answer_is_grounded("Oran ₺3,5 olarak uygulanır.", facts)
+    # The same number with the same unit class stays grounded.
+    assert answer_is_grounded("Oran %3,5 olarak uygulanır.", facts)
+    assert answer_is_grounded("Oran yüzde 3,5 olarak uygulanır.", facts)
+    # A number with no discernible unit keeps presence-only behavior.
+    assert answer_is_grounded("Oran 3,5 olarak uygulanır.", facts)
+
+
+def test_number_gate_rejects_months_recast_as_currency() -> None:
+    facts = (
+        ComposerFact(
+            bank_name="VAKIF KATILIM BANKASI A.Ş.",
+            product_title="Taşıt Finansmanı",
+            label="Azami vade",
+            value="48 ay",
+            quote="Vade 48 aya kadar uzatılabilir.",
+        ),
+    )
+
+    assert not answer_is_grounded("Ücret 48 TL olarak belirtilmiştir.", facts)
+    assert not answer_is_grounded("Oran %48 düzeyindedir.", facts)
+    assert answer_is_grounded("Vade 48 ay olarak sunulmaktadır.", facts)
+    assert answer_is_grounded("Vade 48 aya kadar çıkabilmektedir.", facts)
+    assert answer_is_grounded("Vade değeri 48 olarak belirtilmiştir.", facts)
