@@ -90,8 +90,14 @@ def build_candidate(
     model_digest: str | None = None,
     prompt_version: str | None = None,
     model_fact_count: int = 0,
+    method: ExtractionMethod | None = None,
 ) -> ExtractionCandidate:
-    """Build a canonical candidate only when its mandatory title is source-bound."""
+    """Build a canonical candidate only when its mandatory title is source-bound.
+
+    ``method`` overrides the derived extraction method only for MANUAL intake:
+    a human-attested candidate carries no model facts by definition, so the
+    override refuses to coexist with an accepted model fact count.
+    """
 
     if draft.bank_id != document.bank_id:
         raise CandidateValidationError("bank_mismatch", "draft bank differs from source document")
@@ -101,6 +107,10 @@ def build_candidate(
         raise ValueError("model_fact_count must be non-negative")
     if model_fact_count and (model_id is None or model_digest is None or prompt_version is None):
         raise ValueError("accepted model facts require model identity, digest, and prompt version")
+    if method is not None and method is not ExtractionMethod.MANUAL:
+        raise ValueError("only the MANUAL extraction method may be forced by the caller")
+    if method is ExtractionMethod.MANUAL and model_fact_count:
+        raise ValueError("a manual candidate cannot carry accepted model facts")
 
     family = ProductFamily.UNKNOWN if draft.product_family is None else draft.product_family.value
     campaign_type = (
@@ -197,7 +207,8 @@ def build_candidate(
     if draft.secured is not None:
         add("/data/comparison_context/secured", draft.secured)
 
-    method = ExtractionMethod.HYBRID if model_fact_count else ExtractionMethod.RULE
+    if method is None:
+        method = ExtractionMethod.HYBRID if model_fact_count else ExtractionMethod.RULE
     metadata = ExtractionMetadata(
         method=method,
         extractor_version=extractor_version,

@@ -13,6 +13,7 @@ from pathlib import Path
 
 from katilim_analiz.config import get_settings
 from katilim_analiz.demo import seed_demo
+from katilim_analiz.intake import ingest_human_verified
 from katilim_analiz.logging import configure_logging
 from katilim_analiz.runtime.registry import (
     build_source_request,
@@ -49,6 +50,13 @@ def build_parser() -> argparse.ArgumentParser:
     )
     demo.add_argument("--dataset", type=Path)
     demo.add_argument("--registry", type=Path)
+
+    intake = commands.add_parser(
+        "human-verified-ingest",
+        help="upsert human-attested campaign facts for sources the collector cannot reach",
+    )
+    intake.add_argument("--intake", type=Path, required=True)
+    intake.add_argument("--registry", type=Path)
 
     enqueue = commands.add_parser(
         "enqueue-source", help="enqueue one registry-approved official source URL"
@@ -129,6 +137,22 @@ async def _demo_seed(arguments: argparse.Namespace) -> int:
         result = await seed_demo(
             database,
             seed_path=arguments.dataset,
+            registry_path=arguments.registry,
+        )
+    finally:
+        await database.dispose()
+    print(json.dumps(result.model_dump(mode="json"), ensure_ascii=False))
+    return 0
+
+
+async def _human_verified_ingest(arguments: argparse.Namespace) -> int:
+    settings = get_settings()
+    configure_logging(settings)
+    database = Database.from_settings(settings)
+    try:
+        result = await ingest_human_verified(
+            database,
+            intake_path=arguments.intake,
             registry_path=arguments.registry,
         )
     finally:
@@ -221,6 +245,8 @@ def main(argv: Sequence[str] | None = None) -> int:
         return asyncio.run(_registry_sync(arguments.registry))
     if arguments.command == "demo-seed":
         return asyncio.run(_demo_seed(arguments))
+    if arguments.command == "human-verified-ingest":
+        return asyncio.run(_human_verified_ingest(arguments))
     if arguments.command == "enqueue-source":
         return asyncio.run(_enqueue_source(arguments))
     if arguments.command == "scan":
