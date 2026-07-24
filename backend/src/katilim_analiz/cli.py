@@ -12,6 +12,7 @@ from collections.abc import Mapping, Sequence
 from datetime import datetime
 from pathlib import Path
 
+from katilim_analiz.candidates import run_candidate_discovery, write_discovery_report
 from katilim_analiz.config import get_settings
 from katilim_analiz.demo import seed_demo
 from katilim_analiz.export import export_public_dataset
@@ -84,6 +85,33 @@ def build_parser() -> argparse.ArgumentParser:
     )
     scan.add_argument("--registry", type=Path)
     scan.add_argument("--campaign-registry", type=Path)
+
+    discover = commands.add_parser(
+        "discover-candidates",
+        help=(
+            "suggest new candidate product/campaign pages on allowlisted hosts "
+            "for human review; never auto-enrolls a page into monitoring"
+        ),
+    )
+    discover.add_argument("--registry", type=Path)
+    discover.add_argument("--campaign-registry", type=Path)
+    discover.add_argument(
+        "--output-dir",
+        type=Path,
+        default=Path("datasets/discovery"),
+        help="directory that receives the dated suggestion report",
+    )
+    discover.add_argument(
+        "--max-candidates",
+        type=int,
+        default=30,
+        help="ranked suggestions kept (and HEAD-checked) per bank, 1..30",
+    )
+    discover.add_argument(
+        "--dry-run",
+        action="store_true",
+        help="list ranked suggestions without fetching the candidate pages",
+    )
 
     evaluation = commands.add_parser("eval", help="delegate to the versioned eval harness")
     evaluation.add_argument("eval_args", nargs=argparse.REMAINDER)
@@ -257,6 +285,39 @@ async def _campaign_scan(
     return int(result.has_failures)
 
 
+async def _discover_candidates(arguments: argparse.Namespace) -> int:
+    settings = get_settings()
+    configure_logging(settings)
+    report = await run_candidate_discovery(
+        settings,
+        registry_path=arguments.registry,
+        campaign_registry_path=arguments.campaign_registry,
+        dry_run=arguments.dry_run,
+        max_candidates_per_bank=arguments.max_candidates,
+    )
+    report_path = write_discovery_report(report, arguments.output_dir)
+    print(
+        json.dumps(
+            {
+                "report_path": str(report_path),
+                "dry_run": report.dry_run,
+                "suggestion_count": report.suggestion_count,
+                "banks": [
+                    {
+                        "bank_id": bank.bank_id,
+                        "examined_urls": bank.examined_urls,
+                        "suggestions": len(bank.suggestions),
+                        "notes": len(bank.notes),
+                    }
+                    for bank in report.banks
+                ],
+            },
+            ensure_ascii=False,
+        )
+    )
+    return 0
+
+
 def _delegate_eval(arguments: Sequence[str]) -> int:
     if not arguments:
         raise ValueError("eval requires a subcommand such as 'run'")
@@ -309,6 +370,10 @@ def main(argv: Sequence[str] | None = None) -> int:
                 scan_job_name=scan_job_name,
             )
         )
+    if arguments.command == "discover-candidates":
+        if not 1 <= arguments.max_candidates <= 30:
+            parser.error("--max-candidates must be within 1..30")
+        return asyncio.run(_discover_candidates(arguments))
     if arguments.command == "eval":
         try:
             return _delegate_eval(arguments.eval_args)
