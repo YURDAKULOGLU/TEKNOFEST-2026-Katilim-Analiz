@@ -1,0 +1,31 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://katilim-analiz.local/datasets/gold-extraction-manifest.schema.json",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "dataset_id", "dataset_version", "created_at", "description", "examples_path", "example_count", "content_files", "licence_boundary"],
+  "properties": {
+    "$schema": {"type": "string"},
+    "schema_version": {"const": "1.0"},
+    "dataset_id": {"const": "katilim-extraction-gold"},
+    "dataset_version": {"type": "string", "pattern": "^\\d+\\.\\d+\\.\\d+$"},
+    "created_at": {"type": "string", "format": "date-time"},
+    "description": {"type": "string", "minLength": 1},
+    "examples_path": {"type": "string", "minLength": 1},
+    "example_count": {"type": "integer", "minimum": 0},
+    "content_files": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["path", "sha256"],
+        "properties": {
+          "path": {"type": "string", "minLength": 1},
+          "sha256": {"type": "string", "pattern": "^[a-f0-9]{64}$"}
+        }
+      }
+    },
+    "licence_boundary": {"type": "string", "minLength": 1}
+  }
+}
