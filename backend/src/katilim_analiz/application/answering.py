@@ -407,8 +407,13 @@ def build_answer_bundle(
     requested = [
         dimension for dimension in plan.comparison_dimensions if dimension in _FACT_BUILDERS
     ]
+    # Data-level presence, not fact-level: a rate bound through table hints is
+    # INFERRED and builds no stated-evidence fact, yet it is in the source —
+    # claiming absence for it would be as wrong as the fabrication this guards.
     requested_stated = not requested or any(
-        fact.dimension in requested for _, facts in per_record for fact in facts
+        _dimension_data_present(projection, dimension)
+        for projection, _ in per_record
+        for dimension in requested
     )
     absence_sentences: list[str] = []
     if not requested_stated:
