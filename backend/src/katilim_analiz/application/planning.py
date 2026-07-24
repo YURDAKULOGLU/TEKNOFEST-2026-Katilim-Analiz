@@ -93,6 +93,50 @@ _BANK_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("ziraat-katilim", re.compile(r"\bziraat\b(?: katilim\w*)?(?: bankasi\w*)?")),
 )
 
+#: Live QA finding 3: similar-name conventional institutions must never be
+#: resolved to a participation bank through prefix tolerance ("vakifbank"
+#: matching the "vakif" pattern, "emlak konut" matching "emlak").  These
+#: patterns run over the canonicalized question BEFORE the bank patterns; a
+#: hit is decisive unless the question ALSO explicitly names an in-scope
+#: katilim form (see _IN_SCOPE_FORMS).
+_OUT_OF_SCOPE_INSTITUTIONS: tuple[re.Pattern[str], ...] = tuple(
+    re.compile(rf"\b{phrase}\w*")
+    for phrase in (
+        "vakifbank",
+        "vakiflar bankasi",
+        "ziraat bankasi",
+        "emlak konut",
+        "halkbank",
+        "garanti",
+        "akbank",
+        "is bankasi",
+        "isbank",
+        "yapi kredi",
+        "denizbank",
+        "qnb",
+        "seker bank",
+        "sekerbank",
+    )
+)
+#: Explicit in-scope participation-bank names; naming one of these alongside
+#: an out-of-scope institution keeps the question answerable ("Vakifbank ile
+#: Vakif Katilim ayni mi?" still plans normally).
+_IN_SCOPE_FORMS: tuple[re.Pattern[str], ...] = tuple(
+    re.compile(rf"\b{phrase}\w*")
+    for phrase in (
+        "vakif katilim",
+        "ziraat katilim",
+        "emlak katilim",
+        "turkiye finans",
+        "kuveyt turk",
+        "hayat finans",
+        "albaraka",
+        "dunya katilim",
+        "tom katilim",
+        "adil katilim",
+    )
+)
+
 _FINANCING_SUBFAMILY_TERMS = ("konut", "tasit", "ihtiyac")
 _PRODUCT_TERMS: tuple[tuple[ProductFamily, tuple[str, ...]], ...] = (
     (ProductFamily.FINANCING, ("finansman", "konut", "tasit", "ihtiyac")),
@@ -217,9 +261,7 @@ def _consumed_spans(text: str) -> list[tuple[int, int]]:
         for term in terms
         for match in re.finditer(re.escape(term), text)
     ]
-    spans.extend(
-        match.span() for _, pattern in _BANK_PATTERNS for match in pattern.finditer(text)
-    )
+    spans.extend(match.span() for _, pattern in _BANK_PATTERNS for match in pattern.finditer(text))
     spans.extend(match.span() for match in _TERM_DURATION.finditer(text))
     return spans
 
@@ -260,6 +302,16 @@ class SafeChatPlanner:
             return PlannedQuery(
                 plan=ChatQueryPlan(intent=QueryIntent.UNKNOWN),
                 warnings=("Soru güvenli sorgu planı sınırlarının dışında bırakıldı.",),
+            )
+        if any(pattern.search(canonical) for pattern in _OUT_OF_SCOPE_INSTITUTIONS) and not any(
+            pattern.search(canonical) for pattern in _IN_SCOPE_FORMS
+        ):
+            # Live QA finding 3: "Vakifbank" or "Ziraat Bankasi" must abstain
+            # deterministically instead of answering with a participation
+            # bank's numbers through name-prefix tolerance.
+            return PlannedQuery(
+                plan=ChatQueryPlan(intent=QueryIntent.UNKNOWN),
+                warnings=("Sorudaki kurum katılım bankası kapsamı dışında.",),
             )
 
         family = _first_match(canonical, _PRODUCT_TERMS)
