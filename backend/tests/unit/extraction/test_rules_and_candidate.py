@@ -12,6 +12,7 @@ from katilim_analiz.contracts import (
     ProductFamily,
     RateKind,
     RatePeriod,
+    RewardKind,
     SalesChannel,
 )
 from katilim_analiz.extraction import CandidateValidationError, build_candidate, validate_candidate
@@ -488,6 +489,21 @@ def test_branded_point_currency_reads_as_points() -> None:
     assert draft.campaign_type is not None
     assert draft.campaign_type.value is CampaignType.POINTS
     assert "title_hint:campaign_type" in draft.issues
+
+
+def test_tl_denominated_branded_point_credit_is_a_money_reward() -> None:
+    document = make_document(
+        ("heading", "Market Kampanyası"),
+        ("paragraph", "Market alışverişlerinize 700 TL ParafPara kazanın."),
+    )
+
+    draft = extract_rules(document)
+
+    assert len(draft.rewards) == 1
+    reward = draft.rewards[0].value
+    assert reward.kind is RewardKind.MONEY
+    assert reward.money is not None
+    assert reward.money.amount == Decimal("700")
 
 
 def test_bare_number_term_cell_binds_only_under_an_ay_labeled_header() -> None:

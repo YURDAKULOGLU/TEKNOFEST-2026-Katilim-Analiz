@@ -42,7 +42,9 @@ from katilim_analiz.llm import (
 # 1.9: a single campaign-type marker in the title now outranks a mixed body,
 # and branded point currencies (ParafPara, Worldpuan) read as POINTS, so
 # card-campaign classifications change and records must reprocess.
-EXTRACTOR_VERSION = "hybrid-extractor/1.9"
+# 1.10: a TL-denominated branded point credit ("700 TL ParafPara") reads as a
+# money reward, so points-campaign records gain their required REWARD fact.
+EXTRACTOR_VERSION = "hybrid-extractor/1.10"
 
 
 def extraction_processing_identity() -> str:
