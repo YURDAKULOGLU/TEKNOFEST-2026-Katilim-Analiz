@@ -240,6 +240,24 @@ def test_model_offline_with_required_fields_rule_resolved_validates() -> None:
     assert decision.blocking_issues == ()
 
 
+def test_title_hint_is_provenance_bookkeeping_not_a_block() -> None:
+    """Issue #2: a heading-disambiguated card installment campaign validates."""
+
+    decision = evaluate_validation(
+        ProductFamily.CARD,
+        CampaignType.INSTALLMENT,
+        [
+            "title_hint:campaign_type",
+            "unresolved:term",
+            "unresolved:rate",
+            "unresolved:reward",
+        ],
+    )
+
+    assert decision.status is RecordStatus.VALIDATED
+    assert decision.blocking_issues == ()
+
+
 def test_model_offline_never_rescues_a_missing_required_field() -> None:
     """Issue #22 safety: the unresolved:<field> marker still blocks alone."""
 

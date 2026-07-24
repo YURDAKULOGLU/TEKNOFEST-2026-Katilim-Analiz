@@ -447,6 +447,49 @@ def test_table_row_term_range_or_ragged_row_stays_unbound() -> None:
     assert all(rate.value.term_months is None for rate in draft.rates)
 
 
+def test_single_title_type_marker_outranks_a_mixed_body() -> None:
+    """Issue #2: "A101'de 6 Taksit" is an installment campaign even when the
+    body also advertises discounts and points."""
+
+    document = make_document(
+        ("heading", "A101'de 6 Taksit"),
+        ("paragraph", "Kredi kartınızla A101'de 6 taksit imkânı."),
+        ("paragraph", "Seçili ürünlerde ayrıca indirim ve puan fırsatları sunulur."),
+    )
+
+    draft = extract_rules(document)
+
+    assert draft.campaign_type is not None
+    assert draft.campaign_type.value is CampaignType.INSTALLMENT
+    assert "title_hint:campaign_type" in draft.issues
+    assert "campaign_type_ambiguous" not in draft.issues
+
+
+def test_mixed_title_keeps_the_campaign_type_ambiguous() -> None:
+    document = make_document(
+        ("heading", "Taksit ve Puan Fırsatı"),
+        ("paragraph", "Hem taksit hem puan kazanın, ayrıca indirim var."),
+    )
+
+    draft = extract_rules(document)
+
+    assert draft.campaign_type is None
+    assert "campaign_type_ambiguous" in draft.issues
+
+
+def test_branded_point_currency_reads_as_points() -> None:
+    document = make_document(
+        ("heading", "Market Alışverişlerinize 700 TL ParafPara!"),
+        ("paragraph", "Kampanya kapsamında taksit imkânı da bulunmaktadır."),
+    )
+
+    draft = extract_rules(document)
+
+    assert draft.campaign_type is not None
+    assert draft.campaign_type.value is CampaignType.POINTS
+    assert "title_hint:campaign_type" in draft.issues
+
+
 def test_bare_number_term_cell_binds_only_under_an_ay_labeled_header() -> None:
     document = make_document(
         ("heading", "Taşıt Finansmanı Oranları"),

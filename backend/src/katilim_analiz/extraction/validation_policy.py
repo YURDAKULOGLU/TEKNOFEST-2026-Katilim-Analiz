@@ -148,6 +148,10 @@ _NON_BLOCKING_ISSUE_PREFIXES: tuple[str, ...] = (
     # counterpart, ``registry_page_family_conflict``, carries no prefix and is
     # therefore treated as an unknown (blocking) issue by design.
     "registry_hint:",
+    # ``title_hint:*`` (issue #2) annotates a classification the campaign's
+    # own heading disambiguated after the body named several mechanics; like
+    # the registry hint it explains provenance, never absence.
+    "title_hint:",
 )
 
 _NON_BLOCKING_ISSUE_SUFFIXES: tuple[str, ...] = (":rules_fallback",)
