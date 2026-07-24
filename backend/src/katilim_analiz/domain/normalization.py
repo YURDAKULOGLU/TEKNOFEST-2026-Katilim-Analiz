@@ -228,13 +228,14 @@ def _parse_decimal_token(token: str, *, currency: str | None, scale: str | None)
         decimal_separator = ","
     elif dot_count == 1:
         fractional_length = len(compact.rsplit(".", 1)[1])
-        if currency == "TRY":
-            if fractional_length == 3:
-                decimal_separator = None
-            else:
-                raise ValueError("TRY decimals must use a comma")
-        elif scale is not None and fractional_length == 3:
+        if fractional_length == 3:
+            # Turkish sources group thousands with a dot regardless of the
+            # currency token ("10.000 USD" is ten thousand dollars).  Reading
+            # the dot as a decimal point for foreign currencies collapsed the
+            # magnitude by a thousand, which is a wrong value, not a miss.
             decimal_separator = None
+        elif currency == "TRY":
+            raise ValueError("TRY decimals must use a comma")
         else:
             decimal_separator = "."
 
@@ -424,6 +425,11 @@ _BASIS_POINT_RE = re.compile(rf"\b(?P<number>{_RATE_NUMBER})\s+baz\s+puan\b")
 _RATE_BOUND_RE = re.compile(
     r"\b(?:baslayan|itibaren|azami|asgari|en\s+fazla|en\s+az|arasi|arasinda)\b"
 )
+#: "1 Temmuz 2026 tarihinden itibaren gecerli oran" dates the rate's validity;
+#: the "itibaren" there is not a from-bound on the rate value itself.  The
+#: phrase is removed before the bound check so a dated in-force rate can still
+#: normalize; a bare "%3'ten itibaren" keeps refusing as a bound.
+_DATE_FROM_VALIDITY_RE = re.compile(r"\btarih(?:in)?[dt]en\s+itibaren\b")
 
 
 def _parse_rate_number(token: str) -> Decimal:
@@ -541,7 +547,8 @@ def normalize_rate(
     unique_matches = {(span, value) for span, value in matches}
     if not unique_matches:
         return _failure(raw, NormalizationStatus.INVALID, "rate_value_not_found")
-    if len(unique_matches) != 1 or _RATE_BOUND_RE.search(text) is not None:
+    bound_text = _DATE_FROM_VALIDITY_RE.sub(" ", text)
+    if len(unique_matches) != 1 or _RATE_BOUND_RE.search(bound_text) is not None:
         return _failure(raw, NormalizationStatus.AMBIGUOUS, "non_exact_or_multiple_rates")
     value_percent = next(iter(unique_matches))[1]
 

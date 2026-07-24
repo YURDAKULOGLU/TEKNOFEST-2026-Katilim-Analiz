@@ -63,9 +63,18 @@ def _waiver_ceiling(text: str) -> MoneyValue | None:
     return normalize_money(head[0]).value
 
 
+_EARLY_EXIT_RE = re.compile(
+    r"\berken\s+(?:kapama|kapatma|[oö]deme)\b",
+)
+
+
 def classify_fee(lowered: str) -> tuple[FeeKind, FeeBasis]:
     """Name the fee and the period it is charged over."""
 
+    if _EARLY_EXIT_RE.search(lowered) is not None:
+        # An early-closure commission prices leaving the financing early; it
+        # is charged once, when the exit happens.
+        return FeeKind.EARLY_EXIT, FeeBasis.ONE_TIME
     if "tahsis" in lowered:
         return FeeKind.ALLOCATION, FeeBasis.ONE_TIME
     if "aidat" in lowered or "yıllık" in lowered or "yillik" in lowered:

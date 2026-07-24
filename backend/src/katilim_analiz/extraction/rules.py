@@ -3,8 +3,9 @@
 from __future__ import annotations
 
 import re
-from collections.abc import Iterable, Mapping
+from collections.abc import Callable, Iterable, Mapping
 from dataclasses import dataclass, replace
+from datetime import date
 from decimal import Decimal, InvalidOperation
 from enum import StrEnum
 
@@ -190,9 +191,11 @@ _CAMPAIGN_PATTERNS: Mapping[CampaignType, tuple[re.Pattern[str], ...]] = {
     CampaignType.CASHBACK: (re.compile(r"\b(?:nakit\s+iade|para\s+iadesi)\b", re.I),),
     CampaignType.DISCOUNT: (re.compile(r"\bindirim(?:li|i)?\b", re.I),),
     # Branded card-point currencies (Paraf, World) name a points reward as
-    # unambiguously as the word "puan" itself.
+    # unambiguously as the word "puan" itself.  "Baz puan" is a pricing unit
+    # (basis points, gold-edge-num-003), never a points reward, so a "puan"
+    # directly preceded by "baz" does not mark the campaign.
     CampaignType.POINTS: (
-        re.compile(r"\b(?:puan|bonus)\b", re.I),
+        re.compile(r"\b(?:(?<!baz\s)puan|bonus)\b", re.I),
         re.compile(r"\b(?:parafpara|worldpuan)\b", re.I),
     ),
     CampaignType.FEE_WAIVER: (
@@ -213,6 +216,88 @@ _CAMPAIGN_PATTERNS: Mapping[CampaignType, tuple[re.Pattern[str], ...]] = {
         ),
     ),
 }
+
+#: A fee noun stated as a noun, not as the "-siz" waiver derivation: "ücretsiz"
+#: alone names no fee, so it cannot anchor a fee-waiver campaign by itself.
+_FEE_NOUN_CONTEXT = re.compile(
+    r"\b(?:ücret|ucret|masraf|komisyon|aidat)(?!s[ıi]z)",
+    re.I,
+)
+#: "Azami/maksimum" immediately ahead of "finansman orani" names the LTV share.
+_LTV_LABEL_PREFIX = re.compile(r"\b(?:azami|maksimum|maks)[\s.]*$", re.I)
+
+
+def _is_ltv_label_financing_rate_marker(block_kind: str, text: str, match: re.Match[str]) -> bool:
+    """Veto a FINANCING_RATE marker that is really an LTV table label.
+
+    Gold-ltv-001/002 and gold-edge-table-004: "(Azami) Finansman Orani" in a
+    value-bracket table states the financing share of the asset value, not a
+    priced campaign.  A marker that itself names the profit ("kar"/"payi")
+    stays a campaign marker; a bare "finansman orani" is vetoed when it is
+    prefixed with azami/maksimum or sits in an amount-bracket context.
+    """
+
+    del block_kind
+    if re.search(r"k[âa]r|pay[ıi]", match.group(), re.I) is not None:
+        return False
+    if _LTV_LABEL_PREFIX.search(text[: match.start()]) is not None:
+        return True
+    return _AMOUNT_BRACKET_CONTEXT.search(text) is not None
+
+
+def _is_side_perk_fee_waiver_marker(block_kind: str, text: str, match: re.Match[str]) -> bool:
+    """Veto a fee-waiver marker that prices a side service, not the campaign.
+
+    Gold-edge-camp-003: a bare "ücretsiz EFT/havale" perk sentence must not
+    type the whole campaign fee_waiver.  The marker counts only when the same
+    block also carries a fee noun (ücret/masraf/komisyon/aidat) or when the
+    marker stands in the title itself.
+    """
+
+    del match
+    if block_kind == "heading":
+        return False
+    return _FEE_NOUN_CONTEXT.search(text) is None
+
+
+_CAMPAIGN_MARKER_VETOES: Mapping[CampaignType, Callable[[str, str, re.Match[str]], bool]] = {
+    CampaignType.FINANCING_RATE: _is_ltv_label_financing_rate_marker,
+    CampaignType.FEE_WAIVER: _is_side_perk_fee_waiver_marker,
+}
+
+
+def _campaign_marker_match(
+    pattern: re.Pattern[str],
+    campaign_type: CampaignType,
+    block_kind: str,
+    text: str,
+) -> re.Match[str] | None:
+    veto = _CAMPAIGN_MARKER_VETOES.get(campaign_type)
+    if veto is None:
+        return pattern.search(text)
+    for match in pattern.finditer(text):
+        if not veto(block_kind, text, match):
+            return match
+    return None
+
+
+def _campaign_pattern_hits(
+    blocks: Iterable[tuple[str, str, str]],
+) -> dict[CampaignType, TextSpan]:
+    """Campaign-type ``_pattern_hits`` with per-type marker vetoes applied."""
+
+    hits: dict[CampaignType, TextSpan] = {}
+    for block_id, block_kind, text in blocks:
+        for value, value_patterns in _CAMPAIGN_PATTERNS.items():
+            if value in hits:
+                continue
+            for pattern in value_patterns:
+                match = _campaign_marker_match(pattern, value, block_kind, text)
+                if match is not None and 0 < len(match.group()) <= 500:
+                    hits[value] = TextSpan(block_id, match.group(), match.start(), match.end())
+                    break
+    return hits
+
 
 _SEGMENT_PATTERNS: Mapping[str, re.Pattern[str]] = {
     # "Gercek kisi" is banking Turkish for a natural person; a page that scopes
@@ -573,6 +658,75 @@ def _profit_rate_table_hint(
     )
 
 
+#: A column whose own label names the annual cost ("Yillik Maliyet Orani").
+_ANNUAL_COST_COLUMN_LABEL = re.compile(
+    r"\b(?:y[ıi]ll[ıi]k|senelik)\s+(?:toplam\s+)?maliyet\s+oran", re.I
+)
+
+
+def _annual_cost_rate_table_hint(
+    text: str,
+    *,
+    financing_document: bool,
+) -> _RateContextHint | None:
+    """Read an annual-cost-rate hint out of a table header row, if safe.
+
+    Gold-edge-table-003: a "Vade | Yillik Maliyet Orani" table adjacent to a
+    profit-rate table prices the annual cost, not the monthly profit.  The
+    hint mirrors the profit-table shape rules: exactly one cost-labeled
+    column, a term column, and a financing context.
+    """
+
+    if _NON_FINANCING_PROFIT_CONTEXT.search(text) is not None:
+        return None
+    cells = _table_cells(text)
+    if len(cells) < 2:
+        return None
+    cost_columns = tuple(
+        index
+        for index, (_start, _end, cell) in enumerate(cells)
+        if _ANNUAL_COST_COLUMN_LABEL.search(cell) is not None
+    )
+    if len(cost_columns) != 1:
+        return None
+    cost_column = cost_columns[0]
+    other_cells = tuple(
+        cell for index, (_start, _end, cell) in enumerate(cells) if index != cost_column
+    )
+    term_columns = tuple(
+        index
+        for index, (_start, _end, cell) in enumerate(cells)
+        if index != cost_column and _TERM_COLUMN_LABEL.search(cell) is not None
+    )
+    if not term_columns:
+        return None
+    if not financing_document and _FINANCING_RATE_CONTEXT.search(text) is None:
+        return None
+    term_column = term_columns[0] if len(term_columns) == 1 else None
+    return _RateContextHint(
+        kind=RateKind.ANNUAL_COST_RATE,
+        period=RatePeriod.ANNUAL,
+        profit_column=cost_column,
+        column_count=len(cells),
+        sole_rate_column=all(_RATE_LIKE_COLUMN_LABEL.search(cell) is None for cell in other_cells),
+        term_column=term_column,
+        term_column_in_months=(
+            term_column is not None
+            and re.search(r"\bay\b", cells[term_column][2], re.I) is not None
+        ),
+    )
+
+
+def _is_header_shaped_row(text: str) -> bool:
+    """A table row that names columns instead of stating values.
+
+    Value rows always carry at least one digit (an amount, a term, or a
+    percentage); a letter-bearing row without any digit is a header shape.
+    """
+
+    return any(ch.isalpha() for ch in text) and not any(ch.isdigit() for ch in text)
+
+
 _ROW_TERM_MONTHS = re.compile(r"(?P<months>\d{1,3})\s*ay\b\.?", re.I)
 _ROW_TERM_BARE_NUMBER = re.compile(r"\d{1,3}")
 
@@ -650,6 +804,10 @@ def _rate_context_hints(
 
         if kind == "table":
             table_hint = _profit_rate_table_hint(text, financing_document=financing_document)
+            if table_hint is None:
+                table_hint = _annual_cost_rate_table_hint(
+                    text, financing_document=financing_document
+                )
             if table_hint is not None:
                 current_table_hint = table_hint
                 hints[block_id] = table_hint
@@ -687,6 +845,14 @@ def _rate_context_hints(
         ):
             current_table_hint = _RateContextHint(kind=RateKind.LTV_RATIO, period=None)
             hints[block_id] = current_table_hint
+            continue
+
+        if kind == "table" and _is_header_shaped_row(text):
+            # Gold-edge-table-003: a header-shaped row that produced no hint of
+            # its own opens a table whose meaning is unknown; the previous
+            # table's hint must not bleed into it.  Value rows (they carry
+            # digits) keep inheriting the current hint.
+            current_table_hint = None
             continue
 
         if kind == "table" and current_table_hint is not None:
@@ -766,11 +932,11 @@ def campaign_type_evidence_span(
     if not patterns:
         return None
     safe_blocks = tuple(
-        (block.id, block.text)
+        (block.id, block.kind, block.text)
         for block in document.blocks
         if not is_obvious_prompt_injection(block.text)
     )
-    return _pattern_hits(safe_blocks, {campaign_type: patterns}).get(campaign_type)
+    return _campaign_pattern_hits(safe_blocks).get(campaign_type)
 
 
 def supported_campaign_types(text: str) -> frozenset[CampaignType]:
@@ -814,6 +980,27 @@ def _dedupe_bound[T](facts: Iterable[BoundFact[T]]) -> tuple[BoundFact[T], ...]:
             seen.add(key)
             result.append(fact)
     return tuple(result)
+
+
+def _rate_out_of_force(text: str, reference_date: date) -> bool:
+    """Whether a rate sentence dates its own validity outside the clock.
+
+    Gold-edge-conf-002: "30 Haziran 2026 tarihine kadar geçerli ... %3,20"
+    states a rate that has already expired; publishing it would price the
+    product with a figure the source itself has withdrawn.  A sentence whose
+    own validity window excludes the reference date is skipped — a rate that
+    is not yet or no longer in force is a miss at worst, never a wrong value.
+    Sentences without a parseable window are untouched.
+    """
+
+    if _DATE_MARKER.search(text) is None:
+        return False
+    window = normalize_validity(text, reference_date=reference_date).value
+    if window is None:
+        return False
+    if window.ends_on is not None and window.ends_on < reference_date:
+        return True
+    return window.starts_on is not None and window.starts_on > reference_date
 
 
 def _fee_from_span(span: TextSpan) -> FeeValue | None:
@@ -917,7 +1104,9 @@ def extract_rules(document: CleanDocument) -> ExtractionDraft:
     elif len(family_hits) > 1:
         issues.append("product_family_ambiguous")
 
-    type_hits = _pattern_hits(safe_blocks, _CAMPAIGN_PATTERNS)
+    type_hits = _campaign_pattern_hits(
+        (block.id, block.kind, block.text) for block in safe_source_blocks
+    )
     campaign_type: BoundFact[CampaignType] | None = None
     if len(type_hits) == 1:
         campaign_value, span = next(iter(type_hits.items()))
@@ -929,7 +1118,7 @@ def extract_rules(document: CleanDocument) -> ExtractionDraft:
         # marker in the title outranks the body's noise; a title that is
         # itself mixed leaves the ambiguity standing.
         title_hits = (
-            _pattern_hits(((title.span.block_id, title.value),), _CAMPAIGN_PATTERNS)
+            _campaign_pattern_hits(((title.span.block_id, "heading", title.value),))
             if title is not None
             else {}
         )
@@ -991,6 +1180,7 @@ def extract_rules(document: CleanDocument) -> ExtractionDraft:
             if (
                 normalized_rate.value is not None
                 and normalized_rate.value.kind is not RateKind.UNKNOWN
+                and not _rate_out_of_force(text, document.cleaned_at.date())
             ):
                 rates.append(
                     BoundFact(
