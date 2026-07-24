@@ -87,6 +87,8 @@ async def test_named_bank_becomes_a_structured_filter_not_a_keyword() -> None:
     assert "vakif" not in planned.plan.keywords
     assert "katilim" not in planned.plan.keywords
     assert "in" not in planned.plan.keywords
+    # The sub-family word stays searchable so tasit/ihtiyac sheets stay apart.
+    assert "tasit" in planned.plan.keywords
 
 
 @pytest.mark.asyncio

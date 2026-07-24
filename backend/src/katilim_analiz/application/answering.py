@@ -155,9 +155,17 @@ def select_relevant(
     ):
         # Keywords rank, they must not veto: a leftover question word no
         # record states ("azami") would otherwise erase an answer set the
-        # plan's structured filters already pinned down.  Scoring below still
-        # prefers records that do state the keywords.
-        surviving = list(projections)
+        # plan's structured filters already pinned down.  Records matching at
+        # least one keyword keep priority so a sub-family word ("tasit")
+        # still scopes the answer to the right product sheet.
+        partial = [
+            projection
+            for projection in projections
+            if any(
+                _keyword_matches(keyword, _projection_words(projection)) for keyword in keywords
+            )
+        ]
+        surviving = partial or list(projections)
 
     canonical_question = f" {canonicalize_turkish_text(question)} "
     mentioned = [
@@ -188,8 +196,8 @@ def select_relevant(
     return ordered[: plan.limit]
 
 
-def _stated_evidence(
-    projection: CampaignProjection, pointer_prefix: str
+def _evidence_with_status(
+    projection: CampaignProjection, pointer_prefix: str, status: EvidenceStatus
 ) -> tuple[EvidenceRef, ...]:
     alternate = pointer_prefix.removeprefix("/data")
     return tuple(
@@ -197,7 +205,7 @@ def _stated_evidence(
             (
                 evidence
                 for evidence in projection.record.evidence
-                if evidence.status is EvidenceStatus.STATED
+                if evidence.status is status
                 and (
                     evidence.field_pointer.startswith(pointer_prefix)
                     or evidence.field_pointer.startswith(alternate)
@@ -208,27 +216,62 @@ def _stated_evidence(
     )
 
 
-def _rate_fact(projection: CampaignProjection) -> _FieldFact | None:
+def _stated_evidence(
+    projection: CampaignProjection, pointer_prefix: str
+) -> tuple[EvidenceRef, ...]:
+    return _evidence_with_status(projection, pointer_prefix, EvidenceStatus.STATED)
+
+
+def _inferred_evidence(
+    projection: CampaignProjection, pointer_prefix: str
+) -> tuple[EvidenceRef, ...]:
+    return _evidence_with_status(projection, pointer_prefix, EvidenceStatus.INFERRED)
+
+
+def _rate_fact(
+    projection: CampaignProjection,
+    requested_term_months: int | None = None,
+) -> _FieldFact | None:
     rates = projection.record.data.rates
-    selected = next(
+    monthly = [
+        (index, rate)
+        for index, rate in enumerate(rates)
+        if rate.kind is RateKind.FINANCING_PROFIT_RATE and rate.period is RatePeriod.MONTHLY
+    ]
+    term_specific = next(
         (
             (index, rate)
-            for index, rate in enumerate(rates)
-            if rate.kind is RateKind.FINANCING_PROFIT_RATE and rate.period is RatePeriod.MONTHLY
+            for index, rate in monthly
+            if requested_term_months is not None and rate.term_months == requested_term_months
         ),
         None,
-    ) or next(((index, rate) for index, rate in enumerate(rates)), None)
+    )
+    selected = (
+        term_specific
+        or next(iter(monthly), None)
+        or next(((index, rate) for index, rate in enumerate(rates)), None)
+    )
     if selected is None:
         return None
     index, rate = selected
-    evidence = _stated_evidence(projection, f"/data/rates/{index}")
+    # A table-bound rate is INFERRED (its meaning came from the header), yet
+    # its quote is still the verbatim cell; the inferred refs back the fact
+    # when no stated sentence names the rate.
+    evidence = _stated_evidence(projection, f"/data/rates/{index}") or _inferred_evidence(
+        projection, f"/data/rates/{index}"
+    )
     if not evidence:
         return None
+    clause = (
+        f"{rate.term_months} ay vadede kâr payı oranı {rate.raw} olarak sunulmaktadır"
+        if selected is term_specific and rate.term_months is not None
+        else f"kâr payı oranı {rate.raw} olarak sunulmaktadır"
+    )
     return _FieldFact(
         dimension=ComparisonDimension.RATE,
         label="Kâr payı oranı",
         value=rate.raw,
-        clause=f"kâr payı oranı {rate.raw} olarak sunulmaktadır",
+        clause=clause,
         evidence=evidence,
     )
 
@@ -307,6 +350,10 @@ _FACT_BUILDERS = {
     ComparisonDimension.REWARD: _reward_fact,
 }
 
+#: "36 ay vadede oran yuzde kac?" — the stated month figure selects the
+#: matching per-term table rate instead of the headline rate.
+_REQUESTED_TERM_MONTHS = re.compile(r"\b(\d{1,4}) ay\b")
+
 _DIMENSION_ABSENCE_NAMES = {
     ComparisonDimension.RATE: "kâr payı oranı",
     ComparisonDimension.TERM: "vade",
@@ -318,24 +365,31 @@ _DIMENSION_ABSENCE_NAMES = {
 def _record_facts(
     projection: CampaignProjection,
     dimensions: list[ComparisonDimension],
+    requested_term_months: int | None = None,
 ) -> list[_FieldFact]:
     requested = [dimension for dimension in dimensions if dimension in _FACT_BUILDERS]
-    facts = [
-        fact
-        for dimension in requested
-        if (fact := _FACT_BUILDERS[dimension](projection)) is not None
-    ]
+
+    def build(dimension: ComparisonDimension) -> _FieldFact | None:
+        if dimension is ComparisonDimension.RATE:
+            return _rate_fact(projection, requested_term_months)
+        return _FACT_BUILDERS[dimension](projection)
+
+    facts = [fact for dimension in requested if (fact := build(dimension)) is not None]
     if facts:
         # Supplement with the headline price so a term/fee answer still names
         # the stated rate (the spec dialogs pair rate and term in one answer).
-        supplements = (_rate_fact(projection), _term_fact(projection))
+        supplements = (_rate_fact(projection, requested_term_months), _term_fact(projection))
         for supplement in supplements:
             if supplement is not None and all(fact.label != supplement.label for fact in facts):
                 facts.append(supplement)
         return facts[:3]
     # No requested dimension is stated on this record: fall back to its
     # headline facts so a list/detail question still gets the stated values.
-    fallback = (_rate_fact(projection), _amount_fact(projection), _term_fact(projection))
+    fallback = (
+        _rate_fact(projection, requested_term_months),
+        _amount_fact(projection),
+        _term_fact(projection),
+    )
     return [fact for fact in fallback if fact is not None][:2]
 
 
@@ -396,9 +450,13 @@ def build_answer_bundle(
 ) -> AnswerBundle | None:
     """Assemble the deterministic answer; ``None`` means no citable fact exists."""
 
+    term_match = _REQUESTED_TERM_MONTHS.search(canonicalize_turkish_text(question))
+    requested_term_months = int(term_match.group(1)) if term_match else None
     per_record: list[tuple[CampaignProjection, list[_FieldFact]]] = []
     for projection in projections:
-        facts = _record_facts(projection, plan.comparison_dimensions)
+        facts = _record_facts(
+            projection, plan.comparison_dimensions, requested_term_months=requested_term_months
+        )
         if facts:
             per_record.append((projection, facts))
     if not per_record:
