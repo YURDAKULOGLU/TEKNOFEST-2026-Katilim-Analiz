@@ -2,15 +2,15 @@
   "$schema": "../../../schemas/gold-extraction-manifest.schema.json",
   "schema_version": "1.0",
   "dataset_id": "katilim-extraction-gold",
-  "dataset_version": "0.1.0",
+  "dataset_version": "0.2.0",
   "created_at": "2026-07-24T12:00:00+03:00",
-  "description": "Synthetic gold-standard examples for per-field evaluation of the extraction layer. Inputs are CleanDocument-shaped blocks; expected values include explicit nulls where honest abstention is the correct answer.",
+  "description": "Synthetic gold-standard examples for per-field evaluation of the extraction layer. Inputs are CleanDocument-shaped blocks; expected values include explicit nulls where honest abstention is the correct answer. v0.2 adds 21 adversarial edge cases: zero/boundary numbers, separator traps, conflicting statements, table pathologies, campaign-type traps, currency/segment conflicts, content injection, and validity traps.",
   "examples_path": "examples.jsonl",
-  "example_count": 25,
+  "example_count": 46,
   "content_files": [
     {
       "path": "examples.jsonl",
-      "sha256": "208caf399fedd24fe4f40c0ebb4bd7365206afd793e43040c0fb7aadfdd99c0b"
+      "sha256": "d18e70b15bf25bdf71ea72b22303e35bb6cc6dd9e1f828920f2b1bb7def31b33"
     }
   ],
   "licence_boundary": "All example texts are synthetic and written for this repository; they imitate live wording patterns but contain no bank-specific real numbers or third-party excerpts. Apache-2.0."
