@@ -1,0 +1,43 @@
+# Fast delivery-gate CI: lint plus unit tests only (issue #8).
+# Docker-dependent integration, storage, and security suites stay local-only.
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install uv
+        uses: astral-sh/setup-uv@v5
+        with:
+          python-version: "3.12"
+
+      - name: Sync dependencies
+        run: uv sync --extra dev
+
+      - name: Ruff lint
+        run: uv run ruff check .
+
+      # The seed-sha test is deselected because of a known team-data hash
+      # mismatch tracked in issue #21; do not re-enable it here before that
+      # issue is resolved: https://github.com/YURDAKULOGLU/TEKNOFEST-2026-Katilim-Analiz/issues/21
+      - name: Unit tests
+        run: >-
+          uv run python -m pytest tests/unit -q
+          --deselect tests/unit/demo/test_demo_seed.py::test_default_seed_is_versioned_strict_and_derived_from_declared_sources

@@ -9,10 +9,12 @@ import os
 import subprocess
 import sys
 from collections.abc import Mapping, Sequence
+from datetime import datetime
 from pathlib import Path
 
 from katilim_analiz.config import get_settings
 from katilim_analiz.demo import seed_demo
+from katilim_analiz.export import export_public_dataset
 from katilim_analiz.intake import ingest_human_verified
 from katilim_analiz.logging import configure_logging
 from katilim_analiz.runtime.registry import (
@@ -57,6 +59,17 @@ def build_parser() -> argparse.ArgumentParser:
     )
     intake.add_argument("--intake", type=Path, required=True)
     intake.add_argument("--registry", type=Path)
+
+    export = commands.add_parser(
+        "dataset-export",
+        help="export the latest validated records as a versioned public dataset file",
+    )
+    export.add_argument("--output", type=Path, required=True)
+    export.add_argument("--dataset-version", default="1.0.0")
+    export.add_argument(
+        "--as-of",
+        help="timezone-aware ISO-8601 snapshot instant; defaults to the database clock",
+    )
 
     enqueue = commands.add_parser(
         "enqueue-source", help="enqueue one registry-approved official source URL"
@@ -161,6 +174,35 @@ async def _human_verified_ingest(arguments: argparse.Namespace) -> int:
     return 0
 
 
+def parse_export_as_of(raw: str | None) -> datetime | None:
+    if raw is None:
+        return None
+    try:
+        value = datetime.fromisoformat(raw)
+    except ValueError as exc:
+        raise ValueError(f"--as-of is not a valid ISO-8601 datetime: {raw!r}") from exc
+    if value.tzinfo is None or value.utcoffset() is None:
+        raise ValueError("--as-of must include a timezone offset")
+    return value
+
+
+async def _dataset_export(arguments: argparse.Namespace, as_of: datetime | None) -> int:
+    settings = get_settings()
+    configure_logging(settings)
+    database = Database.from_settings(settings)
+    try:
+        result = await export_public_dataset(
+            database,
+            output_path=arguments.output,
+            dataset_version=arguments.dataset_version,
+            as_of=as_of,
+        )
+    finally:
+        await database.dispose()
+    print(json.dumps(result.model_dump(mode="json"), ensure_ascii=False))
+    return 0
+
+
 def scan_identity_from_environment(environ: Mapping[str, str]) -> tuple[str, str | None]:
     raw_run_id = environ.get("SCAN_RUN_ID")
     if raw_run_id is None:
@@ -247,6 +289,12 @@ def main(argv: Sequence[str] | None = None) -> int:
         return asyncio.run(_demo_seed(arguments))
     if arguments.command == "human-verified-ingest":
         return asyncio.run(_human_verified_ingest(arguments))
+    if arguments.command == "dataset-export":
+        try:
+            as_of = parse_export_as_of(arguments.as_of)
+        except ValueError as exc:
+            parser.error(str(exc))
+        return asyncio.run(_dataset_export(arguments, as_of))
     if arguments.command == "enqueue-source":
         return asyncio.run(_enqueue_source(arguments))
     if arguments.command == "scan":
