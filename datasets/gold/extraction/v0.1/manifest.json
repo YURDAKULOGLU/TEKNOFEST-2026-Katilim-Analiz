@@ -1,0 +1,17 @@
+{
+  "$schema": "../../../schemas/gold-extraction-manifest.schema.json",
+  "schema_version": "1.0",
+  "dataset_id": "katilim-extraction-gold",
+  "dataset_version": "0.1.0",
+  "created_at": "2026-07-24T12:00:00+03:00",
+  "description": "Synthetic gold-standard examples for per-field evaluation of the extraction layer. Inputs are CleanDocument-shaped blocks; expected values include explicit nulls where honest abstention is the correct answer.",
+  "examples_path": "examples.jsonl",
+  "example_count": 25,
+  "content_files": [
+    {
+      "path": "examples.jsonl",
+      "sha256": "208caf399fedd24fe4f40c0ebb4bd7365206afd793e43040c0fb7aadfdd99c0b"
+    }
+  ],
+  "licence_boundary": "All example texts are synthetic and written for this repository; they imitate live wording patterns but contain no bank-specific real numbers or third-party excerpts. Apache-2.0."
+}
