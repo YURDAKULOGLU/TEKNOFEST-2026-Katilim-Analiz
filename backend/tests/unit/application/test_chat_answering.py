@@ -270,6 +270,24 @@ async def test_incomparable_bases_present_values_side_by_side_without_a_winner()
     )
 
 
+async def test_noise_keyword_does_not_veto_a_bank_scoped_question() -> None:
+    """Live battery regression: "azami" appears in no evidence, yet the bank,
+    family, and dimension filters already pin the answer to the vakif record."""
+
+    reads = StrictSearchReads([ZIRAAT, VAKIF])
+    answer = await ChatService(reads, clock=lambda: NOW).answer(
+        ChatRequest(
+            question="Vakıf Katılım'ın taşıt finansmanında azami vade kaç ay?",
+            as_of=NOW,
+        )
+    )
+
+    assert answer.insufficient_evidence is False
+    assert "48 ay" in answer.answer
+    assert "VAKIF KATILIM" in answer.answer
+    assert "ZİRAAT" not in answer.answer
+
+
 async def test_abstention_is_unchanged_when_nothing_matches() -> None:
     reads = StrictSearchReads([])
     answer = await ChatService(reads, clock=lambda: NOW).answer(
