@@ -44,7 +44,10 @@ from katilim_analiz.llm import (
 # card-campaign classifications change and records must reprocess.
 # 1.10: a TL-denominated branded point credit ("700 TL ParafPara") reads as a
 # money reward, so points-campaign records gain their required REWARD fact.
-EXTRACTOR_VERSION = "hybrid-extractor/1.10"
+# 1.11: model value-grounding for campaign_type - a quote-rejected model
+# proposal now binds when the rules locate the proposed type's own marker in
+# the document, so campaign classifications change and records must reprocess.
+EXTRACTOR_VERSION = "hybrid-extractor/1.11"
 
 
 def extraction_processing_identity() -> str:

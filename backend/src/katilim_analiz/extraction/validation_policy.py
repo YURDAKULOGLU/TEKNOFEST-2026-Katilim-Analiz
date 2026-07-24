@@ -152,6 +152,11 @@ _NON_BLOCKING_ISSUE_PREFIXES: tuple[str, ...] = (
     # own heading disambiguated after the body named several mechanics; like
     # the registry hint it explains provenance, never absence.
     "title_hint:",
+    # ``model_value_grounded:*`` annotates a classification whose value the
+    # model proposed and the rules then grounded to their own deterministic
+    # marker span after the model's quote failed verbatim grounding; like the
+    # registry and title hints it explains provenance, never absence.
+    "model_value_grounded:",
 )
 
 _NON_BLOCKING_ISSUE_SUFFIXES: tuple[str, ...] = (":rules_fallback",)
