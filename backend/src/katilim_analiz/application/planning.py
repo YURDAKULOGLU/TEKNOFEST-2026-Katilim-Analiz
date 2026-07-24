@@ -93,6 +93,7 @@ _BANK_PATTERNS: tuple[tuple[str, re.Pattern[str]], ...] = (
     ("ziraat-katilim", re.compile(r"\bziraat\b(?: katilim\w*)?(?: bankasi\w*)?")),
 )
 
+_FINANCING_SUBFAMILY_TERMS = ("konut", "tasit", "ihtiyac")
 _PRODUCT_TERMS: tuple[tuple[ProductFamily, tuple[str, ...]], ...] = (
     (ProductFamily.FINANCING, ("finansman", "konut", "tasit", "ihtiyac")),
     (ProductFamily.CARD, ("kart", "kredi karti")),
@@ -263,13 +264,27 @@ class SafeChatPlanner:
 
         family = _first_match(canonical, _PRODUCT_TERMS)
         dimensions = _dimensions(canonical)
+        keywords = _keywords(canonical)
+        if family is ProductFamily.FINANCING:
+            # "tasit finansmani" scopes the question to one product sheet, not
+            # just the financing family; the sub-family word re-enters the
+            # keyword list (its span was consumed as a family term) so
+            # relevance selection keeps konut/tasit/ihtiyac sheets apart.
+            keywords = [
+                *(
+                    term
+                    for term in _FINANCING_SUBFAMILY_TERMS
+                    if term not in keywords and re.search(rf"\b{term}", canonical) is not None
+                ),
+                *keywords,
+            ][:10]
         deterministic = ChatQueryPlan(
             intent=_intent(canonical),
             bank_ids=_bank_ids(canonical),
             product_family=family,
             campaign_type=_campaign_type(canonical, family, dimensions),
             comparison_dimensions=dimensions,
-            keywords=_keywords(canonical),
+            keywords=keywords,
             limit=5,
         )
         if deterministic.intent is not QueryIntent.UNKNOWN or self._candidate_provider is None:

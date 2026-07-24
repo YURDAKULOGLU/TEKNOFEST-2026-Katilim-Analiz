@@ -288,6 +288,92 @@ async def test_noise_keyword_does_not_veto_a_bank_scoped_question() -> None:
     assert "ZİRAAT" not in answer.answer
 
 
+async def test_term_specific_rate_question_selects_the_matching_table_row() -> None:
+    """"36 ay vadede oran?" must answer %3.40@36, not the 12-month headline.
+
+    The per-term rates are table-bound (INFERRED with verbatim cell quotes),
+    exercising the inferred-evidence fallback of the rate fact."""
+
+    rates = [
+        RateValue(
+            raw="%3.50",
+            value_percent=Decimal("3.50"),
+            kind=RateKind.FINANCING_PROFIT_RATE,
+            period=RatePeriod.MONTHLY,
+            term_months=12,
+        ),
+        RateValue(
+            raw="%3.40",
+            value_percent=Decimal("3.40"),
+            kind=RateKind.FINANCING_PROFIT_RATE,
+            period=RatePeriod.MONTHLY,
+            term_months=36,
+        ),
+    ]
+    evidence = [
+        _evidence("vakif-tasit-tablo", "/data/rates/0/value_percent", "%3.50").model_copy(
+            update={"status": EvidenceStatus.INFERRED}
+        ),
+        _evidence("vakif-tasit-tablo", "/data/rates/1/value_percent", "%3.40").model_copy(
+            update={"id": "evidence:vakif-tasit-tablo:rate-36", "status": EvidenceStatus.INFERRED}
+        ),
+        _evidence("vakif-tasit-tablo", "/data/terms/0/maximum_months", "48 aya varan vade"),
+    ]
+    base = financing_projection(
+        "vakif-tasit-tablo",
+        bank_id="vakif-katilim",
+        bank_name="VAKIF KATILIM BANKASI A.Ş.",
+    )
+    projection = base.model_copy(
+        update={
+            "record": base.record.model_copy(
+                update={
+                    "data": base.record.data.model_copy(update={"rates": rates}),
+                    "evidence": evidence,
+                }
+            )
+        }
+    )
+
+    reads = StrictSearchReads([projection])
+    answer = await ChatService(reads, clock=lambda: NOW).answer(
+        ChatRequest(
+            question="Vakıf Katılım taşıt finansmanında 36 ay vadede oran yüzde kaç?",
+            as_of=NOW,
+        )
+    )
+
+    assert answer.insufficient_evidence is False
+    assert "36 ay vadede kâr payı oranı %3.40" in answer.answer
+    assert any("%3.40" in citation.quote for citation in answer.citations)
+
+
+async def test_subfamily_word_keeps_the_answer_on_the_matching_product_sheet() -> None:
+    """A tasit question must not be answered with an ihtiyac sheet's numbers."""
+
+    ihtiyac = financing_projection(
+        "emlak-ihtiyac",
+        bank_id="emlak-katilim",
+        bank_name="TÜRKİYE EMLAK KATILIM BANKASI A.Ş.",
+        title="İhtiyaç Finansmanı",
+        rate_raw="%1,69",
+        rate_value="1.69",
+        term_months=12,
+    )
+    reads = StrictSearchReads([ihtiyac, VAKIF])
+    answer = await ChatService(reads, clock=lambda: NOW).answer(
+        ChatRequest(
+            question="Taşıt finansmanında hangi bankanın kâr payı oranı daha düşük?",
+            as_of=NOW,
+        )
+    )
+
+    assert answer.insufficient_evidence is False
+    assert "VAKIF KATILIM" in answer.answer
+    assert "%1,69" not in answer.answer
+    assert any("bir bankanın doğrulanmış kaydı" in warning for warning in answer.warnings)
+
+
 async def test_absent_fee_question_states_absence_and_never_reaches_the_composer() -> None:
     """Live battery regression: the emlak record states no fee, and the model
     answered the fee question with the financing amount (30.000 TL). The
