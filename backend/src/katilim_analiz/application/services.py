@@ -334,7 +334,9 @@ class ChatService:
 
         answer_text = bundle.template_answer
         warnings = [*planned.warnings, *bundle.warnings]
-        composed = await self._compose(request.question, bundle)
+        composed = (
+            await self._compose(request.question, bundle) if bundle.compose_allowed else None
+        )
         if composed is not None:
             if answer_is_grounded(composed, bundle.facts):
                 answer_text = composed
