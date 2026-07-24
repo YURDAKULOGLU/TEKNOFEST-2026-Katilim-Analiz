@@ -38,7 +38,7 @@ from katilim_analiz.storage.repositories import monitored_campaign_key
 
 NOW = datetime(2026, 7, 19, 12, 0, tzinfo=UTC)
 PROJECT_ROOT = Path(__file__).resolve().parents[4]
-CAMPAIGN_REGISTRY = PROJECT_ROOT / "data/registry/monitored-campaign-sources-2026-07-21.json"
+CAMPAIGN_REGISTRY = PROJECT_ROOT / "data/registry/monitored-campaign-sources-2026-07-24.json"
 CAMPAIGN_SCHEMA = PROJECT_ROOT / "data/registry/monitored-campaign-sources.schema.json"
 CRONJOB = PROJECT_ROOT / "deploy/k8s/operations/campaign-scan-cronjob.yaml"
 
@@ -262,14 +262,28 @@ def test_registry_schema_bank_set_status_rules_and_official_hosts(tmp_path: Path
     }
     assert set(static_sources) == {
         "albaraka-turk",
+        "dunya-katilim",
         "kuveyt-turk",
         "turkiye-finans",
         "vakif-katilim",
         "ziraat-katilim",
         "emlak-katilim",
     }
+    allowed_labels = {"konut", "tasit", "ihtiyac"}
     for source in static_sources.values():
-        assert [page.label for page in source.static_pages] == ["konut", "tasit", "ihtiyac"]
+        labels = {page.label for page in source.static_pages}
+        # Every label must be one the extraction hint code understands, and
+        # every static source must keep covering all three financing families.
+        assert labels == allowed_labels
+    assert {bank_id: len(source.static_pages) for bank_id, source in static_sources.items()} == {
+        "albaraka-turk": 8,
+        "dunya-katilim": 5,
+        "kuveyt-turk": 3,
+        "turkiye-finans": 3,
+        "vakif-katilim": 6,
+        "ziraat-katilim": 3,
+        "emlak-katilim": 6,
+    }
 
     guessed = copy.deepcopy(payload)
     guessed["sources"][0]["index_url"] = "https://www.adilkatilim.com.tr/kampanyalar"
@@ -305,6 +319,50 @@ def test_registry_schema_bank_set_status_rules_and_official_hosts(tmp_path: Path
     path = tmp_path / "doubled-static.json"
     path.write_text(json.dumps(doubled_static), encoding="utf-8")
     with pytest.raises(RegistryValidationError, match="more than one static-page"):
+        load_monitored_campaign_registry(path, bank_registry=bank_registry)
+
+
+def test_registry_rejects_eleventh_bank_and_oversized_static_page_list(tmp_path: Path) -> None:
+    payload = json.loads(CAMPAIGN_REGISTRY.read_text(encoding="utf-8"))
+    schema = json.loads(CAMPAIGN_SCHEMA.read_text(encoding="utf-8"))
+    validator = Draft202012Validator(schema, format_checker=FormatChecker())
+    bank_registry = load_runtime_registry()
+
+    eleventh_bank = copy.deepcopy(payload)
+    eleventh_bank["sources"].append(
+        {
+            "bank_id": "yeni-katilim",
+            "status": "verified",
+            "observed_on": payload["source_observed_on"],
+            "evidence_url": "https://www.yenikatilim.com.tr/kampanyalar",
+            "discovery_mode": "detail_links",
+            "index_url": "https://www.yenikatilim.com.tr/kampanyalar",
+            "detail_path_prefixes": ["/kampanyalar/"],
+            "max_links": 10,
+        }
+    )
+    path = tmp_path / "eleventh-bank.json"
+    path.write_text(json.dumps(eleventh_bank), encoding="utf-8")
+    with pytest.raises(RegistryValidationError, match="BDDK registry"):
+        load_monitored_campaign_registry(path, bank_registry=bank_registry)
+
+    oversized = copy.deepcopy(payload)
+    static_position = next(
+        position
+        for position, source in enumerate(oversized["sources"])
+        if source.get("discovery_mode") == "static_pages"
+    )
+    oversized["sources"][static_position]["static_pages"] = [
+        {
+            "url": f"https://www.albaraka.com.tr/tr/bireysel/finansmanlar/sayfa-{index}",
+            "label": "ihtiyac",
+        }
+        for index in range(21)
+    ]
+    assert list(validator.iter_errors(oversized))
+    path = tmp_path / "oversized-static.json"
+    path.write_text(json.dumps(oversized), encoding="utf-8")
+    with pytest.raises(RegistryValidationError, match=r"1\.\.20"):
         load_monitored_campaign_registry(path, bank_registry=bank_registry)
 
 

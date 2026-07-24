@@ -29,7 +29,7 @@ from katilim_analiz.storage.database import Database
 from katilim_analiz.storage.repositories import JobRepository, SourceRepository
 
 DEFAULT_REGISTRY_PATH = Path("data/registry/bddk-participation-banks-2026-07-18.json")
-DEFAULT_CAMPAIGN_REGISTRY_PATH = Path("data/registry/monitored-campaign-sources-2026-07-21.json")
+DEFAULT_CAMPAIGN_REGISTRY_PATH = Path("data/registry/monitored-campaign-sources-2026-07-24.json")
 SOURCE_JOB_KIND = "ingest_source"
 _CAMPAIGN_REGISTRY_ID = "monitored-campaign-sources"
 _REGISTRY_VERSION = re.compile(r"^(\d{4}-\d{2}-\d{2})\.([1-9]\d*)$")
