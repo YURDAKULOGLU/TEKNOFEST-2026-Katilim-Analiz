@@ -145,6 +145,14 @@ def select_relevant(
         for projection in projections
         if all(_keyword_matches(keyword, _projection_words(projection)) for keyword in keywords)
     ]
+    if not surviving and (
+        plan.bank_ids or plan.product_family is not None or plan.campaign_type is not None
+    ):
+        # Keywords rank, they must not veto: a leftover question word no
+        # record states ("azami") would otherwise erase an answer set the
+        # plan's structured filters already pinned down.  Scoring below still
+        # prefers records that do state the keywords.
+        surviving = list(projections)
 
     canonical_question = f" {canonicalize_turkish_text(question)} "
     mentioned = [
