@@ -82,7 +82,7 @@ async def test_named_bank_becomes_a_structured_filter_not_a_keyword() -> None:
     assert planned.plan.bank_ids == ["vakif-katilim"]
     assert planned.plan.product_family is ProductFamily.FINANCING
     assert ComparisonDimension.TERM in planned.plan.comparison_dimensions
-    # The apostrophe suffix ("'ın" -> "in") and the bank tokens must not leak
+    # The Turkish apostrophe suffix (-in) and the bank tokens must not leak
     # into the AND-composed keyword search.
     assert "vakif" not in planned.plan.keywords
     assert "katilim" not in planned.plan.keywords
