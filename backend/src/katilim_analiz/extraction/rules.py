@@ -189,7 +189,12 @@ _PRODUCT_PATTERNS: Mapping[ProductFamily, tuple[re.Pattern[str], ...]] = {
 _CAMPAIGN_PATTERNS: Mapping[CampaignType, tuple[re.Pattern[str], ...]] = {
     CampaignType.CASHBACK: (re.compile(r"\b(?:nakit\s+iade|para\s+iadesi)\b", re.I),),
     CampaignType.DISCOUNT: (re.compile(r"\bindirim(?:li|i)?\b", re.I),),
-    CampaignType.POINTS: (re.compile(r"\b(?:puan|bonus)\b", re.I),),
+    # Branded card-point currencies (Paraf, World) name a points reward as
+    # unambiguously as the word "puan" itself.
+    CampaignType.POINTS: (
+        re.compile(r"\b(?:puan|bonus)\b", re.I),
+        re.compile(r"\b(?:parafpara|worldpuan)\b", re.I),
+    ),
     CampaignType.FEE_WAIVER: (
         re.compile(r"\b(?:masrafsız|masrafsiz|ücretsiz|ucretsiz|ücret\s+alınmayacak)\b", re.I),
     ),
@@ -881,7 +886,22 @@ def extract_rules(document: CleanDocument) -> ExtractionDraft:
         campaign_value, span = next(iter(type_hits.items()))
         campaign_type = BoundFact(campaign_value, span, inferred=True)
     elif len(type_hits) > 1:
-        issues.append("campaign_type_ambiguous")
+        # Issue #2: a campaign page's body routinely names several mechanics
+        # ("taksit" terms next to "indirim" footers), but its heading names
+        # the one offer the campaign is ("A101'de 6 Taksit").  A single type
+        # marker in the title outranks the body's noise; a title that is
+        # itself mixed leaves the ambiguity standing.
+        title_hits = (
+            _pattern_hits(((title.span.block_id, title.value),), _CAMPAIGN_PATTERNS)
+            if title is not None
+            else {}
+        )
+        if len(title_hits) == 1:
+            campaign_value, span = next(iter(title_hits.items()))
+            campaign_type = BoundFact(campaign_value, span, inferred=True)
+            issues.append("title_hint:campaign_type")
+        else:
+            issues.append("campaign_type_ambiguous")
 
     rate_context_hints = _rate_context_hints(
         ((block.id, block.kind, block.text) for block in safe_source_blocks),

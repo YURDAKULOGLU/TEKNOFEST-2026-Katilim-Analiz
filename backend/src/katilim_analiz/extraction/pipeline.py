@@ -39,7 +39,10 @@ from katilim_analiz.llm import (
 # record statuses change and cached conditional fetches must reprocess.
 # 1.8: installment-table rows now bind their term cell ("12 Ay") to the row's
 # profit rate, so rate values gain term_months and must be re-extracted.
-EXTRACTOR_VERSION = "hybrid-extractor/1.8"
+# 1.9: a single campaign-type marker in the title now outranks a mixed body,
+# and branded point currencies (ParafPara, Worldpuan) read as POINTS, so
+# card-campaign classifications change and records must reprocess.
+EXTRACTOR_VERSION = "hybrid-extractor/1.9"
 
 
 def extraction_processing_identity() -> str:
